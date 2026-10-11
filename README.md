@@ -44,7 +44,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Light, dark and system themes, 8 palettes, keyboard shortcuts, tray, notifications | ✅ Implemented |
 | Offline demo mode | ✅ `wren --demo` |
 | Audio and video calls | ↗ Hand-off to Teams via deep links ([why](docs/calling.md)) |
-| Instant updates in the background | ⚠️ Partial: Microsoft forbids polling, so push needs a relay ([why](docs/realtime.md)) |
+| Real-time updates | ✅ On open, focus and refresh. 🧪 Push through a self-hostable `wren-relay` (experimental), since Microsoft forbids polling ([why](docs/realtime.md)) |
 | Sending files, new chats, multiple accounts, own status | 🗓 Planned ([roadmap](docs/roadmap.md)) |
 | In-app calling, incoming calls, screen sharing | ❌ No official API for native desktop apps (Azure Communication Services route documented) |
 
@@ -121,8 +121,10 @@ src/
   store.rs       SQLite cache with FTS5 search, one database per account
   sync.rs        when to fetch (never polls)
   html.rs        Teams HTML in, composer markdown out
+  realtime.rs    push updates through a wren-relay (experimental)
   calling.rs     meeting/call hand-off and the in-app calling seam
   secrets.rs     refresh tokens in the OS credential store
+relay/           wren-relay: forwards Graph change notifications over WebSocket
 ```
 
 Built on [fastframe](https://github.com/crmne/fastframe) (fonts, colour emoji,
@@ -139,8 +141,9 @@ the egui and winit forks shared with Spotifast and ZapFast.
   calls and meetings off to Teams ([details](docs/calling.md)).
 - **Real-time.** Polling Graph for Teams changes more than once a day breaks
   the Microsoft APIs Terms of Use. Push needs a public webhook, Event Hubs or
-  Event Grid. Wren refreshes when you look, and a self-hostable relay is
-  planned ([details](docs/realtime.md)).
+  Event Grid. Wren refreshes when you look. For push, you run the small
+  `wren-relay` (in `relay/`) on any HTTPS host: it forwards Graph's
+  content-free change notifications to Wren ([details](docs/realtime.md)).
 - **Consent.** Expect an administrator to approve Wren's permissions in your
   tenant.
 

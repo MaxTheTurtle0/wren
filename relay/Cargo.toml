@@ -1,0 +1,29 @@
+[package]
+name = "wren-relay"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+license = "MIT"
+description = "Self-hostable relay that forwards Microsoft Graph change notifications to Wren"
+repository = "https://github.com/MaxTheTurtle0/wren"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "wren-relay"
+path = "src/main.rs"
+
+[dependencies]
+# HTTP routes for Graph's webhooks and the WebSocket clients connect to.
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "query", "ws"] }
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "net", "macros", "signal"] }
+serde = { version = "1", features = ["derive"] }
+log = "0.4"
+env_logger = { version = "0.11", default-features = false, features = ["auto-color", "humantime"] }
+
+[dev-dependencies]
+reqwest = { version = "0.12", default-features = false }
+tokio-tungstenite = { version = "0.29", default-features = false, features = ["connect"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }

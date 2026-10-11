@@ -11,10 +11,8 @@ Roughly in order. Each step lands as its own focused change with tests.
    (expect edge cases in Teams HTML and system events).
 2. **Windows and Linux visual pass.** Run on both, capture screenshots, fix
    platform chrome (title bar, fonts, tray).
-3. **Push relay (experimental).** A small self-hostable service for Graph
-   change notifications (encrypted resource data, WebSocket to the client),
-   and subscription management in Wren. This is what makes background
-   notifications possible. Design in [realtime.md](realtime.md).
+3. **Push relay, live.** Run `wren-relay` against a real tenant, deploy
+   guide with a container image, channel-post subscriptions.
 4. **Send files.** OneDrive upload (Files.ReadWrite), sharing link, and a
    `reference` attachment. Drag and drop, and paste of images (hosted
    content).

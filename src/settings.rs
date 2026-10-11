@@ -40,6 +40,8 @@ pub struct Settings {
     pub account: Option<String>,
     pub perf_overlay: bool,
     pub window: Option<WindowGeometry>,
+    /// A wren-relay for push updates (experimental), `https://…`.
+    pub relay_url: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -66,6 +68,7 @@ impl Default for Settings {
             account: None,
             perf_overlay: false,
             window: None,
+            relay_url: None,
         }
     }
 }

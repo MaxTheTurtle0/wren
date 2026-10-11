@@ -47,6 +47,8 @@ pub enum Trigger {
     AfterAction,
     /// The once-a-day unattended refresh.
     Daily,
+    /// A Graph change notification said this resource changed.
+    Push,
 }
 
 const DAY: Duration = Duration::from_secs(24 * 60 * 60);
@@ -82,8 +84,11 @@ impl Freshness {
             // A person's explicit refresh always goes, but a double press
             // within two seconds is one refresh.
             Trigger::Refresh => age.is_none_or(|age| age >= Duration::from_secs(2)),
-            // After the person's own change, look once to confirm it.
-            Trigger::AfterAction => age.is_none_or(|age| age >= Duration::from_secs(1)),
+            // After the person's own change, or when Graph says something
+            // changed, look once; a burst within a second is one fetch.
+            Trigger::AfterAction | Trigger::Push => {
+                age.is_none_or(|age| age >= Duration::from_secs(1))
+            }
             Trigger::Start | Trigger::Opened | Trigger::Focused => {
                 age.is_none_or(|age| age >= resource.reuse_for())
             }

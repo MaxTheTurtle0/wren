@@ -475,6 +475,36 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                 ui.add_space(8.0);
 
                 if !app.demo {
+                    widgets::section_label(ui, &palette, "Push updates (experimental)");
+                    ui.label(
+                        egui::RichText::new(
+                            "With a wren-relay you run, Microsoft Graph tells Wren about new messages as they happen, also in the background. Only chat and message IDs pass through the relay.",
+                        )
+                        .font(theme::regular(12.0))
+                        .color(palette.dim),
+                    );
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut app.form_relay)
+                                .hint_text("https://relay.example.com")
+                                .desired_width(ui.available_width() - 70.0),
+                        );
+                        let changed = app.form_relay.trim() != app.settings.relay_url.as_deref().unwrap_or_default();
+                        if ui.add_enabled(changed, egui::Button::new("Save")).clicked() {
+                            actions.push(Action::SetRelay(app.form_relay.clone()));
+                        }
+                    });
+                    let color = match app.push {
+                        crate::realtime::PushStatus::Live => palette.success,
+                        crate::realtime::PushStatus::Failed(_) => palette.danger,
+                        _ => palette.secondary,
+                    };
+                    ui.label(
+                        egui::RichText::new(format!("Status: {}", app.push.label()))
+                            .font(theme::regular(12.0))
+                            .color(color),
+                    );
+                    ui.add_space(8.0);
                     widgets::section_label(ui, &palette, "App registration");
                     ui.label(egui::RichText::new("Application (client) ID").color(palette.secondary));
                     ui.add(egui::TextEdit::singleline(&mut app.form_client_id).font(theme::mono(12.0)).desired_width(f32::INFINITY));

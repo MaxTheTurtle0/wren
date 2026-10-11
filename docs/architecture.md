@@ -33,8 +33,8 @@ one-directional data flow between them.
    at once, marked *Sending* where it matters. Graph's answer reconciles it.
    Every list opens from the SQLite cache before the network answers.
 4. **No polling.** `src/sync.rs` is the only place that decides whether to
-   fetch, and every fetch answers something the person did (see
-   [realtime.md](realtime.md)).
+   fetch. Every fetch answers something the person did, or a Graph change
+   notification (see [realtime.md](realtime.md)).
 5. **Platform code stays behind `cfg`.** Shared code compiles on macOS,
    Windows and Linux. Platform pieces come from fastframe crates or sit
    in `#[cfg(target_os = …)]` blocks.
@@ -55,6 +55,8 @@ one-directional data flow between them.
 | `store.rs` | Per-account SQLite cache with FTS5 search |
 | `sync.rs` | Fetch policy (no polling; dedupe repeated requests) |
 | `calling.rs` | Deep-link hand-off and the capability model for future in-app calling |
+| `realtime.rs` | Push updates: relay WebSocket, Graph subscription lifecycle, notification parsing (experimental) |
+| `relay/` (crate `wren-relay`) | The self-hostable relay: validation handshake and forwarding of Graph notifications |
 | `theme.rs` | Palettes (fastframe-theme compatible), visuals, type scale, Lucide icon table |
 | `platform.rs` | App icon rasterization, tray item, single-instance slot |
 | `notify.rs` | Desktop notifications |

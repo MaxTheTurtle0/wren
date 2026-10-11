@@ -496,6 +496,8 @@ pub enum Action {
     SetTheme(crate::settings::ThemeChoice),
     SetNotifications(bool),
     SetKeepRunning(bool),
+    /// The push relay's URL; empty turns push off.
+    SetRelay(String),
     TogglePerfOverlay,
     Refresh,
     DismissToast(u64),

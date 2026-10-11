@@ -15,6 +15,7 @@ pub mod model;
 pub mod notify;
 pub mod paths;
 pub mod platform;
+pub mod realtime;
 pub mod secrets;
 pub mod settings;
 pub mod store;

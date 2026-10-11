@@ -13,17 +13,17 @@ Microsoft's Teams API overview says:
 
 ([source](https://learn.microsoft.com/en-us/graph/api/resources/teams-api-overview?view=graph-rest-1.0#polling-requirements))
 
-The ways Graph pushes changes all need infrastructure a desktop app does not
-have:
+Graph pushes changes only to infrastructure a desktop app does not have:
 
 - a public HTTPS webhook;
 - Azure Event Hubs;
-- Azure Event Grid;
-- possibly Web Push, though its support for Teams messages is unverified.
+- Azure Event Grid.
 
-## What Wren does (implemented)
+Wren therefore has two modes.
 
-`src/sync.rs` decides every fetch. It has no timer that fetches on its own.
+## Without a relay: fetch on intent (default)
+
+`src/sync.rs` decides every fetch. There is no timer that fetches on its own.
 
 | Trigger | Fetches | Skipped if fetched within |
 |---|---|---|
@@ -36,33 +36,81 @@ have:
 | Presence | People in the chat you open | 60 s per person |
 
 Message refreshes ask only for what changed since the newest cached change
-(`$filter=lastModifiedDateTime gt …`), as the polling rules request.
-Everything is cached in SQLite, so every view first shows the cache
-immediately and updates when Graph answers.
+(`$filter=lastModifiedDateTime gt …`), as the polling rules request. Every
+view shows the cache first and updates when Graph answers.
 
 What this means in practice:
 
-- While you are using Wren, a chat you open or return to is current.
-- While Wren sits untouched in the background, it learns nothing new and
-  shows no notifications for new messages. Meeting reminders still work,
-  because they come from the cached calendar.
+- A chat you open or return to is current.
+- While Wren sits untouched, it learns nothing new and shows no new-message
+  notifications. Meeting reminders still work, because they come from the
+  cached calendar.
 
-## Real push (planned)
+## With a relay: push updates (experimental)
 
-Instant updates and background notifications need Graph change
-notifications. The design Wren intends to support:
+**Status:** implemented and tested end to end against a local relay and a
+simulated Graph (`tests/push_flow.rs`). It has **not yet been run against a
+live tenant**.
 
-1. **A small relay** that anyone can self-host (a single binary or a
-   container). It receives Graph webhooks for
-   `/users/{id}/chats/getAllMessages` (`Chat.Read`) and channel subscriptions,
-   answers the validation handshake, and forwards each notification to the
-   person's connected Wren over a WebSocket.
-2. **End-to-end encryption through Graph's own mechanism.** Wren creates the
-   subscription with `includeResourceData` and its own RSA certificate, so
-   the relay only ever handles ciphertext it cannot read.
-3. **Renewal.** Chat message subscriptions last at most three days. Wren
-   renews them while it runs.
-4. **For organisations on Azure:** Event Hubs delivery instead of a relay.
+How it works:
 
-Until a relay is configured, Wren keeps working with the fetch-on-intent
-rules above.
+1. You run `wren-relay` (in this repository, `relay/`) on a public HTTPS
+   hostname and enter its URL in **Settings → Push updates**.
+2. Wren opens a WebSocket to `{relay}/ws/{channel}`, with a random channel
+   per run.
+3. Wren subscribes to Graph change notifications for all of your chat
+   messages: `POST /subscriptions` on `/users/{id}/chats/getAllMessages`,
+   delegated `Chat.Read` (covered by `Chat.ReadWrite`), delivered to
+   `{relay}/graph/{channel}`, **without resource data**.
+4. Graph validates the URL (the relay echoes the `validationToken`), then
+   posts each change. The relay forwards it over the WebSocket.
+5. Wren checks the `clientState` secret and fetches the changed chat with the
+   usual date-ranged request, plus the chat list for unread state and
+   notifications. A burst of changes within a second is one fetch.
+6. Wren renews the subscription every 40 minutes, reauthorizes it when Graph
+   asks, recreates it when Graph removes it or the relay drops, and deletes
+   it when push is turned off or Wren exits.
+
+What the relay sees: notification envelopes with a subscription id, the
+`clientState`, and resource paths such as `chats('19:…')/messages('1702')`.
+**No message content and no tokens.** It keeps nothing on disk. Anyone who
+could forge a notification could only make Wren re-fetch from Graph.
+
+With push on, keeping Wren running in the tray (**Settings → Behaviour**)
+gives background notifications for new messages.
+
+### Running the relay
+
+```sh
+cargo build --release -p wren-relay
+./target/release/wren-relay --listen 127.0.0.1:8787
+```
+
+Put it behind HTTPS on a public hostname, because Graph only posts to
+`https://` URLs. For example, with [Caddy](https://caddyserver.com):
+
+```
+relay.example.com {
+    reverse_proxy 127.0.0.1:8787
+}
+```
+
+A Cloudflare tunnel (`cloudflared tunnel --url http://127.0.0.1:8787`) or
+any cloud load balancer works too. One relay serves any number of people.
+Routes:
+
+| Route | Who calls it |
+|---|---|
+| `GET /` | Health check |
+| `GET /ws/{channel}` (WebSocket) | Wren |
+| `POST /graph/{channel}` | Microsoft Graph: change notifications and validation |
+| `POST /lifecycle/{channel}` | Microsoft Graph: lifecycle notifications |
+
+### Limits
+
+- Graph allows 10,000 Teams subscriptions per organisation. Each running Wren
+  holds one.
+- Channel posts are not subscribed yet. They would need `ChannelMessage.Read.All`
+  and one subscription per channel.
+- Organisations on Azure could deliver through Event Hubs instead. Not
+  implemented.

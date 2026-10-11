@@ -248,6 +248,10 @@ impl Graph {
             .map(drop)
     }
 
+    pub async fn delete(&self, path: &str) -> Result<(), GraphError> {
+        self.send(Method::DELETE, path, None, &[]).await.map(drop)
+    }
+
     /// Raw bytes (photos, inline images), at most `limit` bytes.
     pub async fn get_bytes(&self, path_or_url: &str, limit: usize) -> Result<Vec<u8>, GraphError> {
         let response = self.send(Method::GET, path_or_url, None, &[]).await?;

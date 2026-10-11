@@ -18,8 +18,10 @@ Microsoft Graph. These rules are for coding agents and contributors. Follow
   person looks and at most one unattended refresh a day. Polling violates
   the Microsoft APIs Terms of Use. Every fetch goes through
   `sync::Freshness::claim` with a `Trigger` caused by the person. Do not add
-  timers that fetch. Real-time work goes through change notifications
-  (`docs/realtime.md`).
+  timers that fetch. Real-time work goes through Graph change notifications
+  (`src/realtime.rs`, the `relay/` crate, `docs/realtime.md`), which trigger
+  ordinary fetches with `Trigger::Push`. Subscriptions carry no resource
+  data, so the relay never sees message content; keep it that way.
 - **Least privilege.** Do not add a Graph scope to `auth::SIGN_IN_SCOPES`
   without a feature in the interface that needs it. Scopes needing admin
   consent are requested incrementally (`auth::OPTIONAL_SCOPES`). Update

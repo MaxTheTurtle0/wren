@@ -19,6 +19,7 @@ use crate::auth::{self, AuthConfig, CHANNEL_READ_SCOPE, IdClaims, loopback::Loop
 use crate::graph::{Graph, GraphError};
 use crate::model::{Access, ConversationId, Message};
 use crate::paths::AppDirs;
+use crate::realtime::{self, Notice, PushStatus};
 use crate::secrets::SecretStore;
 use crate::store::Store;
 use crate::sync::{Freshness, Resource, Trigger};
@@ -71,6 +72,10 @@ enum Internal {
     FetchFailed(Resource),
     /// Confirms the person's own change with a date-ranged refresh.
     Refetch(ConversationId),
+    /// Graph said a chat changed.
+    Pushed(String),
+    /// Graph lost notifications: refresh the chat list.
+    PushMissed,
 }
 
 struct Worker {
@@ -89,6 +94,8 @@ struct Worker {
     older_links: Arc<Mutex<HashMap<ConversationId, String>>>,
     downloads: Arc<Semaphore>,
     options: super::BackendOptions,
+    relay: Option<String>,
+    stop_push: Option<watch::Sender<bool>>,
 }
 
 pub(super) async fn run(
@@ -111,6 +118,8 @@ pub(super) async fn run(
         http,
         secrets: Arc::clone(&options.secrets),
         options,
+        relay: None,
+        stop_push: None,
         out: Outbox { events, waker },
         internal: internal_tx,
         config: None,
@@ -134,6 +143,7 @@ pub(super) async fn run(
     if let Some(cancel) = worker.cancel_sign_in.take() {
         let _ = cancel.send(true);
     }
+    worker.stop_push().await;
 }
 
 impl Worker {
@@ -179,6 +189,15 @@ impl Worker {
                 on,
             } => self.react(conversation, message, emoji, on),
             Command::MarkRead(chat) => self.mark_read(chat),
+            Command::Relay(relay) => {
+                self.relay = relay.as_deref().and_then(realtime::normalize_relay);
+                if relay.is_some() && self.relay.is_none() {
+                    self.out.send(Event::Push(PushStatus::Failed(
+                        "the relay must be an https:// address".into(),
+                    )));
+                }
+                self.restart_push().await;
+            }
             Command::Presence(users) => self.presence(users),
             Command::Photo(user) => self.photo(user),
             Command::Media(url) => self.media(url),
@@ -202,6 +221,14 @@ impl Worker {
             Internal::Refetch(conversation) => {
                 self.fetch(Resource::Messages(conversation), Trigger::AfterAction)
             }
+            Internal::Pushed(chat) => {
+                self.fetch(
+                    Resource::Messages(ConversationId::Chat(chat)),
+                    Trigger::Push,
+                );
+                self.fetch(Resource::Chats, Trigger::Push);
+            }
+            Internal::PushMissed => self.fetch(Resource::Chats, Trigger::Push),
         }
     }
 
@@ -272,6 +299,7 @@ impl Worker {
                     name: record.display_name.clone(),
                     username: record.username.clone(),
                 }));
+                self.restart_push().await;
             }
             Ok(None) => self.out.send(Event::Auth(AuthStatus::Expired {
                 username: record.username.clone(),
@@ -384,9 +412,44 @@ impl Worker {
             name: record.display_name,
             username: record.username,
         }));
+        self.restart_push().await;
+    }
+
+    // -- Push (experimental) ------------------------------------------------
+
+    /// Stops any running push loop and, when a relay is set and an account is
+    /// signed in, starts a new one.
+    async fn restart_push(&mut self) {
+        self.stop_push().await;
+        let (Some(relay), Some(account)) = (self.relay.clone(), &self.account) else {
+            self.out.send(Event::Push(PushStatus::Off));
+            return;
+        };
+        let (stop, stopped) = watch::channel(false);
+        self.stop_push = Some(stop);
+        let graph = Arc::clone(&account.graph);
+        let me = account
+            .record
+            .id
+            .split('.')
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+        let out = self.out.clone();
+        let internal = self.internal.clone();
+        tokio::spawn(push_loop(graph, me, relay, out, internal, stopped));
+    }
+
+    async fn stop_push(&mut self) {
+        if let Some(stop) = self.stop_push.take() {
+            let _ = stop.send(true);
+            // Give the loop a moment to delete its subscription.
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
     }
 
     async fn sign_out(&mut self) {
+        self.stop_push().await;
         let Some(account) = self.account.take() else {
             self.out.send(Event::Auth(AuthStatus::SignedOut));
             return;
@@ -1030,6 +1093,121 @@ async fn fetch_resource(
         Resource::Presence => {}
     }
     Ok(())
+}
+
+/// Keeps one subscription alive while `stop` stays false: connect to the
+/// relay, subscribe, forward notices, renew, and start over after failures
+/// with growing pauses.
+async fn push_loop(
+    graph: Arc<Graph>,
+    me: String,
+    relay: String,
+    out: Outbox,
+    internal: mpsc::UnboundedSender<Internal>,
+    mut stop: watch::Receiver<bool>,
+) {
+    use futures_util::{SinkExt, StreamExt};
+    let mut pause = Duration::from_secs(5);
+    while !*stop.borrow() {
+        out.send(Event::Push(PushStatus::Connecting));
+        let channel = auth::random_token(32);
+        let client_state = auth::random_token(24);
+        let failure = 'session: {
+            let socket =
+                match tokio_tungstenite::connect_async(realtime::websocket_url(&relay, &channel))
+                    .await
+                {
+                    Ok((socket, _)) => socket,
+                    Err(_) => break 'session "the relay could not be reached".to_owned(),
+                };
+            let (mut sink, mut stream) = socket.split();
+            let subscription = match graph
+                .subscribe_chat_messages(
+                    &me,
+                    &realtime::notification_url(&relay, &channel),
+                    &realtime::lifecycle_url(&relay, &channel),
+                    &client_state,
+                    realtime::LIFETIME,
+                )
+                .await
+            {
+                Ok(subscription) => subscription,
+                Err(error) => {
+                    break 'session format!("Microsoft Graph refused the subscription ({error})");
+                }
+            };
+            out.send(Event::Push(PushStatus::Live));
+            // A change may have happened while connecting.
+            let _ = internal.send(Internal::PushMissed);
+            pause = Duration::from_secs(5);
+            let mut renew = tokio::time::interval(realtime::RENEW_EVERY);
+            renew.tick().await;
+            let mut keepalive = tokio::time::interval(Duration::from_secs(30));
+            keepalive.tick().await;
+            let reason = loop {
+                tokio::select! {
+                    changed = stop.changed() => {
+                        if changed.is_err() || *stop.borrow() {
+                            break None;
+                        }
+                    }
+                    _ = renew.tick() => {
+                        if let Err(error) = graph.renew_subscription(&subscription.id, realtime::LIFETIME).await {
+                            break Some(format!("renewing the subscription failed ({error})"));
+                        }
+                    }
+                    _ = keepalive.tick() => {
+                        if sink.send(tokio_tungstenite::tungstenite::Message::Ping(Vec::new().into())).await.is_err() {
+                            break Some("the relay connection dropped".to_owned());
+                        }
+                    }
+                    message = stream.next() => {
+                        let text = match message {
+                            Some(Ok(tokio_tungstenite::tungstenite::Message::Text(text))) => text.to_string(),
+                            Some(Ok(_)) => continue,
+                            Some(Err(_)) | None => break Some("the relay connection dropped".to_owned()),
+                        };
+                        let mut recreate = false;
+                        for notice in realtime::parse(&text, &client_state) {
+                            match notice {
+                                Notice::Chat(chat) => {
+                                    let _ = internal.send(Internal::Pushed(chat));
+                                }
+                                Notice::Missed => {
+                                    let _ = internal.send(Internal::PushMissed);
+                                }
+                                Notice::Reauthorize => {
+                                    if graph.reauthorize_subscription(&subscription.id).await.is_err() {
+                                        recreate = true;
+                                    }
+                                }
+                                Notice::Removed => recreate = true,
+                            }
+                        }
+                        if recreate {
+                            break Some("Microsoft Graph ended the subscription".to_owned());
+                        }
+                    }
+                }
+            };
+            // Best effort: a subscription left behind expires within the hour.
+            let _ = graph.delete_subscription(&subscription.id).await;
+            match reason {
+                Some(reason) => reason,
+                None => return,
+            }
+        };
+        if *stop.borrow() {
+            return;
+        }
+        log::info!("push: {failure}; retrying in {pause:?}");
+        out.send(Event::Push(PushStatus::Failed(failure)));
+        tokio::select! {
+            _ = tokio::time::sleep(pause) => {}
+            _ = stop.changed() => {}
+        }
+        pause = (pause * 2).min(Duration::from_secs(300));
+    }
 }
 
 async fn browser_sign_in(

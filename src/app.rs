@@ -231,6 +231,9 @@ pub struct App {
     pub focus_composer: bool,
     /// Frames left in which the open history scrolls to its newest message.
     pub scroll_to_end: u8,
+    pub push: crate::realtime::PushStatus,
+    /// The relay field in settings.
+    pub form_relay: String,
 }
 
 impl App {
@@ -257,7 +260,8 @@ impl App {
         demo: bool,
     ) -> Self {
         let palette = crate::theme::resolve(&settings.theme, true);
-        Self {
+        let form_relay = settings.relay_url.clone().unwrap_or_default();
+        let mut app = Self {
             form_client_id: settings.client_id.clone(),
             form_tenant: settings.tenant.clone(),
             dirs,
@@ -305,7 +309,11 @@ impl App {
             requests: None,
             focus_composer: false,
             scroll_to_end: 4,
-        }
+            push: crate::realtime::PushStatus::Off,
+            form_relay: String::new(),
+        };
+        app.form_relay = form_relay;
+        app
     }
 
     fn start_backend(&mut self) {
@@ -319,6 +327,8 @@ impl App {
             tenant: self.settings.tenant.clone(),
             account: self.settings.account.clone(),
         });
+        self.backend
+            .send(Command::Relay(self.settings.relay_url.clone()));
     }
 
     /// The signed-in person's id (Graph user id).
@@ -655,6 +665,7 @@ impl App {
                 }
             }
             Event::Error(text) => self.toast(ToastKind::Error, text),
+            Event::Push(status) => self.push = status,
         }
     }
 
@@ -1148,6 +1159,18 @@ impl App {
             Action::SetKeepRunning(on) => {
                 self.settings.keep_running = on;
                 self.mark_settings_dirty();
+            }
+            Action::SetRelay(url) => {
+                let url = url.trim().to_owned();
+                if !url.is_empty() && crate::realtime::normalize_relay(&url).is_none() {
+                    self.toast(ToastKind::Error, "The relay must be an https:// address.");
+                    return;
+                }
+                self.settings.relay_url = (!url.is_empty()).then_some(url);
+                self.mark_settings_dirty();
+                if !self.demo {
+                    self.backend.send(Command::Relay(self.settings.relay_url.clone()));
+                }
             }
             Action::TogglePerfOverlay => {
                 self.settings.perf_overlay = !self.settings.perf_overlay;

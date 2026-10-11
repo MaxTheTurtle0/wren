@@ -114,6 +114,8 @@ pub enum Command {
         on: bool,
     },
     MarkRead(String),
+    /// The push relay to use, or none (experimental, docs/realtime.md).
+    Relay(Option<String>),
     Presence(Vec<String>),
     Photo(String),
     Media(String),
@@ -200,6 +202,8 @@ pub enum Event {
     },
     /// A fetch started (`true`) or ended.
     Loading(Resource, bool),
+    /// The push relay's state.
+    Push(crate::realtime::PushStatus),
     /// Something the person should hear about, in plain words.
     Error(String),
 }

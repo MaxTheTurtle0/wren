@@ -444,6 +444,68 @@ impl Graph {
     }
 }
 
+/// A Graph change-notification subscription.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Subscription {
+    pub id: String,
+    #[serde(default)]
+    pub expiration_date_time: Option<String>,
+}
+
+impl Graph {
+    /// `POST /subscriptions` for all of the person's chat messages, without
+    /// resource data (Chat.Read; Chat.ReadWrite includes it).
+    pub async fn subscribe_chat_messages(
+        &self,
+        me: &str,
+        notification_url: &str,
+        lifecycle_url: &str,
+        client_state: &str,
+        lifetime: std::time::Duration,
+    ) -> Result<Subscription, GraphError> {
+        let expiration = crate::time::to_iso(crate::time::now() + lifetime.as_millis() as i64);
+        self.post(
+            "subscriptions",
+            &json!({
+                "changeType": "created,updated,deleted",
+                "notificationUrl": notification_url,
+                "lifecycleNotificationUrl": lifecycle_url,
+                "resource": format!("/users/{}/chats/getAllMessages", segment(me)),
+                "expirationDateTime": expiration,
+                "clientState": client_state,
+                "includeResourceData": false,
+            }),
+        )
+        .await
+    }
+
+    pub async fn renew_subscription(
+        &self,
+        id: &str,
+        lifetime: std::time::Duration,
+    ) -> Result<(), GraphError> {
+        let expiration = crate::time::to_iso(crate::time::now() + lifetime.as_millis() as i64);
+        self.patch(
+            &format!("subscriptions/{}", segment(id)),
+            &json!({ "expirationDateTime": expiration }),
+        )
+        .await
+    }
+
+    pub async fn reauthorize_subscription(&self, id: &str) -> Result<(), GraphError> {
+        self.post_no_content(
+            &format!("subscriptions/{}/reauthorize", segment(id)),
+            &json!({}),
+        )
+        .await
+    }
+
+    pub async fn delete_subscription(&self, id: &str) -> Result<(), GraphError> {
+        self.delete(&format!("subscriptions/{}", segment(id))).await
+    }
+}
+
 fn message_path(conversation: &ConversationId, message: &str) -> String {
     match conversation {
         ConversationId::Chat(chat) => {

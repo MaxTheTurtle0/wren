@@ -30,8 +30,8 @@ Status as of Wren 0.1.
 | Local message search | Works | SQLite FTS5 over everything cached, instant |
 | Microsoft Search (server-side) | Works | Merged into ⌘K results for queries of 3+ characters |
 | Start a new chat | Planned | Needs Chat.Create |
-| Real-time updates | Partial | Fetch on open, focus and refresh. Background polling is forbidden by Microsoft. Push needs a relay (planned), see [realtime.md](realtime.md) |
-| New-message notifications | Partial | Shown when a fetch finds new messages in other chats. Not while Wren is idle in the background |
+| Real-time updates | Works by default on intent; push is experimental | Fetch on open, focus and refresh (Microsoft forbids background polling). With a self-hosted `wren-relay`, Graph change notifications push new messages. See [realtime.md](realtime.md) |
+| New-message notifications | Partial | Whenever a fetch finds new messages in other chats. With the relay, also while Wren runs in the background |
 
 ## Teams and channels
 
@@ -87,6 +87,12 @@ Tested and run:
     the cache before any request;
   - refresh-token rotation;
   - sign-out deleting the token and the cache.
+- **Push updates end to end** (`tests/push_flow.rs`):
+  - the real `wren-relay` and backend, with Graph simulated;
+  - the subscription request (resource, no resource data);
+  - the validation handshake through the relay;
+  - a change notification leading to a fetch of that chat;
+  - deleting the subscription when push is turned off.
 - Wren's requests against Microsoft's real token endpoint, with an
   unregistered client ID. Entra parsed them and answered with the expected
   AADSTS codes, which Wren now explains (single-tenant registrations need the
