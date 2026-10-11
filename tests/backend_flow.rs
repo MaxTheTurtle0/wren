@@ -243,6 +243,9 @@ async fn sign_in_sync_send_restore_and_sign_out() {
         local_id: "local-1".into(),
         html: wren::html::compose("Shipping **today**"),
         reply_to: None,
+        mentions: Vec::new(),
+        files: Vec::new(),
+        recipients: Vec::new(),
     });
     let sent = wait_for(&backend, 10, |e| match e {
         Event::Sent {

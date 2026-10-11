@@ -39,6 +39,17 @@ one-directional data flow between them.
    Windows and Linux. Platform pieces come from fastframe crates or sit
    in `#[cfg(target_os = …)]` blocks.
 
+## Accounts
+
+Each signed-in account is an `app::Account`: its own backend runtime, session,
+chats, teams, drafts and push connection. `App` holds them all and
+dereferences to the active one, so views and actions read `app.chats` and
+work on whichever account is shown. Events from a background account are
+applied with that account swapped in as the active one and `App::hidden`
+set, which keeps their notifications and unread counts while drawing nothing.
+Adding an account starts a new, empty slot; a sign-in that turns out to be an
+account already open is retired.
+
 ## Modules
 
 | Module | Role |
@@ -51,7 +62,7 @@ one-directional data flow between them.
 | `backend.rs`, `backend/worker.rs` | The runtime thread, `Command`/`Event`, and the worker's tasks |
 | `auth/` | Entra ID: PKCE authorize URL, loopback listener, token endpoint (code, refresh, device code), `Session` with refresh-token rotation |
 | `secrets.rs` | Refresh tokens in the OS credential store (`keyring-core` with each platform's native store) |
-| `graph/` | Graph client (token only to the Graph origin, 401 refresh, `Retry-After`), endpoints (`api.rs`), JSON shapes (`types.rs`), translation (`convert.rs`) |
+| `graph/` | Graph client (token only to the Graph origin, 401 refresh, `Retry-After`), endpoints (`api.rs`; OneDrive uploads and sharing in `files.rs`; people, new chats and your own presence in `people.rs`), JSON shapes (`types.rs`), translation (`convert.rs`) |
 | `store.rs` | Per-account SQLite cache with FTS5 search |
 | `sync.rs` | Fetch policy (no polling; dedupe repeated requests) |
 | `calling.rs` | Deep-link hand-off and the capability model for future in-app calling |
@@ -69,10 +80,11 @@ one-directional data flow between them.
 | Settings (no secrets) | config folder, `settings.json` |
 | Cache: chats, messages, teams, channels, meetings, photos | data folder, `accounts/<account>/wren.db` (0600) |
 | Account record (name, granted scopes; no tokens) | `accounts/<account>/account.json` |
+| Signed-in accounts, in order | `settings.json`, `accounts` |
 | Refresh token | OS credential store, service `app.wren.Wren` |
 | Logs (no message contents, tokens or URLs with queries) | state folder, `wren.log`, `panic.log` |
 
-Signing out deletes the refresh token and the account's folder.
+Signing out deletes that account's refresh token and folder.
 
 ## Rendering and performance
 

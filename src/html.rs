@@ -785,6 +785,52 @@ pub fn compose(text: &str) -> String {
     out
 }
 
+/// Like [`compose`], with `@Name` turned into Teams mentions.
+///
+/// `mentions` are the people picked in the composer, in order. The first
+/// `@Name` in the text for each becomes `<at id="n">Name</at>`, numbered in
+/// the order they appear; people whose `@Name` was deleted are dropped.
+/// Returns the HTML and the mentions it uses, indexed by their `id`.
+pub fn compose_with_mentions(
+    text: &str,
+    mentions: &[crate::model::MentionRef],
+) -> (String, Vec<crate::model::MentionRef>) {
+    // Mark each mention with private-use characters that markdown and
+    // escaping leave alone, then swap the marks for <at> tags.
+    let mut marked = text.to_owned();
+    let mut found: Vec<(usize, crate::model::MentionRef)> = Vec::new();
+    for mention in mentions {
+        let needle = format!("@{}", mention.name);
+        if found.iter().any(|(_, m)| m.user_id == mention.user_id) {
+            continue;
+        }
+        let Some(at) = marked.find(&needle) else {
+            continue;
+        };
+        found.push((at, mention.clone()));
+        let token = format!("\u{E000}{}\u{E001}", found.len() - 1);
+        marked.replace_range(at..at + needle.len(), &token);
+    }
+    // Number mentions by where they appear in the text, as Teams does.
+    let mut order: Vec<usize> = (0..found.len()).collect();
+    order.sort_by_key(|&index| {
+        marked
+            .find(&format!("\u{E000}{index}\u{E001}"))
+            .unwrap_or(usize::MAX)
+    });
+    let mut html = compose(&marked);
+    let mut used = Vec::new();
+    for (id, &index) in order.iter().enumerate() {
+        let mention = &found[index].1;
+        html = html.replace(
+            &format!("\u{E000}{index}\u{E001}"),
+            &format!("<at id=\"{id}\">{}</at>", escape(&mention.name)),
+        );
+        used.push(mention.clone());
+    }
+    (html, used)
+}
+
 /// Inline markup for one line: code spans first (their content is literal),
 /// then emphasis and links in the rest.
 fn inline(line: &str) -> String {
@@ -1043,6 +1089,35 @@ mod tests {
             parse(&compose(text)).to_plain(),
             "Hello team\n• first\n• second"
         );
+    }
+
+    #[test]
+    fn mentions_become_at_tags_in_text_order() {
+        use crate::model::MentionRef;
+        let ada = MentionRef {
+            user_id: "u-ada".into(),
+            name: "Ada Lovelace".into(),
+        };
+        let grace = MentionRef {
+            user_id: "u-grace".into(),
+            name: "Grace <Hopper>".into(),
+        };
+        let gone = MentionRef {
+            user_id: "u-gone".into(),
+            name: "Alan Turing".into(),
+        };
+        let (html, used) = compose_with_mentions(
+            "@Grace <Hopper> and @Ada Lovelace: **ship** it",
+            &[ada.clone(), grace.clone(), gone],
+        );
+        assert_eq!(
+            html,
+            "<p><at id=\"0\">Grace &lt;Hopper&gt;</at> and <at id=\"1\">Ada Lovelace</at>: <strong>ship</strong> it</p>"
+        );
+        assert_eq!(used, vec![grace, ada]);
+        let (plain, none) = compose_with_mentions("no mentions", &[]);
+        assert_eq!(plain, "<p>no mentions</p>");
+        assert!(none.is_empty());
     }
 
     #[test]

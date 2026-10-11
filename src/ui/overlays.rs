@@ -5,7 +5,7 @@ use egui::{CornerRadius, Frame, Key, Margin, Modifiers, Sense, Stroke, vec2};
 use super::widgets;
 use crate::app::{App, Overlay};
 use crate::backend::AuthStatus;
-use crate::model::{Access, Action, ConversationId, SearchHit};
+use crate::model::{Access, Action, ConversationId, Member, SearchHit};
 use crate::settings::ThemeChoice;
 use crate::theme::{self, Icon};
 
@@ -14,6 +14,9 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
         Some(Overlay::Switcher) => switcher(app, ctx),
         Some(Overlay::Settings) => settings(app, ctx),
         Some(Overlay::Shortcuts) => shortcuts(app, ctx),
+        Some(Overlay::NewChat) => new_chat(app, ctx),
+        Some(Overlay::StatusMessage) => status_message(app, ctx),
+        Some(Overlay::Consent(scope)) => consent(app, ctx, scope),
         None => {}
     }
 }
@@ -407,6 +410,21 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         ui.label(egui::RichText::new(format!("Not signed in ({})", other.log_label())).color(palette.secondary));
                     }
                 }
+                ui.horizontal(|ui| {
+                    let accounts = app.accounts.len();
+                    ui.label(
+                        egui::RichText::new(if accounts == 1 {
+                            "1 account in Wren".to_owned()
+                        } else {
+                            format!("{accounts} accounts in Wren · switch from your picture or with ⌘⇧A")
+                        })
+                        .font(theme::regular(12.0))
+                        .color(palette.dim),
+                    );
+                    if !app.demo && ui.link("Add account").clicked() {
+                        actions.push(Action::AddAccount);
+                    }
+                });
                 if !app.demo {
                     let channel = match app.channel_access {
                         Access::Granted => "granted",
@@ -468,6 +486,14 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         .font(theme::regular(12.0))
                         .color(palette.dim),
                 );
+                let mut session = app.settings.presence_session;
+                if ui
+                    .checkbox(&mut session, "Show me as available while I use Wren")
+                    .on_hover_text("Keeps a Microsoft presence session, as a Teams app does: you show Available while you use Wren, and Away a few minutes after you stop. Needs the Presence.ReadWrite permission, asked for the first time you set your status.")
+                    .changed()
+                {
+                    actions.push(Action::SetPresenceSession(session));
+                }
                 let mut perf = app.settings.perf_overlay;
                 if ui.checkbox(&mut perf, "Show the performance overlay (⌘⇧P)").changed() {
                     actions.push(Action::TogglePerfOverlay);
@@ -592,6 +618,326 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
     if close {
         app.actions.push(Action::CloseOverlay);
     }
+}
+
+/// Start a chat: pick people from the directory, name a group, start.
+fn new_chat(app: &mut App, ctx: &egui::Context) {
+    let palette = app.palette;
+    let mut actions = Vec::new();
+    let mut query = app.new_chat.query.clone();
+    let mut topic = app.new_chat.topic.clone();
+    let mut picked = app.new_chat.picked.clone();
+    // People known from chats first, then the directory's answer.
+    let needle = query.trim().to_lowercase();
+    let mut found: Vec<Member> = app
+        .directory()
+        .into_iter()
+        .filter(|p| {
+            !needle.is_empty()
+                && (p.display_name.to_lowercase().contains(&needle)
+                    || p.email
+                        .as_deref()
+                        .is_some_and(|e| e.to_lowercase().contains(&needle)))
+        })
+        .collect();
+    if app.people.query == query {
+        for person in &app.people.results {
+            if !found.iter().any(|p| p.user_id == person.user_id) {
+                found.push(person.clone());
+            }
+        }
+    }
+    found.retain(|p| !picked.iter().any(|q| q.user_id == p.user_id) && p.user_id != app.me());
+    found.truncate(8);
+    let mut selected = app.new_chat.selected.min(found.len().saturating_sub(1));
+    let mut choose: Option<Member> = None;
+    let mut start = false;
+    ctx.input_mut(|input| {
+        if !found.is_empty() {
+            if input.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                selected = (selected + 1) % found.len();
+            }
+            if input.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                selected = (selected + found.len() - 1) % found.len();
+            }
+            if input.consume_key(Modifiers::NONE, Key::Enter) {
+                choose = found.get(selected).cloned();
+            }
+        } else if !picked.is_empty() && input.consume_key(Modifiers::COMMAND, Key::Enter) {
+            start = true;
+        }
+    });
+    let close = modal(palette, ctx, "new-chat", 520.0, 90.0, |ui| {
+        Frame::new().inner_margin(Margin::same(20)).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(
+                    egui::RichText::new("New chat")
+                        .font(theme::bold(20.0))
+                        .color(palette.text),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
+                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
+                });
+            });
+            ui.add_space(10.0);
+            // The people picked so far.
+            if !picked.is_empty() {
+                let mut remove = None;
+                ui.horizontal_wrapped(|ui| {
+                    ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
+                    for (index, person) in picked.iter().enumerate() {
+                        Frame::new()
+                            .fill(palette.surface_hover)
+                            .corner_radius(CornerRadius::same(14))
+                            .inner_margin(Margin {
+                                left: 4,
+                                right: 2,
+                                top: 2,
+                                bottom: 2,
+                            })
+                            .show(ui, |ui| {
+                                ui.horizontal(|ui| {
+                                    ui.spacing_mut().item_spacing.x = 4.0;
+                                    widgets::avatar(
+                                        ui,
+                                        app,
+                                        Some(&person.user_id),
+                                        &person.display_name,
+                                        22.0,
+                                        false,
+                                    );
+                                    ui.label(
+                                        egui::RichText::new(&person.display_name)
+                                            .font(theme::medium(13.0))
+                                            .color(palette.text),
+                                    );
+                                    let close = widgets::icon_button_sized(
+                                        ui,
+                                        &palette,
+                                        Icon::Close,
+                                        "Remove",
+                                        20.0,
+                                        12.0,
+                                        palette.dim,
+                                    );
+                                    if close.clicked() {
+                                        remove = Some(index);
+                                    }
+                                });
+                            });
+                    }
+                });
+                if let Some(index) = remove {
+                    picked.remove(index);
+                }
+                ui.add_space(8.0);
+            }
+            let response = ui.add(
+                egui::TextEdit::singleline(&mut query)
+                    .hint_text("Type a name or email address")
+                    .desired_width(f32::INFINITY)
+                    .margin(Margin::symmetric(10, 8))
+                    .font(theme::regular(14.0)),
+            );
+            response.request_focus();
+            ui.add_space(6.0);
+            for (index, person) in found.iter().enumerate() {
+                let (rect, row) =
+                    ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::click());
+                if index == selected || row.hovered() {
+                    ui.painter()
+                        .rect_filled(rect, CornerRadius::same(8), palette.surface_active);
+                }
+                let mut child = ui.new_child(
+                    egui::UiBuilder::new()
+                        .max_rect(rect.shrink2(vec2(10.0, 0.0)))
+                        .layout(egui::Layout::left_to_right(egui::Align::Center)),
+                );
+                widgets::avatar(
+                    &mut child,
+                    app,
+                    Some(&person.user_id),
+                    &person.display_name,
+                    30.0,
+                    true,
+                );
+                child.add_space(8.0);
+                child.vertical(|ui| {
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    ui.label(
+                        egui::RichText::new(&person.display_name)
+                            .font(theme::medium(14.0))
+                            .color(palette.text),
+                    );
+                    if let Some(email) = &person.email {
+                        ui.label(
+                            egui::RichText::new(email)
+                                .font(theme::regular(12.0))
+                                .color(palette.dim),
+                        );
+                    }
+                });
+                if row.clicked() {
+                    choose = Some(person.clone());
+                }
+            }
+            if found.is_empty() && query.trim().chars().count() >= 2 {
+                ui.label(egui::RichText::new("Searching your organisation…").color(palette.dim));
+            }
+            if picked.len() > 1 {
+                ui.add_space(10.0);
+                ui.label(
+                    egui::RichText::new("Group name (optional)")
+                        .font(theme::medium(12.0))
+                        .color(palette.secondary),
+                );
+                ui.add(
+                    egui::TextEdit::singleline(&mut topic)
+                        .hint_text("Launch crew")
+                        .desired_width(f32::INFINITY)
+                        .margin(Margin::symmetric(10, 6)),
+                );
+            }
+            ui.add_space(12.0);
+            ui.horizontal(|ui| {
+                let label = match picked.len() {
+                    0 => "Pick someone to chat with".to_owned(),
+                    1 => format!("Chat with {}", picked[0].display_name),
+                    n => format!("Start a group chat with {n} people"),
+                };
+                let button = ui.add_enabled(
+                    !picked.is_empty(),
+                    egui::Button::new(
+                        egui::RichText::new(label)
+                            .font(theme::semibold(13.0))
+                            .color(palette.on_accent),
+                    )
+                    .fill(palette.accent)
+                    .corner_radius(CornerRadius::same(8))
+                    .min_size(vec2(0.0, 32.0)),
+                );
+                if button.clicked() {
+                    start = true;
+                }
+                if picked.len() == 1 {
+                    ui.label(
+                        egui::RichText::new("An existing chat with this person opens instead.")
+                            .font(theme::regular(11.0))
+                            .color(palette.dim),
+                    );
+                }
+            });
+        });
+    });
+    if let Some(person) = choose {
+        picked.push(person);
+        query.clear();
+        selected = 0;
+    }
+    if query != app.new_chat.query {
+        selected = 0;
+        if query.trim().chars().count() >= 2 {
+            actions.push(Action::SearchPeople(query.clone()));
+        }
+    }
+    if start && !picked.is_empty() {
+        actions.push(Action::CreateChat {
+            members: picked.clone(),
+            topic: (!topic.trim().is_empty()).then(|| topic.clone()),
+        });
+    }
+    app.new_chat.query = query;
+    app.new_chat.topic = topic;
+    app.new_chat.picked = picked;
+    app.new_chat.selected = selected;
+    if close {
+        actions.push(Action::CloseOverlay);
+    }
+    app.actions.extend(actions);
+}
+
+fn status_message(app: &mut App, ctx: &egui::Context) {
+    let palette = app.palette;
+    let mut actions = Vec::new();
+    let mut text = app.form_status.clone();
+    let close = modal(palette, ctx, "status-message", 440.0, 120.0, |ui| {
+        Frame::new().inner_margin(Margin::same(20)).show(ui, |ui| {
+            ui.label(
+                egui::RichText::new("Status message")
+                    .font(theme::bold(18.0))
+                    .color(palette.text),
+            );
+            ui.add_space(4.0);
+            ui.label(
+                egui::RichText::new("People see it next to your name in Teams and Wren.")
+                    .color(palette.secondary),
+            );
+            ui.add_space(10.0);
+            let response = ui.add(
+                egui::TextEdit::multiline(&mut text)
+                    .hint_text("Back at 3 pm")
+                    .desired_rows(2)
+                    .desired_width(f32::INFINITY)
+                    .margin(Margin::symmetric(10, 8)),
+            );
+            response.request_focus();
+            ui.add_space(12.0);
+            ui.horizontal(|ui| {
+                if widgets::primary_button(ui, &palette, "  Save  ").clicked() {
+                    actions.push(Action::SetStatusMessage(text.clone()));
+                }
+                if widgets::secondary_button(ui, &palette, "Clear").clicked() {
+                    actions.push(Action::SetStatusMessage(String::new()));
+                }
+                if widgets::secondary_button(ui, &palette, "Cancel").clicked() {
+                    actions.push(Action::CloseOverlay);
+                }
+            });
+        });
+    });
+    app.form_status = text;
+    if close {
+        actions.push(Action::CloseOverlay);
+    }
+    app.actions.extend(actions);
+}
+
+/// Explains a permission before Wren asks Microsoft for it.
+fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
+    let palette = app.palette;
+    let mut actions = Vec::new();
+    let close = modal(palette, ctx, "consent", 460.0, 120.0, |ui| {
+        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                theme::icon(ui, Icon::Lock, 20.0, palette.accent);
+                ui.label(egui::RichText::new("One more permission").font(theme::bold(18.0)).color(palette.text));
+            });
+            ui.add_space(8.0);
+            ui.label(egui::RichText::new(crate::auth::scope_reason(scope)).color(palette.text));
+            ui.add_space(6.0);
+            ui.label(
+                egui::RichText::new(format!(
+                    "Wren asks for Microsoft Graph's {scope} permission only now that you use this. Microsoft's consent page opens in your browser; some organisations need an administrator to approve it."
+                ))
+                .font(theme::regular(12.0))
+                .color(palette.secondary),
+            );
+            ui.add_space(14.0);
+            ui.horizontal(|ui| {
+                if widgets::primary_button(ui, &palette, "  Continue in browser  ").clicked() {
+                    actions.push(Action::RequestScope(scope));
+                }
+                if widgets::secondary_button(ui, &palette, "Not now").clicked() {
+                    actions.push(Action::CloseOverlay);
+                }
+            });
+        });
+    });
+    if close {
+        actions.push(Action::CloseOverlay);
+    }
+    app.actions.extend(actions);
 }
 
 #[cfg(test)]

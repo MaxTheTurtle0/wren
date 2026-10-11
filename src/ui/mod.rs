@@ -29,6 +29,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     } else {
         signin::show(app, ui);
     }
+    drop_files(app, &ctx);
     overlays::show(app, &ctx);
     toasts(app, &ctx);
     if app.settings.perf_overlay {
@@ -36,6 +37,49 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     }
     if !app.demo {
         widgets::request_photos(app, &ctx);
+    }
+}
+
+/// Files dropped on the window go to the open conversation's draft; while
+/// they hover, a hint says where they will go.
+fn drop_files(app: &mut App, ctx: &egui::Context) {
+    let (dropped, hovering) = ctx.input(|input| {
+        let dropped: Vec<std::path::PathBuf> = input
+            .raw
+            .dropped_files
+            .iter()
+            .map(|file| file.path().to_path_buf())
+            .collect();
+        (dropped, !input.raw.hovered_files.is_empty())
+    });
+    if !dropped.is_empty() {
+        app.actions.push(Action::AddFiles(dropped));
+    }
+    if hovering && app.open.is_some() && app.shows_workspace() {
+        let palette = app.palette;
+        let title = app
+            .open
+            .as_ref()
+            .map(|open| app.title_of(open))
+            .unwrap_or_default();
+        egui::Area::new(egui::Id::new("wren-drop"))
+            .order(egui::Order::Foreground)
+            .anchor(Align2::CENTER_CENTER, vec2(0.0, 0.0))
+            .interactable(false)
+            .show(ctx, |ui| {
+                Frame::new()
+                    .fill(palette.surface)
+                    .stroke(Stroke::new(2.0, palette.accent))
+                    .corner_radius(CornerRadius::same(14))
+                    .inner_margin(Margin::symmetric(28, 18))
+                    .show(ui, |ui| {
+                        ui.label(
+                            egui::RichText::new(format!("Drop to send to {title}"))
+                                .font(theme::semibold(15.0))
+                                .color(palette.text),
+                        );
+                    });
+            });
     }
 }
 
@@ -81,6 +125,13 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                                     "Search and jump (⌘K)",
                                 );
                                 widgets::on_click(&search, &mut app.actions, Action::OpenSwitcher);
+                                let new_chat = widgets::icon_button(
+                                    ui,
+                                    &palette,
+                                    Icon::Compose,
+                                    "New chat (⌘N)",
+                                );
+                                widgets::on_click(&new_chat, &mut app.actions, Action::OpenNewChat);
                             }
                             let busy = !app.loading.is_empty();
                             if busy {

@@ -182,6 +182,15 @@ See [calling.md](calling.md) for the full write-up. In short:
   `callRecords` is application-only and after the fact [R73][R13].
 - ACS retirement as a standalone offering, effective 2028-09-30; Teams
   interop not impacted; ACS Chat retired in favour of Graph [R69].
+- Update, 2026-10-11 (sources in
+  [video-calling-options.md](video-calling-options.md)): Electron is a
+  supported environment on macOS and Windows. Windows SDK 2.0.0 ships x64
+  `net8.0-windows` binaries only (no UWP, Arm64 or `.winmd`; 1.15.0 still had
+  them). Teams-user calls cost $0.004 per participant-minute, and starting
+  calls with Teams users may need a Teams Phone licence. Desktop Chrome and
+  Edge send 3-layer simulcast by default. The Windows 2.0.0 and iOS 3.0.0
+  licence files say "pre-release" and grant no right to distribute; the npm
+  Web SDK 2.0.0 allows it with conditions.
 
 ## 8. Search
 

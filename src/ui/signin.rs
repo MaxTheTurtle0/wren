@@ -50,7 +50,15 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                             });
                         });
                     ui.add_space(18.0);
-                    if widgets::secondary_button(ui, &palette, "  Explore the demo  ").on_hover_text("Sample chats, channels and meetings. Nothing leaves this computer.").clicked() {
+                    if let Some(previous) = app.adding_from().map(|account| account.label()) {
+                        // Adding a second account: the way back.
+                        if widgets::secondary_button(ui, &palette, &format!("  Back to {previous}  ")).clicked() {
+                            app.actions.push(Action::CancelAddAccount);
+                        }
+                    } else if widgets::secondary_button(ui, &palette, "  Explore the demo  ")
+                        .on_hover_text("Sample chats, channels and meetings. Nothing leaves this computer.")
+                        .clicked()
+                    {
                         app.actions.push(Action::StartDemo);
                     }
                     ui.add_space(24.0);

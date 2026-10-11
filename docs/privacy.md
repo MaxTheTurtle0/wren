@@ -2,8 +2,11 @@
 
 - **No telemetry, no Wren servers.** Wren talks only to
   `login.microsoftonline.com` (sign-in) and `graph.microsoft.com` (your
-  data). It opens Microsoft Teams links in your browser or the Teams app when
-  you ask it to.
+  data). Two exceptions, both on your request: a file larger than 4 MiB is
+  uploaded to the one-time upload URL Graph returns (your organisation's
+  OneDrive host), without the Graph token; and an optional `wren-relay` that
+  you run yourself ([realtime.md](realtime.md)). Wren opens Microsoft Teams
+  links in your browser or the Teams app when you ask it to.
 - **Your password never reaches Wren.** You sign in on Microsoft's page in
   your browser. Wren receives a one-time code on `localhost` and exchanges it
   with a PKCE verifier only it knows.
@@ -21,6 +24,20 @@
 - **Logs** never contain message text, tokens, authorization codes or URLs
   with query strings. Panics are logged without their payload
   (fastframe-log).
+- **Files you send** are uploaded to your own OneDrive, in the
+  `Microsoft Teams Chat Files` folder Teams uses too, and shared read-only
+  with the people in that chat. In a channel, Wren creates a view link for
+  your organisation, since a channel's members aren't known in advance.
+  Remove the file or its sharing in OneDrive to revoke access.
+- **Presence.** While "Show me as available while I use Wren" is on (the
+  default), Wren tells Microsoft you are active when you use it, at most
+  every 4 minutes and only after input. Microsoft shows you as inactive
+  5 minutes after the last update and Away 5 minutes later. Wren ends the
+  session when you quit or sign out; otherwise it expires after an hour.
+  Nothing is sent until you grant Presence.ReadWrite by setting your status
+  once.
+- **Several accounts** each have their own cache folder and refresh token.
+  Signing out of one removes only its data.
 - **Images in messages** are only fetched from Graph's own hosted content.
   Images hosted elsewhere are not loaded, so senders can't track when you
   read a message.

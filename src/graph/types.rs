@@ -284,3 +284,38 @@ pub struct SearchHit {
     pub summary: Option<String>,
     pub resource: Option<serde_json::Value>,
 }
+
+/// A OneDrive file, as Wren reads it back after an upload.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct DriveItem {
+    pub id: String,
+    pub name: String,
+    pub web_url: Option<String>,
+    pub web_dav_url: Option<String>,
+    pub e_tag: Option<String>,
+    pub size: Option<u64>,
+}
+
+impl DriveItem {
+    /// The attachment id Teams expects: the GUID inside the item's eTag
+    /// (`"{GUID},N"`), lowercase.
+    pub fn attachment_id(&self) -> Option<String> {
+        let tag = self.e_tag.as_deref()?;
+        let start = tag.find('{')? + 1;
+        let end = start + tag[start..].find('}')?;
+        let guid = tag[start..end].to_ascii_lowercase();
+        crate::settings::is_guid(&guid).then_some(guid)
+    }
+
+    /// Where the message's attachment points.
+    pub fn content_url(&self) -> Option<&str> {
+        self.web_dav_url.as_deref().or(self.web_url.as_deref())
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadSession {
+    pub upload_url: String,
+}

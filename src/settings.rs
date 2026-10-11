@@ -36,8 +36,13 @@ pub struct Settings {
     /// The interface zoom.
     pub zoom: f32,
     pub sidebar_width: f32,
-    /// The last signed-in account, opened at start.
+    /// The account shown at start (kept for settings files from 0.1).
     pub account: Option<String>,
+    /// Every signed-in account, in the order they were added.
+    pub accounts: Vec<String>,
+    /// Keep a presence session while Wren runs, so people see you available
+    /// (needs Presence.ReadWrite).
+    pub presence_session: bool,
     pub perf_overlay: bool,
     pub window: Option<WindowGeometry>,
     /// A wren-relay for push updates (experimental), `https://…`.
@@ -66,6 +71,8 @@ impl Default for Settings {
             zoom: 1.0,
             sidebar_width: 300.0,
             account: None,
+            accounts: Vec::new(),
+            presence_session: true,
             perf_overlay: false,
             window: None,
             relay_url: None,
@@ -98,6 +105,12 @@ impl Settings {
             && !tenant.trim().is_empty()
         {
             settings.tenant = tenant.trim().to_owned();
+        }
+        // 0.1 remembered one account; carry it over.
+        if settings.accounts.is_empty()
+            && let Some(account) = &settings.account
+        {
+            settings.accounts.push(account.clone());
         }
         settings.zoom = settings.zoom.clamp(0.5, 3.0);
         settings.sidebar_width = settings.sidebar_width.clamp(220.0, 520.0);
@@ -162,6 +175,14 @@ mod tests {
         if std::env::var("WREN_CLIENT_ID").is_err() && std::env::var("WREN_TENANT").is_err() {
             assert_eq!(Settings::load(&path), settings);
         }
+    }
+
+    #[test]
+    fn a_single_account_from_0_1_is_carried_over() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(&path, r#"{"account": "o.t"}"#).unwrap();
+        assert_eq!(Settings::load(&path).accounts, ["o.t"]);
     }
 
     #[test]

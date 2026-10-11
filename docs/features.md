@@ -1,6 +1,6 @@
 # Feature support
 
-Status as of Wren 0.1.
+Status as of Wren 0.1 (unreleased).
 
 - **Works**: implemented against Microsoft Graph, unit-tested against a mock
   Graph server and drawn in the headless UI tests. It has **not yet been
@@ -25,11 +25,12 @@ Status as of Wren 0.1.
 | Rich text: bold, italic, underline, strike, code, quotes, lists, links, mentions, emoji | Works | Native rendering of Teams HTML |
 | Inline images (hosted content) | Works | Lazy, Graph-hosted only; other hosts are never fetched (privacy) |
 | File attachments: view | Works | Shown as file chips that open in the browser |
-| File attachments: send | Planned | Needs OneDrive upload (Files.ReadWrite) and a sharing link |
+| File attachments: send | Works | Attach button or drag and drop, up to 1 GiB per file. Uploaded to your OneDrive folder `Microsoft Teams Chat Files` (resumable upload above 4 MiB), shared read-only with the chat's members (an organisation-wide view link in channels), and sent as a `reference` attachment. Files.ReadWrite, requested on first use. Pasting images: not yet |
+| @mentions in the composer | Works | Type `@`: suggestions from the chat's members, or a directory search in channels. Sent as `<at>` tags with a `mentions` array, so people are notified as in Teams |
 | Adaptive Cards | Not yet | Shown as a placeholder with a hint to open in Teams |
 | Local message search | Works | SQLite FTS5 over everything cached, instant |
 | Microsoft Search (server-side) | Works | Merged into ⌘K results for queries of 3+ characters |
-| Start a new chat | Planned | Needs Chat.Create |
+| Start a new chat | Works | ⌘N or the compose button: search your organisation's directory (User.ReadBasic.All), pick one or more people, optionally name a group. `POST /chats` with Chat.Create, requested on first use. An existing 1:1 chat opens instead of a new one |
 | Real-time updates | Works by default on intent; push is experimental | Fetch on open, focus and refresh (Microsoft forbids background polling). With a self-hosted `wren-relay`, Graph change notifications push new messages. See [realtime.md](realtime.md) |
 | New-message notifications | Partial | Whenever a fetch finds new messages in other chats. With the relay, also while Wren runs in the background |
 
@@ -56,9 +57,10 @@ Status as of Wren 0.1.
 | Feature | Status | Notes |
 |---|---|---|
 | Presence of people in chats | Works | Presence.Read.All, fetched when a chat opens, at most once a minute per person |
-| Setting your own presence or status message | Planned | Presence.ReadWrite plus a presence session |
+| Setting your own availability and status message | Works | From the account menu (your picture in the rail): Available, Busy, Do not disturb, Be right back, Appear away, Appear offline, or Reset. `setUserPreferredPresence` with Graph's default expiry, `setStatusMessage`. Presence.ReadWrite, requested on first use. Clearing a message sends empty content, which Microsoft does not document (unverified) |
+| Showing you as available while you use Wren | Works | A Graph presence session (`setPresence`), refreshed at most every 4 minutes and only on input, so stepping away shows you inactive after 5 minutes and Away after 10. Ended at sign-out and exit, expires after an hour otherwise. Starts once Presence.ReadWrite is granted; can be turned off in Settings |
 | Profile photos | Works | Lazy, cached 7 days |
-| Multiple accounts | Planned | The cache, credentials and folders are already per account; the switcher is not built |
+| Multiple accounts | Works | Add from the account menu or Settings; ⌘⇧A switches. Each account has its own backend, cache, credentials and push connection. Unread chats in other accounts show as a dot on your picture; their notifications still arrive. Signing in to an account twice keeps one |
 | Light, dark, system theme, 8 shared palettes | Works | fastframe-theme presets |
 | Keyboard shortcuts, ⌘K switcher | Works | ⌘/ lists them |
 | Tray / menu-bar item, keep running | Works | Off by default (no push yet) |
@@ -79,6 +81,15 @@ Tested and run:
   `Retry-After`, refusing to send tokens to foreign hosts, every write
   endpoint.
 - The cache: ordering, FTS5, diacritics, permissions.
+- **Files, new chats, mentions and status end to end**
+  (`tests/features_flow.rs`), through the real worker against a mock Graph:
+  the people search (`ConsistencyLevel: eventual`, `$search`, `$count`), the
+  `POST /chats` body, the upload with its read-back and the sharing invite,
+  the exact message body with an `<at>` mention and an `<attachment>`,
+  `setUserPreferredPresence`, `setStatusMessage`, a single `setPresence`
+  with the client ID as session ID, and `clearPresence` on exit.
+- Large uploads: the upload-session request and 5 MiB chunks without the
+  Graph token (unit tests in `graph/files.rs`).
 - **The whole backend end to end** (`tests/backend_flow.rs`), against local
   stand-ins for Entra ID and Graph:
   - the browser sign-in through Wren's real loopback redirect, with PKCE;
@@ -99,8 +110,11 @@ Tested and run:
   tenant set).
 - Model translation from Graph-shaped JSON.
 - Headless UI frames for every screen, including a 5,000-message
-  conversation.
-- The macOS app run and screenshotted on macOS 27 (Apple Silicon).
+  conversation, the new-chat, status-message and consent dialogs, switching
+  accounts, and a draft with a mention and an attached file.
+- The macOS app run and screenshotted on macOS 27 (Apple Silicon), including
+  the account menu, the new-chat and status dialogs and the mention
+  suggestions.
 
 Not yet run:
 

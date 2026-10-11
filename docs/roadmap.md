@@ -7,24 +7,20 @@ Roughly in order. Each step lands as its own focused change with tests.
 1. **First live-tenant run.** Register the app, sign in, and walk the
    checklist: chat list, history paging, send, quote reply, reactions,
    edit/delete, mark read, teams/channels, channel consent flow, calendar,
-   presence, photos, inline images, search. Fix what the real data shows
-   (expect edge cases in Teams HTML and system events).
+   presence, photos, inline images, search, file upload and sharing, new
+   chats, mentions, two accounts, availability, status message (including
+   clearing it) and the presence session. Fix what
+   the real data shows (expect edge cases in Teams HTML and system events).
 2. **Windows and Linux visual pass.** Run on both, capture screenshots, fix
    platform chrome (title bar, fonts, tray).
 3. **Push relay, live.** Run `wren-relay` against a real tenant, deploy
    guide with a container image, channel-post subscriptions.
-4. **Send files.** OneDrive upload (Files.ReadWrite), sharing link, and a
-   `reference` attachment. Drag and drop, and paste of images (hosted
-   content).
-5. **New chats** (Chat.Create) and **@mentions** in the composer.
+4. **Paste images** into the composer as hosted content, and upload
+   progress for large files.
 
 ## Then
 
-- Multiple accounts. Storage and credentials are already per account; this
-  needs an account switcher and one backend per account.
 - Encrypt the cache (SQLCipher with a key in the OS credential store).
-- Set your own presence and status message (Presence.ReadWrite and a
-  presence session).
 - Adaptive Cards (a native renderer for the common card elements).
 - Lazy per-script fallback fonts (upstream in fastframe-fonts), about 29 MB
   less memory.
@@ -34,7 +30,15 @@ Roughly in order. Each step lands as its own focused change with tests.
 
 ## Calling
 
-- Companion ACS calling page (web SDK in the system browser) with a
-  self-hostable token exchange, as an opt-in experiment for organisations
-  with an Azure subscription. See [calling.md](calling.md) for the limits.
-- Research: ACS Windows SDK through WinRT from Rust.
+The plan, with measurements and acceptance criteria, is in
+[video-calling-options.md](video-calling-options.md).
+
+0. Token exchange in `wren-relay`, an ACS resource, and a licence review of
+   the Calling SDKs.
+1. macOS: a call window from the ACS Web SDK, served by Wren on loopback and
+   opened as a Chrome or Edge app window, with call controls in Wren. Meeting
+   join and 1:1 calls.
+2. Picture-in-picture, an opt-in resident agent for incoming calls, screen
+   sharing, Linux.
+3. Windows: a native C# WinUI 3 helper on the ACS Windows SDK, measured
+   against the web path.

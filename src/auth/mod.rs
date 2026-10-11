@@ -39,8 +39,40 @@ pub const SIGN_IN_SCOPES: &[&str] = &[
 /// separately (incremental consent) when someone opens a channel.
 pub const CHANNEL_READ_SCOPE: &str = "ChannelMessage.Read.All";
 
-/// The scopes Wren may ask for beyond sign-in.
-pub const OPTIONAL_SCOPES: &[&str] = &[CHANNEL_READ_SCOPE];
+/// Starting new chats. User-consentable; asked for on first use.
+pub const CHAT_CREATE_SCOPE: &str = "Chat.Create";
+
+/// Uploading files to the person's OneDrive and sharing them in messages.
+/// User-consentable; asked for on first use.
+pub const FILES_SCOPE: &str = "Files.ReadWrite";
+
+/// Setting the person's own availability and status message.
+/// User-consentable; asked for on first use.
+pub const PRESENCE_WRITE_SCOPE: &str = "Presence.ReadWrite";
+
+/// The scopes Wren may ask for beyond sign-in, each when a feature first
+/// needs it (incremental consent).
+pub const OPTIONAL_SCOPES: &[&str] = &[
+    CHANNEL_READ_SCOPE,
+    CHAT_CREATE_SCOPE,
+    FILES_SCOPE,
+    PRESENCE_WRITE_SCOPE,
+];
+
+/// Why a feature needs an optional scope, for the consent prompt.
+pub fn scope_reason(scope: &str) -> &'static str {
+    match scope {
+        CHANNEL_READ_SCOPE => {
+            "Reading channel posts. Your administrator must approve this permission."
+        }
+        CHAT_CREATE_SCOPE => "Starting new chats with people in your organisation.",
+        FILES_SCOPE => {
+            "Uploading files to your OneDrive ('Microsoft Teams Chat Files') and sharing them with the people in the conversation."
+        }
+        PRESENCE_WRITE_SCOPE => "Setting your availability and status message.",
+        _ => "This feature.",
+    }
+}
 
 pub const DEFAULT_AUTHORITY: &str = "https://login.microsoftonline.com";
 

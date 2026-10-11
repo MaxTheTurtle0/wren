@@ -30,6 +30,8 @@ pub enum Resource {
     Calendar,
     /// Presence of the people in view.
     Presence,
+    /// The signed-in person's own presence.
+    MyPresence,
 }
 
 /// Why a fetch is being considered.
@@ -64,7 +66,7 @@ impl Resource {
             Self::Teams => Duration::from_secs(30 * 60),
             Self::Channels(_) => Duration::from_secs(30 * 60),
             Self::Calendar => Duration::from_secs(5 * 60),
-            Self::Presence => Duration::from_secs(60),
+            Self::Presence | Self::MyPresence => Duration::from_secs(60),
         }
     }
 }

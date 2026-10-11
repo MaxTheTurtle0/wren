@@ -5,6 +5,7 @@
 use wren::app::{App, Overlay};
 use wren::backend::{AuthStatus, Waker};
 use wren::model::{Action, ConversationId, Section};
+use wren::model::{Availability, MentionRef};
 use wren::paths::AppDirs;
 use wren::settings::{Settings, ThemeChoice};
 
@@ -131,6 +132,8 @@ fn sending_reacting_and_editing_in_the_demo() {
         conversation: chat.clone(),
         text: "Shipping **today**".into(),
         reply_to: None,
+        mentions: Vec::new(),
+        files: Vec::new(),
     });
     let conversation = h.app.conversation(&chat).unwrap();
     assert_eq!(conversation.messages.len(), before + 1);
@@ -201,6 +204,8 @@ fn channel_replies_land_in_their_thread() {
         conversation: channel.clone(),
         text: "Agreed".into(),
         reply_to: Some(root.id.clone()),
+        mentions: Vec::new(),
+        files: Vec::new(),
     });
     let root = h
         .app
@@ -310,4 +315,157 @@ fn large_conversations_stay_cheap() {
         per_frame < std::time::Duration::from_millis(250),
         "{per_frame:?} per frame"
     );
+}
+
+#[test]
+fn accounts_switch_and_keep_their_own_chats() {
+    let mut h = Harness::new();
+    h.frames(2);
+    assert_eq!(h.app.accounts.len(), 2, "the demo has a second account");
+    let first = h.app.chats[0].id.clone();
+    h.act(Action::SwitchAccount(1));
+    assert_eq!(h.app.active, 1);
+    assert!(h.app.chats.iter().all(|c| c.id.starts_with("19:fabrikam")));
+    assert!(h.frames(2) > 50, "the second account draws");
+    h.act(Action::SwitchAccount(0));
+    assert_eq!(h.app.chats[0].id, first);
+    // The other account's unread chat shows as a dot on the avatar.
+    assert!(h.app.other_unread() >= 1);
+}
+
+#[test]
+fn starting_a_new_chat_from_the_directory() {
+    let mut h = Harness::new();
+    h.act(Action::OpenNewChat);
+    assert_eq!(h.app.overlay, Some(Overlay::NewChat));
+    h.app.new_chat.query = "barb".into();
+    h.act(Action::SearchPeople("barb".into()));
+    let barbara = h
+        .app
+        .people
+        .results
+        .iter()
+        .find(|p| p.display_name == "Barbara Liskov")
+        .cloned()
+        .expect("found in the directory");
+    h.frames(2);
+    h.act(Action::CreateChat {
+        members: vec![barbara],
+        topic: None,
+    });
+    assert_eq!(h.app.overlay, None);
+    let open = h.app.open.clone().expect("the new chat opens");
+    assert_eq!(h.app.title_of(&open), "Barbara Liskov");
+    h.act(Action::Send {
+        conversation: open.clone(),
+        text: "Hi Barbara".into(),
+        reply_to: None,
+        mentions: Vec::new(),
+        files: Vec::new(),
+    });
+    assert_eq!(h.app.conversation(&open).unwrap().messages.len(), 1);
+    // Starting a one-on-one with someone again opens the same chat.
+    let chats = h.app.chats.len();
+    let ada = h
+        .app
+        .directory()
+        .into_iter()
+        .find(|p| p.display_name == "Ada Lovelace")
+        .unwrap();
+    h.act(Action::CreateChat {
+        members: vec![ada],
+        topic: None,
+    });
+    assert_eq!(h.app.chats.len(), chats);
+    assert_eq!(
+        h.app.open,
+        Some(ConversationId::Chat("19:demo-ada@unq.gbl.spaces".into()))
+    );
+}
+
+#[test]
+fn mentions_and_files_in_the_demo() {
+    let mut h = Harness::new();
+    let chat = ConversationId::Chat("19:demo-launch@thread.v2".into());
+    h.act(Action::OpenConversation(chat.clone()));
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("checklist.pdf");
+    std::fs::write(&file, b"%PDF-1.7").unwrap();
+    h.act(Action::AddFiles(vec![
+        file.clone(),
+        dir.path().to_path_buf(),
+    ]));
+    assert_eq!(
+        h.app.drafts[&chat].files,
+        vec![file.clone()],
+        "folders are refused"
+    );
+    assert!(h.frames(2) > 50, "the composer draws its file chips");
+    h.act(Action::Send {
+        conversation: chat.clone(),
+        text: "@Grace Hopper here it is".into(),
+        reply_to: None,
+        mentions: vec![MentionRef {
+            user_id: "u-grace".into(),
+            name: "Grace Hopper".into(),
+        }],
+        files: vec![file],
+    });
+    let sent = h
+        .app
+        .conversation(&chat)
+        .unwrap()
+        .messages
+        .last()
+        .unwrap()
+        .clone();
+    assert_eq!(sent.attachments[0].name.as_deref(), Some("checklist.pdf"));
+    let first = &sent.body.blocks[0];
+    let wren::html::Block::Paragraph(spans) = first else {
+        panic!("paragraph expected")
+    };
+    assert!(spans[0].style.mention && spans[0].text == "Grace Hopper");
+    assert!(!h.app.drafts.contains_key(&chat));
+}
+
+#[test]
+fn setting_status_and_message() {
+    let mut h = Harness::new();
+    h.act(Action::SetAvailability(Some(Availability::DoNotDisturb)));
+    assert_eq!(
+        h.app.my_presence.as_ref().unwrap().availability,
+        Availability::DoNotDisturb
+    );
+    h.act(Action::OpenStatusMessage);
+    assert_eq!(h.app.overlay, Some(Overlay::StatusMessage));
+    h.frames(2);
+    h.act(Action::SetStatusMessage("Back at 3 pm".into()));
+    assert_eq!(
+        h.app
+            .my_presence
+            .as_ref()
+            .unwrap()
+            .status_message
+            .as_deref(),
+        Some("Back at 3 pm")
+    );
+    let me = h.app.me().to_owned();
+    assert_eq!(h.app.presence[&me].availability, Availability::DoNotDisturb);
+    h.act(Action::SetAvailability(None));
+    assert_eq!(
+        h.app.my_presence.as_ref().unwrap().availability,
+        Availability::Available
+    );
+}
+
+#[test]
+fn new_dialogs_draw() {
+    let mut h = Harness::new();
+    h.app.overlay = Some(Overlay::Consent(wren::auth::FILES_SCOPE));
+    assert!(h.frames(2) > 50);
+    h.app.overlay = Some(Overlay::NewChat);
+    h.app.new_chat.query = "a".into();
+    assert!(h.frames(2) > 50);
+    h.app.overlay = Some(Overlay::StatusMessage);
+    assert!(h.frames(2) > 50);
 }

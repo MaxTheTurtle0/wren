@@ -14,6 +14,66 @@ pub const PAGE: usize = 50;
 /// Avatars and inline images larger than this are not downloaded.
 pub const MEDIA_LIMIT: usize = 8 * 1024 * 1024;
 
+/// A message to send: its HTML, the people it mentions (`<at id="n">` in
+/// the HTML), and files already uploaded and shared.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Outgoing {
+    pub html: String,
+    pub mentions: Vec<crate::model::MentionRef>,
+    pub files: Vec<super::files::SharedFile>,
+}
+
+impl Outgoing {
+    pub fn html(html: impl Into<String>) -> Self {
+        Self {
+            html: html.into(),
+            ..Default::default()
+        }
+    }
+
+    /// The `chatMessage` body Graph takes.
+    pub fn body(&self) -> serde_json::Value {
+        let mut content = self.html.clone();
+        for file in &self.files {
+            content.push_str(&format!("<attachment id=\"{}\"></attachment>", file.id));
+        }
+        let mut body = json!({ "body": { "contentType": "html", "content": content } });
+        if !self.mentions.is_empty() {
+            body["mentions"] = self
+                .mentions
+                .iter()
+                .enumerate()
+                .map(|(id, mention)| {
+                    json!({
+                        "id": id,
+                        "mentionText": mention.name,
+                        "mentioned": { "user": {
+                            "id": mention.user_id,
+                            "displayName": mention.name,
+                            "userIdentityType": "aadUser",
+                        }},
+                    })
+                })
+                .collect();
+        }
+        if !self.files.is_empty() {
+            body["attachments"] = self
+                .files
+                .iter()
+                .map(|file| {
+                    json!({
+                        "id": file.id,
+                        "contentType": "reference",
+                        "contentUrl": file.url,
+                        "name": file.name,
+                    })
+                })
+                .collect();
+        }
+        body
+    }
+}
+
 /// A page of messages, newest first, and the link to the older ones.
 #[derive(Debug, Default)]
 pub struct MessagePage {
@@ -149,11 +209,15 @@ impl Graph {
     }
 
     /// `POST /chats/{id}/messages` (ChatMessage.Send).
-    pub async fn send_chat_message(&self, chat: &str, html: &str) -> Result<Message, GraphError> {
+    pub async fn send_chat_message(
+        &self,
+        chat: &str,
+        message: &Outgoing,
+    ) -> Result<Message, GraphError> {
         let raw: g::ChatMessage = self
             .post(
                 &format!("chats/{}/messages", segment(chat)),
-                &json!({ "body": { "contentType": "html", "content": html } }),
+                &message.body(),
             )
             .await?;
         Ok(convert::message(
@@ -167,15 +231,12 @@ impl Graph {
         &self,
         chat: &str,
         quoted: &str,
-        html: &str,
+        message: &Outgoing,
     ) -> Result<Message, GraphError> {
         let raw: g::ChatMessage = self
             .post(
                 &format!("chats/{}/messages/replyWithQuote", segment(chat)),
-                &json!({
-                    "messageIds": [quoted],
-                    "replyMessage": { "body": { "contentType": "html", "content": html } }
-                }),
+                &json!({ "messageIds": [quoted], "replyMessage": message.body() }),
             )
             .await?;
         Ok(convert::message(
@@ -344,7 +405,7 @@ impl Graph {
         team: &str,
         channel: &str,
         root: Option<&str>,
-        html: &str,
+        message: &Outgoing,
     ) -> Result<Message, GraphError> {
         let conversation = ConversationId::Channel {
             team: team.to_owned(),
@@ -358,12 +419,7 @@ impl Graph {
         if let Some(root) = root {
             path.push_str(&format!("/{}/replies", segment(root)));
         }
-        let raw: g::ChatMessage = self
-            .post(
-                &path,
-                &json!({ "body": { "contentType": "html", "content": html } }),
-            )
-            .await?;
+        let raw: g::ChatMessage = self.post(&path, &message.body()).await?;
         Ok(convert::message(raw, Some(&conversation)))
     }
 
@@ -648,11 +704,40 @@ mod tests {
             .await;
         let message = graph(&server)
             .await
-            .send_chat_message("19:a@thread.v2", "<p>hi</p>")
+            .send_chat_message("19:a@thread.v2", &Outgoing::html("<p>hi</p>"))
             .await
             .unwrap();
         assert_eq!(message.id, "1702");
         assert_eq!(message.body.to_plain(), "hi");
+    }
+
+    #[test]
+    fn outgoing_messages_carry_mentions_and_files() {
+        let message = Outgoing {
+            html: "<p><at id=\"0\">Ada</at> see this</p>".into(),
+            mentions: vec![crate::model::MentionRef {
+                user_id: "u-ada".into(),
+                name: "Ada".into(),
+            }],
+            files: vec![crate::graph::files::SharedFile {
+                id: "153fa47d-18c9-4179-be08-9879815a9f90".into(),
+                name: "plan.pdf".into(),
+                url: "https://contoso-my.sharepoint.com/personal/me/Documents/plan.pdf".into(),
+            }],
+        };
+        assert_eq!(
+            message.body(),
+            json!({
+                "body": {"contentType": "html", "content": "<p><at id=\"0\">Ada</at> see this</p><attachment id=\"153fa47d-18c9-4179-be08-9879815a9f90\"></attachment>"},
+                "mentions": [{"id": 0, "mentionText": "Ada", "mentioned": {"user": {"id": "u-ada", "displayName": "Ada", "userIdentityType": "aadUser"}}}],
+                "attachments": [{"id": "153fa47d-18c9-4179-be08-9879815a9f90", "contentType": "reference",
+                    "contentUrl": "https://contoso-my.sharepoint.com/personal/me/Documents/plan.pdf", "name": "plan.pdf"}]
+            })
+        );
+        assert_eq!(
+            Outgoing::html("<p>x</p>").body(),
+            json!({"body": {"contentType": "html", "content": "<p>x</p>"}})
+        );
     }
 
     #[tokio::test]
@@ -667,7 +752,7 @@ mod tests {
             .await;
         graph(&server)
             .await
-            .reply_with_quote("19:a@thread.v2", "1690", "<p>yes</p>")
+            .reply_with_quote("19:a@thread.v2", "1690", &Outgoing::html("<p>yes</p>"))
             .await
             .unwrap();
     }

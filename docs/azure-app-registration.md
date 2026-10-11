@@ -49,7 +49,7 @@ permissions**, add:
 | Permission | Why | Admin consent |
 |---|---|---|
 | `User.Read` | Your profile | No |
-| `User.ReadBasic.All` | Names and photos of people in your chats | No |
+| `User.ReadBasic.All` | Names and photos of people in your chats; finding people for new chats and mentions | No |
 | `Chat.ReadWrite` | List chats, read messages, edit, delete, mark read | Not by flag, but excluded from the default user-consent policy |
 | `ChatMessage.Send` | Send messages, quote replies, reactions | No |
 | `Team.ReadBasic.All` | The teams you belong to | No |
@@ -57,10 +57,15 @@ permissions**, add:
 | `ChannelMessage.Send` | Post and reply in channels | No |
 | `Presence.Read.All` | Availability of people in your chats | No |
 | `Calendars.Read` | Upcoming meetings and their join links | Not by flag, but excluded from the default user-consent policy |
+| `Chat.Create` *(optional)* | Starting new chats | No |
+| `Files.ReadWrite` *(optional)* | Sending files (upload to your OneDrive and share) | No |
+| `Presence.ReadWrite` *(optional)* | Setting your availability and status message | No |
 | `ChannelMessage.Read.All` *(optional)* | Reading channel posts | **Yes** |
 
 `openid`, `profile` and `offline_access` are added automatically during
-sign-in.
+sign-in. Wren requests the optional permissions only when someone first uses
+the feature. Add them here anyway: a tenant that blocks user consent can then
+approve everything at once.
 
 Then select **Grant admin consent for <your organisation>** if you are an
 administrator. Otherwise send your administrator the link Wren shows under
@@ -109,7 +114,8 @@ APP=<appId>
 GRAPH=00000003-0000-0000-c000-000000000000
 for scope in User.Read User.ReadBasic.All Chat.ReadWrite ChatMessage.Send \
              Team.ReadBasic.All Channel.ReadBasic.All ChannelMessage.Send \
-             Presence.Read.All Calendars.Read; do
+             Presence.Read.All Calendars.Read Chat.Create Files.ReadWrite \
+             Presence.ReadWrite ChannelMessage.Read.All; do
   id=$(az ad sp show --id $GRAPH --query "oauth2PermissionScopes[?value=='$scope'].id" -o tsv)
   az ad app permission add --id $APP --api $GRAPH --api-permissions "$id=Scope"
 done

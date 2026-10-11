@@ -1113,6 +1113,85 @@ fn thread_card(
 
 // -- Composer -----------------------------------------------------------------
 
+/// The `@name` being typed before the cursor: where its `@` is (in
+/// characters) and what follows it. Names have spaces, so up to two words
+/// count; a line break or a third word ends it.
+pub fn mention_query(text: &str, cursor: usize) -> Option<(usize, String)> {
+    let chars: Vec<char> = text.chars().collect();
+    let cursor = cursor.min(chars.len());
+    let mut at = None;
+    for index in (0..cursor).rev() {
+        let c = chars[index];
+        if c == '\n' || cursor - index > 32 {
+            return None;
+        }
+        if c == '@' {
+            at = Some(index);
+            break;
+        }
+    }
+    let at = at?;
+    if at > 0 && chars[at - 1].is_alphanumeric() {
+        // An email address, not a mention.
+        return None;
+    }
+    let query: String = chars[at + 1..cursor].iter().collect();
+    if query.split(' ').count() > 3 || query.starts_with(' ') {
+        return None;
+    }
+    Some((at, query))
+}
+
+/// People who can be mentioned here whose name matches `query`.
+fn mention_candidates(
+    app: &App,
+    conversation: &ConversationId,
+    query: &str,
+) -> Vec<crate::model::Member> {
+    let needle = query.trim().to_lowercase();
+    let me = app.me().to_owned();
+    let matches = |name: &str| {
+        needle.is_empty()
+            || name
+                .to_lowercase()
+                .split_whitespace()
+                .any(|word| word.starts_with(&needle))
+            || name.to_lowercase().starts_with(&needle)
+    };
+    let mut people: Vec<crate::model::Member> = match conversation {
+        ConversationId::Chat(chat) => app
+            .chat(chat)
+            .map(|c| {
+                c.members
+                    .iter()
+                    .filter(|m| m.user_id != me)
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default(),
+        ConversationId::Channel { .. } => app.directory(),
+    };
+    if conversation.is_channel() && app.people.query == query {
+        for person in &app.people.results {
+            if !people.iter().any(|p| p.user_id == person.user_id) {
+                people.push(person.clone());
+            }
+        }
+    }
+    people.retain(|p| matches(&p.display_name));
+    people.truncate(6);
+    people
+}
+
+fn file_size(path: &std::path::Path) -> String {
+    let bytes = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+    match bytes {
+        b if b >= 1024 * 1024 => format!("{:.1} MB", b as f64 / (1024.0 * 1024.0)),
+        b if b >= 1024 => format!("{} KB", b / 1024),
+        b => format!("{b} B"),
+    }
+}
+
 fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let palette = app.palette;
     let title = app.title_of(conversation);
@@ -1121,6 +1200,38 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let mut draft = app.drafts.get(conversation).cloned().unwrap_or_default();
     let context_line = draft_context(app, conversation, &draft);
     let can_post = !channel || app.has_scope("ChannelMessage.Send");
+    let id = ui.make_persistent_id(("composer", conversation.key()));
+    // The mention being typed, from the cursor the editor had last frame.
+    let cursor = egui::TextEdit::load_state(ui.ctx(), id)
+        .and_then(|state| state.cursor.char_range())
+        .map(|range| range.primary.index.0);
+    let dismissed_id = id.with("mention-dismissed");
+    let dismissed: Option<usize> = ui.ctx().data(|d| d.get_temp(dismissed_id));
+    let mention = cursor
+        .and_then(|cursor| {
+            mention_query(&draft.text, cursor).map(|(at, query)| (at, query, cursor))
+        })
+        .filter(|(at, ..)| dismissed != Some(*at));
+    let candidates = mention
+        .as_ref()
+        .map(|(_, query, _)| mention_candidates(app, conversation, query))
+        .unwrap_or_default();
+    if let Some((_, query, _)) = &mention
+        && channel
+        && query.chars().count() >= 2
+        && app.people.query != *query
+    {
+        actions.push(Action::SearchPeople(query.clone()));
+    }
+    let selected_id = id.with("mention-selected");
+    let mut selected: usize = ui.ctx().data(|d| d.get_temp(selected_id)).unwrap_or(0);
+    selected = selected.min(candidates.len().saturating_sub(1));
+    // A person clicked in the list last frame.
+    let pick_id = id.with("mention-pick");
+    let clicked: Option<usize> = ui.ctx().data_mut(|d| d.remove_temp(pick_id));
+    let mut picked: Option<crate::model::Member> =
+        clicked.and_then(|index| candidates.get(index).cloned());
+    let mut composer_top = None;
     egui::Panel::bottom("composer")
         .show_separator_line(false)
         .frame(Frame::new().fill(palette.window).inner_margin(Margin {
@@ -1130,6 +1241,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             bottom: 14,
         }))
         .show(ui, |ui| {
+            composer_top = Some(ui.cursor().min);
             Frame::new()
                 .fill(palette.surface)
                 .stroke(Stroke::new(1.0, palette.outline))
@@ -1167,12 +1279,74 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         });
                         ui.add_space(2.0);
                     }
+                    // Files waiting to go with the message.
+                    if !draft.files.is_empty() {
+                        let mut remove = None;
+                        ui.horizontal_wrapped(|ui| {
+                            ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
+                            for (index, path) in draft.files.iter().enumerate() {
+                                let name = path
+                                    .file_name()
+                                    .map(|n| n.to_string_lossy().into_owned())
+                                    .unwrap_or_default();
+                                Frame::new()
+                                    .fill(palette.surface_hover)
+                                    .corner_radius(CornerRadius::same(6))
+                                    .inner_margin(Margin { left: 8, right: 2, top: 3, bottom: 3 })
+                                    .show(ui, |ui| {
+                                        ui.horizontal(|ui| {
+                                            ui.spacing_mut().item_spacing.x = 4.0;
+                                            theme::icon(ui, Icon::File, 14.0, palette.accent);
+                                            ui.label(
+                                                egui::RichText::new(crate::html::truncate(&name, 32))
+                                                    .font(theme::medium(12.0))
+                                                    .color(palette.text),
+                                            );
+                                            ui.label(
+                                                egui::RichText::new(file_size(path))
+                                                    .font(theme::regular(11.0))
+                                                    .color(palette.dim),
+                                            );
+                                            let close = widgets::icon_button_sized(
+                                                ui, &palette, Icon::Close, "Remove", 20.0, 12.0, palette.dim,
+                                            );
+                                            if close.clicked() {
+                                                remove = Some(index);
+                                            }
+                                        });
+                                    });
+                            }
+                        });
+                        if let Some(index) = remove {
+                            draft.files.remove(index);
+                        }
+                        ui.add_space(4.0);
+                    }
                     ui.horizontal_top(|ui| {
-                        let id = ui.make_persistent_id(("composer", conversation.key()));
                         let focused = ui.memory(|m| m.has_focus(id));
                         let mut send = false;
                         if focused {
                             ui.input_mut(|input| {
+                                // The mention list takes the arrows, Enter
+                                // and Tab while it shows.
+                                if !candidates.is_empty() {
+                                    if input.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                                        selected = (selected + 1) % candidates.len();
+                                    }
+                                    if input.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                                        selected = (selected + candidates.len() - 1) % candidates.len();
+                                    }
+                                    if input.consume_key(Modifiers::NONE, Key::Enter)
+                                        || input.consume_key(Modifiers::NONE, Key::Tab)
+                                    {
+                                        picked = candidates.get(selected).cloned();
+                                    }
+                                    if input.consume_key(Modifiers::NONE, Key::Escape)
+                                        && let Some((at, ..)) = &mention
+                                    {
+                                        ui.ctx().data_mut(|d| d.insert_temp(dismissed_id, *at));
+                                    }
+                                }
                                 if input.consume_key(Modifiers::NONE, Key::Enter) {
                                     send = true;
                                 }
@@ -1197,16 +1371,37 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 }
                             });
                         }
+                        // Put the picked name in place of `@query`.
+                        if let (Some(person), Some((at, _, cursor))) = (&picked, &mention) {
+                            let chars: Vec<char> = draft.text.chars().collect();
+                            let before: String = chars[..*at].iter().collect();
+                            let after: String = chars[(*cursor).min(chars.len())..].iter().collect();
+                            let inserted = format!("@{} ", person.display_name);
+                            draft.text = format!("{before}{inserted}{after}");
+                            if !draft.mentions.iter().any(|m| m.user_id == person.user_id) {
+                                draft.mentions.push(crate::model::MentionRef {
+                                    user_id: person.user_id.clone(),
+                                    name: person.display_name.clone(),
+                                });
+                            }
+                            let caret = at + inserted.chars().count();
+                            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
+                                state.cursor.set_char_range(Some(egui::text::CCursorRange::one(
+                                    egui::text::CCursor::new(caret),
+                                )));
+                                egui::TextEdit::store_state(ui.ctx(), id, state);
+                            }
+                        }
                         let hint = if !can_post {
                             "Posting needs the ChannelMessage.Send permission".to_owned()
                         } else if draft.editing.is_some() {
                             "Edit your message".to_owned()
                         } else if channel && draft.reply_to.is_none() {
-                            format!("Start a new post in {title}")
+                            format!("Start a new post in {title}  ·  @ to mention")
                         } else if channel {
                             "Reply to the thread".to_owned()
                         } else {
-                            format!("Message {title}")
+                            format!("Message {title}  ·  @ to mention")
                         };
                         let width = ui.available_width() - 70.0;
                         let edit = egui::TextEdit::multiline(&mut draft.text)
@@ -1223,7 +1418,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         }
                         ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
                             ui.spacing_mut().item_spacing.x = 2.0;
-                            let ready = !draft.text.trim().is_empty();
+                            let ready = !draft.text.trim().is_empty() || !draft.files.is_empty();
                             let tint = if ready { palette.accent } else { palette.dim };
                             let label = if draft.editing.is_some() {
                                 "Save (Enter)"
@@ -1246,18 +1441,21 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                             if button.clicked() {
                                 send = true;
                             }
-                            let attach = widgets::icon_button_sized(
-                                ui,
-                                &palette,
-                                Icon::Paperclip,
-                                "Attach files (not supported yet)",
-                                30.0,
-                                18.0,
-                                palette.dim,
-                            );
-                            widgets::on_click(&attach, &mut actions, Action::AttachFiles);
+                            if draft.editing.is_none() {
+                                let attach = widgets::icon_button_sized(
+                                    ui,
+                                    &palette,
+                                    Icon::Paperclip,
+                                    "Attach files (or drop them here)",
+                                    30.0,
+                                    18.0,
+                                    palette.secondary,
+                                );
+                                widgets::on_click(&attach, &mut actions, Action::AttachFiles);
+                            }
                         });
-                        if send && !draft.text.trim().is_empty() && can_post {
+                        let has_content = !draft.text.trim().is_empty() || !draft.files.is_empty();
+                        if send && has_content && can_post && picked.is_none() {
                             match &draft.editing {
                                 Some(message) => actions.push(Action::Edit {
                                     conversation: conversation.clone(),
@@ -1268,6 +1466,8 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                     conversation: conversation.clone(),
                                     text: std::mem::take(&mut draft.text),
                                     reply_to: draft.reply_to.take(),
+                                    mentions: std::mem::take(&mut draft.mentions),
+                                    files: std::mem::take(&mut draft.files),
                                 }),
                             }
                             draft.editing = None;
@@ -1277,12 +1477,85 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             ui.add_space(2.0);
             ui.label(
                 egui::RichText::new(
-                    "**bold**  *italic*  `code`  > quote  - list   ·   Shift+Enter for a new line",
+                    "**bold**  *italic*  `code`  > quote  - list  @ mention   ·   Shift+Enter for a new line",
                 )
                 .font(theme::regular(11.0))
                 .color(palette.dim),
             );
         });
+    ui.ctx().data_mut(|d| d.insert_temp(selected_id, selected));
+    // The mention list, just above the composer.
+    if picked.is_none()
+        && !candidates.is_empty()
+        && let Some(top) = composer_top
+    {
+        let height = candidates.len() as f32 * 40.0 + 12.0;
+        egui::Area::new(id.with("mentions"))
+            .order(egui::Order::Foreground)
+            .fixed_pos(top + vec2(0.0, -height - 4.0))
+            .show(ui.ctx(), |ui| {
+                Frame::new()
+                    .fill(palette.surface)
+                    .stroke(Stroke::new(1.0, palette.outline))
+                    .corner_radius(CornerRadius::same(10))
+                    .shadow(egui::Shadow {
+                        offset: [0, 4],
+                        blur: 16,
+                        spread: 0,
+                        color: palette.shadow,
+                    })
+                    .inner_margin(Margin::same(6))
+                    .show(ui, |ui| {
+                        ui.set_width(300.0);
+                        for (index, person) in candidates.iter().enumerate() {
+                            let (rect, response) =
+                                ui.allocate_exact_size(vec2(300.0, 38.0), Sense::click());
+                            if index == selected || response.hovered() {
+                                ui.painter().rect_filled(
+                                    rect,
+                                    CornerRadius::same(7),
+                                    palette.surface_active,
+                                );
+                            }
+                            let mut child = ui.new_child(
+                                egui::UiBuilder::new()
+                                    .max_rect(rect.shrink2(vec2(8.0, 0.0)))
+                                    .layout(Layout::left_to_right(Align::Center)),
+                            );
+                            widgets::avatar(
+                                &mut child,
+                                app,
+                                Some(&person.user_id),
+                                &person.display_name,
+                                26.0,
+                                true,
+                            );
+                            child.add_space(8.0);
+                            child.vertical(|ui| {
+                                ui.spacing_mut().item_spacing.y = 0.0;
+                                ui.label(
+                                    egui::RichText::new(&person.display_name)
+                                        .font(theme::medium(13.0))
+                                        .color(palette.text),
+                                );
+                                if let Some(email) = &person.email {
+                                    ui.label(
+                                        egui::RichText::new(email)
+                                            .font(theme::regular(11.0))
+                                            .color(palette.dim),
+                                    );
+                                }
+                            });
+                            if response.clicked() {
+                                // Put in place next frame, by the composer.
+                                ui.ctx().data_mut(|d| d.insert_temp(pick_id, index));
+                                ui.ctx().memory_mut(|m| m.request_focus(id));
+                                ui.ctx().request_repaint();
+                            }
+                        }
+                    });
+            });
+    }
     let changed = app.drafts.get(conversation).cloned().unwrap_or_default() != draft;
     let sending = actions
         .iter()
@@ -1364,5 +1637,21 @@ fn stamp(at: i64, now: i64) -> String {
             crate::time::short_label(at, now),
             crate::time::clock(at)
         )
+    }
+}
+
+#[cfg(test)]
+mod mention_tests {
+    use super::mention_query;
+
+    #[test]
+    fn mentions_start_at_an_at_sign_and_end_at_a_line_break() {
+        assert_eq!(mention_query("hi @ad", 6), Some((3, "ad".into())));
+        assert_eq!(mention_query("@", 1), Some((0, String::new())));
+        assert_eq!(mention_query("hi @Ada Lo", 10), Some((3, "Ada Lo".into())));
+        assert_eq!(mention_query("mail me@contoso", 15), None);
+        assert_eq!(mention_query("@ada\nnext", 9), None);
+        assert_eq!(mention_query("no mention", 10), None);
+        assert_eq!(mention_query("@a b c d e", 10), None);
     }
 }

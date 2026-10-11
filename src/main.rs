@@ -221,6 +221,32 @@ fn apply_page(app: &mut App, page: &str) {
             }
             "shortcuts" => app.actions.push(Action::OpenShortcuts),
             "perf" => app.settings.perf_overlay = true,
+            "accounts" => app.open_account_menu = true,
+            "newchat" => {
+                app.overlay = Some(wren::app::Overlay::NewChat);
+                app.new_chat.picked = app
+                    .directory()
+                    .into_iter()
+                    .filter(|p| p.display_name == "Grace Hopper")
+                    .collect();
+                app.new_chat.query = "ra".into();
+                app.actions.push(Action::SearchPeople("ra".into()));
+            }
+            "mention" => {
+                let launch = ConversationId::Chat("19:demo-launch@thread.v2".into());
+                app.actions.push(Action::OpenConversation(launch.clone()));
+                let file = std::env::temp_dir().join("Launch checklist.pdf");
+                let _ = std::fs::write(&file, vec![0u8; 182_000]);
+                app.drafts.insert(
+                    launch,
+                    wren::app::Draft {
+                        text: "Shipping checklist attached. @Mar".into(),
+                        files: vec![file],
+                        ..Default::default()
+                    },
+                );
+            }
+            "status" => app.actions.push(Action::OpenStatusMessage),
             "signin" => {
                 app.demo = false;
                 app.chats.clear();

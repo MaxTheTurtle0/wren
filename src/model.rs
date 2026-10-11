@@ -378,6 +378,13 @@ pub enum Access {
     Forbidden,
 }
 
+/// A person mentioned in a message being written.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MentionRef {
+    pub user_id: String,
+    pub name: String,
+}
+
 /// A message found by search.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SearchHit {
@@ -431,6 +438,10 @@ pub enum Action {
         conversation: ConversationId,
         text: String,
         reply_to: Option<String>,
+        /// People mentioned with `@`, in the order they were picked.
+        mentions: Vec<MentionRef>,
+        /// Files to upload to OneDrive and share in the message.
+        files: Vec<std::path::PathBuf>,
     },
     Edit {
         conversation: ConversationId,
@@ -462,7 +473,12 @@ pub enum Action {
         conversation: ConversationId,
         local_id: String,
     },
+    /// Opens the file picker for the open conversation.
     AttachFiles,
+    /// Adds files (picked or dropped) to the open conversation's draft.
+    AddFiles(Vec<std::path::PathBuf>),
+    /// Removes a file from the draft, by position.
+    RemoveFile(usize),
     LoadMedia(String),
 
     SignIn,
@@ -478,7 +494,26 @@ pub enum Action {
         client_id: String,
         tenant: String,
     },
-    SetPresence(Availability),
+    /// Sets the signed-in person's availability; `None` resets it.
+    SetAvailability(Option<Availability>),
+    SetStatusMessage(String),
+    OpenStatusMessage,
+    /// Whether Wren keeps a presence session (shows you available while it
+    /// runs).
+    SetPresenceSession(bool),
+
+    SwitchAccount(usize),
+    AddAccount,
+    /// Abandons an account being added and goes back to the previous one.
+    CancelAddAccount,
+
+    OpenNewChat,
+    /// Looks people up in the directory for the new-chat dialog or mentions.
+    SearchPeople(String),
+    CreateChat {
+        members: Vec<Member>,
+        topic: Option<String>,
+    },
 
     JoinMeeting(String),
     StartCall {

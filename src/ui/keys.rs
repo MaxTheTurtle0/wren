@@ -9,6 +9,9 @@ use crate::model::{Action, Section};
 pub const SHORTCUTS: &[(&str, &str)] = &[
     ("⌘K", "Search chats, channels and messages"),
     ("⌘1 – ⌘4", "Chat, Teams, Calendar, Calls"),
+    ("⌘N", "New chat"),
+    ("⌘⇧A", "Next account"),
+    ("@ in the composer", "Mention someone"),
     ("Alt ↑ / Alt ↓", "Previous or next conversation"),
     ("Enter", "Send"),
     ("Shift Enter", "New line"),
@@ -47,6 +50,12 @@ pub fn handle(app: &mut App, ctx: &egui::Context) {
         }
         if input.consume_key(Modifiers::ALT, Key::ArrowUp) {
             actions.push(Action::Step(-1));
+        }
+        if input.consume_key(command, Key::N) {
+            actions.push(Action::OpenNewChat);
+        }
+        if input.consume_key(command | Modifiers::SHIFT, Key::A) && app.accounts.len() > 1 {
+            actions.push(Action::SwitchAccount((app.active + 1) % app.accounts.len()));
         }
         if input.consume_key(command, Key::R) {
             actions.push(Action::Refresh);

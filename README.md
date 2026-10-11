@@ -36,6 +36,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | | Status |
 |---|---|
 | Chats: list, unread, history, send, quote replies, reactions, edit, delete, mark read | ✅ Implemented (Graph) |
+| New chats, @mentions in the composer, sending files (OneDrive upload and sharing) | ✅ Implemented |
 | Rich text, mentions, emoji, links, code, inline images | ✅ Implemented (native rendering of Teams HTML) |
 | Teams and channels, threaded posts and replies | ✅ Implemented; reading channel posts needs admin consent |
 | Local full-text search plus Microsoft Search, ⌘K switcher | ✅ Implemented |
@@ -45,8 +46,8 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Offline demo mode | ✅ `wren --demo` |
 | Audio and video calls | ↗ Hand-off to Teams via deep links ([why](docs/calling.md)) |
 | Real-time updates | ✅ On open, focus and refresh. 🧪 Push through a self-hostable `wren-relay` (experimental), since Microsoft forbids polling ([why](docs/realtime.md)) |
-| Sending files, new chats, multiple accounts, own status | 🗓 Planned ([roadmap](docs/roadmap.md)) |
-| In-app calling, incoming calls, screen sharing | ❌ No official API for native desktop apps (Azure Communication Services route documented) |
+| Multiple accounts, setting your availability and status message | ✅ Implemented |
+| In-app calling, incoming calls, screen sharing | ❌ No official API for native desktop apps. 🗓 Planned through Azure Communication Services ([options](docs/video-calling-options.md)) |
 
 The full matrix, including what was verified and how, is in
 [docs/features.md](docs/features.md). The Microsoft API investigation behind
@@ -79,8 +80,9 @@ tenants, and most tenants block unverified multi-tenant apps.
 3. In most tenants an administrator must approve `Chat.ReadWrite` and
    `Calendars.Read`, which the default consent policy excludes, and
    `ChannelMessage.Read.All` for channel posts. Wren shows an admin-consent
-   link under **Settings**. Each permission is explained in
-   [docs/permissions.md](docs/permissions.md).
+   link under **Settings**. Starting a chat, sending a file and setting
+   your status each ask for one more permission the first time. Each
+   permission is explained in [docs/permissions.md](docs/permissions.md).
 
 Personal Microsoft accounts and Teams (free) are not supported; Graph's Teams
 APIs serve work and school accounts only.
@@ -98,9 +100,10 @@ artifacts. Nothing is published as a release yet.
 
 ## Keyboard
 
-`⌘K` jump anywhere or search messages · `⌘1–4` sections · `Alt ↑/↓` previous
-or next conversation · `Enter` send · `Shift Enter` new line · `↑` edit last
-message · `⌘R` refresh · `⌘,` settings · `⌘/` all shortcuts. (`⌘` is Ctrl on
+`⌘K` jump anywhere or search messages · `⌘N` new chat · `⌘1–4` sections ·
+`Alt ↑/↓` previous or next conversation · `⌘⇧A` next account · `Enter` send ·
+`Shift Enter` new line · `@` mention · `↑` edit last message · `⌘R` refresh ·
+`⌘,` settings · `⌘/` all shortcuts. (`⌘` is Ctrl on
 Windows and Linux.)
 
 ## Architecture

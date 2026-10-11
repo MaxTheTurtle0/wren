@@ -222,7 +222,18 @@ pub fn populate(app: &mut App) {
         job_title: Some("Desktop engineer".into()),
         tenant_id: Some("demo".into()),
     });
-    app.granted = crate::auth::scope_string(&[crate::auth::CHANNEL_READ_SCOPE.into()]);
+    app.id = Some("u-me.demo".into());
+    app.granted = crate::auth::scope_string(
+        &crate::auth::OPTIONAL_SCOPES
+            .iter()
+            .map(|s| (*s).to_owned())
+            .collect::<Vec<_>>(),
+    );
+    app.my_presence = Some(Presence {
+        availability: Availability::Available,
+        activity: None,
+        status_message: None,
+    });
     app.channel_access = Access::Granted;
 
     let mut conversations = Vec::new();
@@ -692,6 +703,189 @@ pub fn populate(app: &mut App) {
     app.conversations = conversations.into_iter().collect();
     app.open = Some(ConversationId::Chat("19:demo-ada@unq.gbl.spaces".into()));
     app.section = Section::Chats;
+
+    // A second account, so the account switcher has something to switch to.
+    let shown = app.active;
+    app.accounts.push(crate::app::Account::new(
+        crate::backend::Backend::detached().0,
+    ));
+    app.active = app.accounts.len() - 1;
+    populate_second(app, now);
+    app.active = shown;
+}
+
+/// People in the demo directory who are in no chat yet, for "New chat".
+const DIRECTORY: &[(&str, &str, &str)] = &[
+    ("u-barbara", "Barbara Liskov", "barbara@contoso.com"),
+    ("u-radia", "Radia Perlman", "radia@contoso.com"),
+    ("u-frances", "Frances Allen", "frances@contoso.com"),
+    ("u-annie", "Annie Easley", "annie@contoso.com"),
+];
+
+/// The demo's directory search: everyone in the sample company.
+pub fn search_people(app: &App, query: &str) -> Vec<Member> {
+    let needle = query.trim().to_lowercase();
+    let mut people: Vec<Member> = PEOPLE
+        .iter()
+        .filter(|p| p.id != ME)
+        .map(|p| member(p.id))
+        .chain(DIRECTORY.iter().map(|(id, name, email)| Member {
+            user_id: (*id).into(),
+            display_name: (*name).into(),
+            email: Some((*email).into()),
+        }))
+        .filter(|m| {
+            m.display_name.to_lowercase().contains(&needle)
+                || m.email.as_deref().is_some_and(|e| e.contains(&needle))
+        })
+        .collect();
+    people.retain(|p| p.user_id != app.me());
+    people
+}
+
+/// A chat the demo makes on the spot.
+pub fn new_chat(app: &App, others: Vec<Member>, topic: Option<String>) -> Chat {
+    let mut members = vec![member(ME)];
+    members.extend(others);
+    Chat {
+        id: format!("19:demo-new-{}@thread.v2", app.chats.len()),
+        kind: if members.len() == 2 {
+            ChatKind::OneOnOne
+        } else {
+            ChatKind::Group
+        },
+        topic: topic.filter(|t| !t.trim().is_empty() && members.len() > 2),
+        members,
+        updated: crate::time::now(),
+        ..Default::default()
+    }
+}
+
+/// Alex's second job: a smaller Fabrikam account.
+fn populate_second(app: &mut App, now: i64) {
+    app.id = Some("u-alex2.fabrikam".into());
+    app.auth = AuthStatus::SignedIn {
+        account: "u-alex2.fabrikam".into(),
+        name: "Alex Rivera".into(),
+        username: "alex@fabrikam.com".into(),
+    };
+    app.profile = Some(Profile {
+        id: "u-alex2".into(),
+        display_name: "Alex Rivera".into(),
+        mail: Some("alex@fabrikam.com".into()),
+        user_principal_name: "alex@fabrikam.com".into(),
+        job_title: Some("Advisor".into()),
+        tenant_id: Some("fabrikam".into()),
+    });
+    app.granted = crate::auth::scope_string(&[]);
+    let advisor = |id: &str, name: &str, email: &str| Member {
+        user_id: id.into(),
+        display_name: name.into(),
+        email: Some(email.into()),
+    };
+    let me = advisor("u-alex2", "Alex Rivera", "alex@fabrikam.com");
+    let mae = advisor("u-mae", "Mae Jemison", "mae@fabrikam.com");
+    let evelyn = advisor("u-evelyn", "Evelyn Boyd Granville", "evelyn@fabrikam.com");
+    let chat_id = "19:fabrikam-mae@unq.gbl.spaces";
+    let message = |id: &str, author: &Member, at: i64, text: &str| Message {
+        id: id.into(),
+        conversation: Some(ConversationId::Chat(chat_id.into())),
+        author_id: Some(author.user_id.clone()),
+        author: author.display_name.clone(),
+        created: at,
+        modified: at,
+        body: html::parse(&html::compose(text)),
+        ..Default::default()
+    };
+    let messages = vec![
+        message(
+            "f1",
+            &mae,
+            now - 2 * DAY,
+            "Thanks for the advisory call. Could you review the onboarding flow?",
+        ),
+        message(
+            "f2",
+            &me,
+            now - 2 * DAY + HOUR,
+            "Happy to. I'll send notes by Friday.",
+        ),
+        message(
+            "f3",
+            &mae,
+            now - 20 * MINUTE,
+            "No rush. Also: are you joining the board meeting on Thursday?",
+        ),
+    ];
+    app.chats = vec![
+        Chat {
+            id: chat_id.into(),
+            kind: ChatKind::OneOnOne,
+            members: vec![me.clone(), mae.clone()],
+            preview: Some(Preview {
+                message_id: "f3".into(),
+                author_id: Some("u-mae".into()),
+                author: Some("Mae Jemison".into()),
+                text: "No rush. Also: are you joining the board meeting on Thursday?".into(),
+                at: now - 20 * MINUTE,
+                deleted: false,
+            }),
+            last_read: Some(now - DAY),
+            updated: now - 20 * MINUTE,
+            ..Default::default()
+        },
+        Chat {
+            id: "19:fabrikam-board@thread.v2".into(),
+            kind: ChatKind::Group,
+            topic: Some("Fabrikam advisors".into()),
+            members: vec![me, mae, evelyn],
+            preview: Some(Preview {
+                message_id: "g1".into(),
+                author_id: Some("u-evelyn".into()),
+                author: Some("Evelyn Boyd Granville".into()),
+                text: "Deck for Thursday is in the shared folder.".into(),
+                at: now - 3 * DAY,
+                deleted: false,
+            }),
+            last_read: Some(now),
+            updated: now - 3 * DAY,
+            ..Default::default()
+        },
+    ];
+    let mut conversation = Conversation {
+        fresh: true,
+        ..Default::default()
+    };
+    conversation.messages = messages;
+    app.conversations = [(ConversationId::Chat(chat_id.into()), conversation)]
+        .into_iter()
+        .collect();
+    app.presence.insert(
+        "u-mae".into(),
+        Presence {
+            availability: Availability::Available,
+            ..Default::default()
+        },
+    );
+    app.presence.insert(
+        "u-evelyn".into(),
+        Presence {
+            availability: Availability::Away,
+            ..Default::default()
+        },
+    );
+    app.my_presence = Some(Presence {
+        availability: Availability::Available,
+        ..Default::default()
+    });
+    app.presence.insert(
+        "u-alex2".into(),
+        Presence {
+            availability: Availability::Available,
+            ..Default::default()
+        },
+    );
+    app.open = Some(ConversationId::Chat(chat_id.into()));
 }
 
 fn reply(root: &str, author: &str, at: i64, text: &str) -> Message {

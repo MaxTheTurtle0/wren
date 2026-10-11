@@ -89,6 +89,9 @@ open = "5"
 # Native desktop notifications: D-Bus on Linux, the notification centre on
 # macOS, toast notifications on Windows.
 notify-rust = { version = "4", default-features = false, features = ["z"] }
+# The platform's own file picker for attachments (NSOpenPanel, the Windows
+# file dialog, the desktop portal on Linux), as ZapFast uses it.
+rfd = { version = "0.17", default-features = false, features = ["xdg-portal", "wayland"] }
 # Unicode grapheme handling for avatars' initials and text truncation.
 unicode-segmentation = "1"
 # The push relay's WebSocket (src/realtime.rs, experimental). The same

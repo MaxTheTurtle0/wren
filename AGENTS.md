@@ -23,8 +23,9 @@ Microsoft Graph. These rules are for coding agents and contributors. Follow
   ordinary fetches with `Trigger::Push`. Subscriptions carry no resource
   data, so the relay never sees message content; keep it that way.
 - **Least privilege.** Do not add a Graph scope to `auth::SIGN_IN_SCOPES`
-  without a feature in the interface that needs it. Scopes needing admin
-  consent are requested incrementally (`auth::OPTIONAL_SCOPES`). Update
+  without a feature in the interface that needs it. Scopes that one feature
+  needs, and every scope needing admin consent, are requested the first time
+  the feature is used (`auth::OPTIONAL_SCOPES`, `App::ensure_scope`). Update
   `docs/permissions.md` and `docs/azure-app-registration.md` in the same
   change.
 - Don't advertise a capability the API lacks. `docs/features.md` and
@@ -44,6 +45,9 @@ Microsoft Graph. These rules are for coding agents and contributors. Follow
   (`src/backend/worker.rs`), never the interface thread. The sides talk only
   through `backend::Command` and `backend::Event`. Each event wakes the window.
   Nothing should request continuous repaints.
+- State that belongs to one signed-in person goes in `app::Account`, not
+  `App`. `App` dereferences to the active account; events from background
+  accounts are applied with that account swapped in and `App::hidden` set.
 - Graph JSON stays in `src/graph/types.rs`. Translate it into `model` types
   in `src/graph/convert.rs`. Views never see Graph shapes.
 - `graph::Graph` sends the access token only to its own origin. Never build

@@ -34,15 +34,27 @@ ACS can act as a Teams user (the "Custom Teams Endpoint").
 
 What it cannot do:
 
-- Join an existing Teams 1:1 or group call.
+- Join an existing Teams ad-hoc group call after it has started.
 - Run natively on macOS or Linux. The Calling SDK exists for the web
-  (JavaScript), Windows (UWP or WinUI 3, MSIX-packaged), iOS and Android. It
-  is closed source, with no C or C++ build.
-- Run for free. Minutes are billed to the ACS resource's Azure subscription.
+  (JavaScript), Windows, iOS and Android. It is closed source, with no C or
+  C++ build. The iOS framework has no macOS or Mac Catalyst slice.
+- Run on Windows without packaging, or on Windows on Arm natively. Windows SDK
+  2.0.0 ships only x64 binaries for `net8.0-windows` (WinUI 3, MSIX), with no
+  `.winmd` metadata for non-.NET callers.
+- Run in an embedded webview. Microsoft lists WebView2, CEF and WebKitGTK as
+  unsupported. Electron is supported on macOS and Windows; Chrome, Edge and
+  Safari on macOS; Chrome only on Linux.
+- Run for free. Teams users calling through ACS cost $0.004 per
+  participant-minute, billed to the ACS resource's Azure subscription.
+  Starting calls with Teams users may also need a Teams Phone licence
+  (unverified).
+- Ship without a licence review. The npm Web SDK 2.0.0 allows redistribution
+  with conditions; the Windows 2.0.0 and iOS 3.0.0 licence files say
+  "pre-release" and grant no right to distribute.
 - Last forever without change. On 2026-09-23 Microsoft announced the
-  retirement of ACS as a standalone offering, effective 2028-09-30. Teams
-  interop is listed as not impacted, but Microsoft does not commit to new
-  features.
+  retirement of ACS as a standalone offering, effective 2028-09-30. The
+  Calling SDK continues "in conjunction with a Microsoft Teams-aligned
+  product", with new major versions.
 
 ### Deep links: what Wren does today
 
@@ -66,26 +78,35 @@ because calendar invitations can carry anyone's links.
 
 ## Paths forward
 
+The full comparison, with performance techniques, a prototype plan and
+sources, is in [video-calling-options.md](video-calling-options.md).
+
 1. **Now (implemented):** hand off through deep links. This works on every
    platform with no Azure resources, and the person keeps Teams' calling
    quality and features.
-2. **Companion web page (experimental, not built):** an ACS Teams-user calling
-   page served from a self-hosted token-exchange service and opened in the
-   system browser. The Web SDK supports Chrome, Edge and Safari on macOS and
-   Windows, and Chrome on Linux. The page would bring in-call controls
-   (microphone, camera, screen sharing, participants) close to Wren without
-   embedding a browser engine. It needs an ACS resource, a backend, and
-   admin consent for the ACS scopes.
-3. **Windows-only native calling (research):** call the ACS Windows SDK
-   (WinRT) from Rust through the `windows` crate, with MSIX packaging.
-   Plausible, but undocumented for non-.NET callers.
-4. **Watch:** whether Microsoft documents delegated calling in Graph, or a
-   native macOS or Linux SDK. If either appears, `calling::CallBackend` is
-   the seam where an in-app backend plugs in without changing the interface.
+2. **macOS and Linux (planned): a call window driven by Wren.** Wren serves a
+   small page with the ACS Web SDK from a fixed loopback origin and opens it
+   as a chrome-less app window in Chrome or Edge (Safari as the fallback).
+   Call controls, the roster and incoming-call prompts stay in Wren's egui
+   interface and drive the page over a loopback WebSocket. The browser
+   decodes and composites video with hardware H.264, and Chrome and Edge send
+   simulcast, so Wren itself stays idle during calls. It needs an ACS
+   resource, a token exchange (planned in `wren-relay`) and consent for the
+   ACS scopes.
+3. **Windows (research): a native helper.** A small C# WinUI 3 app on the ACS
+   Windows SDK, speaking the same protocol, with video rendered by Media
+   Foundation. Calling the SDK directly from Rust is not practical: 2.0.0 has
+   no WinRT metadata and needs package identity.
+4. **Not planned:** drawing remote video inside egui (it would end Wren's
+   idle-at-zero during calls), the iOS SDK on the Mac, and any own WebRTC
+   stack talking to Teams.
+5. **Watch:** whether Microsoft documents delegated calling in Graph, or a
+   native macOS or Linux SDK. `calling::CallBackend` is the seam where an
+   in-app backend plugs in without changing the interface.
 
 ## Microphone, camera and screen sharing
 
-These only become relevant once calls run inside Wren (path 2 or 3). On
+These only become relevant once Wren hosts calls (path 2 or 3). On
 macOS, the bundle would then need `NSMicrophoneUsageDescription`,
 `NSCameraUsageDescription` and Screen Recording permission. The current
 bundle declares none, because Wren 0.1 never touches those devices.

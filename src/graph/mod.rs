@@ -16,6 +16,8 @@
 
 pub mod api;
 pub mod convert;
+pub mod files;
+pub mod people;
 pub mod types;
 
 use std::sync::{Arc, Mutex};
@@ -58,6 +60,13 @@ impl GraphError {
     pub fn is_forbidden(&self) -> bool {
         matches!(self, Self::Forbidden { .. })
     }
+}
+
+/// What a request carries.
+#[derive(Clone, Copy)]
+enum Body<'a> {
+    Json(&'a serde_json::Value),
+    Bytes(&'a [u8]),
 }
 
 pub struct Graph {
@@ -131,7 +140,7 @@ impl Graph {
         &self,
         method: Method,
         path_or_url: &str,
-        body: Option<&serde_json::Value>,
+        body: Option<Body<'_>>,
         headers: &[(&str, &str)],
     ) -> Result<reqwest::Response, GraphError> {
         let url = self.url(path_or_url)?;
@@ -149,8 +158,14 @@ impl Graph {
             for (name, value) in headers {
                 request = request.header(*name, *value);
             }
-            if let Some(body) = body {
-                request = request.json(body);
+            match body {
+                Some(Body::Json(json)) => request = request.json(json),
+                Some(Body::Bytes(bytes)) => {
+                    request = request
+                        .header(reqwest::header::CONTENT_TYPE, "application/octet-stream")
+                        .body(bytes.to_vec())
+                }
+                None => {}
             }
             let response = match request.send().await {
                 Ok(response) => response,
@@ -225,7 +240,9 @@ impl Graph {
         body: &B,
     ) -> Result<T, GraphError> {
         let body = serde_json::to_value(body).map_err(|_| GraphError::Decode)?;
-        let response = self.send(Method::POST, path, Some(&body), &[]).await?;
+        let response = self
+            .send(Method::POST, path, Some(Body::Json(&body)), &[])
+            .await?;
         decode(response).await
     }
 
@@ -236,16 +253,34 @@ impl Graph {
         body: &B,
     ) -> Result<(), GraphError> {
         let body = serde_json::to_value(body).map_err(|_| GraphError::Decode)?;
-        self.send(Method::POST, path, Some(&body), &[])
+        self.send(Method::POST, path, Some(Body::Json(&body)), &[])
             .await
             .map(drop)
     }
 
     pub async fn patch<B: Serialize>(&self, path: &str, body: &B) -> Result<(), GraphError> {
         let body = serde_json::to_value(body).map_err(|_| GraphError::Decode)?;
-        self.send(Method::PATCH, path, Some(&body), &[])
+        self.send(Method::PATCH, path, Some(Body::Json(&body)), &[])
             .await
             .map(drop)
+    }
+
+    /// `PUT` raw bytes (small file uploads) and decode the answer.
+    pub async fn put_bytes<T: DeserializeOwned>(
+        &self,
+        path: &str,
+        bytes: &[u8],
+    ) -> Result<T, GraphError> {
+        let response = self
+            .send(Method::PUT, path, Some(Body::Bytes(bytes)), &[])
+            .await?;
+        decode(response).await
+    }
+
+    /// The HTTP client without credentials, for pre-authenticated upload
+    /// URLs (which must not receive the access token).
+    pub fn plain_http(&self) -> &reqwest::Client {
+        &self.http
     }
 
     pub async fn delete(&self, path: &str) -> Result<(), GraphError> {

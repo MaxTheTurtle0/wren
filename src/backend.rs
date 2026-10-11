@@ -12,7 +12,8 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 use crate::model::{
-    Access, Channel, Chat, ConversationId, Meeting, Message, Presence, Profile, SearchHit, Team,
+    Access, Availability, Channel, Chat, ConversationId, Meeting, Member, MentionRef, Message,
+    Presence, Profile, SearchHit, Team,
 };
 use crate::paths::AppDirs;
 use crate::sync::{Resource, Trigger};
@@ -97,7 +98,26 @@ pub enum Command {
         html: String,
         /// A chat message to quote, or a channel post to reply under.
         reply_to: Option<String>,
+        /// The people `<at id="n">` tags in `html` name, by index.
+        mentions: Vec<MentionRef>,
+        /// Files to upload to OneDrive and share in the message.
+        files: Vec<std::path::PathBuf>,
+        /// Who to share the files with (the chat's members' addresses).
+        recipients: Vec<String>,
     },
+    SearchPeople(String),
+    /// A one-on-one chat with one person, or a group chat with several.
+    CreateChat {
+        others: Vec<String>,
+        topic: Option<String>,
+    },
+    /// Sets (`Some`) or resets (`None`) the person's preferred availability.
+    SetAvailability(Option<Availability>),
+    SetStatusMessage(String),
+    /// The person is using Wren: keep the presence session Available.
+    PresenceActive,
+    /// Whether Wren keeps a presence session at all.
+    PresenceSession(bool),
     Edit {
         conversation: ConversationId,
         message: String,
@@ -204,6 +224,14 @@ pub enum Event {
     Loading(Resource, bool),
     /// The push relay's state.
     Push(crate::realtime::PushStatus),
+    /// Directory search results for `query`.
+    People {
+        query: String,
+        people: Vec<Member>,
+    },
+    ChatCreated(Box<Chat>),
+    /// The signed-in person's own presence.
+    MyPresence(Presence),
     /// Something the person should hear about, in plain words.
     Error(String),
 }

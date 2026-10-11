@@ -16,6 +16,8 @@ use super::{AuthStatus, Command, Event, Merge, Waker};
 use crate::auth::session::{AccountRecord, Session};
 use crate::auth::token::{self, TokenError};
 use crate::auth::{self, AuthConfig, CHANNEL_READ_SCOPE, IdClaims, loopback::Loopback};
+use crate::graph::api::Outgoing;
+use crate::graph::files::SharedFile;
 use crate::graph::{Graph, GraphError};
 use crate::model::{Access, ConversationId, Message};
 use crate::paths::AppDirs;
@@ -96,6 +98,10 @@ struct Worker {
     options: super::BackendOptions,
     relay: Option<String>,
     stop_push: Option<watch::Sender<bool>>,
+    /// Whether Wren keeps a presence session (setting), and when it last
+    /// refreshed it.
+    session_enabled: bool,
+    session_refreshed: Option<Instant>,
 }
 
 pub(super) async fn run(
@@ -120,6 +126,8 @@ pub(super) async fn run(
         options,
         relay: None,
         stop_push: None,
+        session_enabled: true,
+        session_refreshed: None,
         out: Outbox { events, waker },
         internal: internal_tx,
         config: None,
@@ -144,6 +152,7 @@ pub(super) async fn run(
         let _ = cancel.send(true);
     }
     worker.stop_push().await;
+    worker.end_presence_session().await;
 }
 
 impl Worker {
@@ -172,7 +181,32 @@ impl Worker {
                 local_id,
                 html,
                 reply_to,
-            } => self.send(conversation, local_id, html, reply_to),
+                mentions,
+                files,
+                recipients,
+            } => self.send(
+                conversation,
+                local_id,
+                Outgoing {
+                    html,
+                    mentions,
+                    files: Vec::new(),
+                },
+                reply_to,
+                files,
+                recipients,
+            ),
+            Command::SearchPeople(query) => self.search_people(query),
+            Command::CreateChat { others, topic } => self.create_chat(others, topic),
+            Command::SetAvailability(availability) => self.set_availability(availability),
+            Command::SetStatusMessage(text) => self.set_status_message(text),
+            Command::PresenceActive => self.presence_active(),
+            Command::PresenceSession(enabled) => {
+                self.session_enabled = enabled;
+                if !enabled {
+                    self.end_presence_session().await;
+                }
+            }
             Command::Edit {
                 conversation,
                 message,
@@ -450,6 +484,7 @@ impl Worker {
 
     async fn sign_out(&mut self) {
         self.stop_push().await;
+        self.end_presence_session().await;
         let Some(account) = self.account.take() else {
             self.out.send(Event::Auth(AuthStatus::SignedOut));
             return;
@@ -508,7 +543,10 @@ impl Worker {
                     ) => {
                         out.send(Event::ChannelAccess(Access::Forbidden));
                     }
-                    (Resource::Presence | Resource::Calendar, GraphError::Forbidden { .. }) => {
+                    (
+                        Resource::Presence | Resource::MyPresence | Resource::Calendar,
+                        GraphError::Forbidden { .. },
+                    ) => {
                         log::info!("{resource:?} is not permitted for this account");
                     }
                     _ => out.error(describe(&resource), &error),
@@ -608,8 +646,10 @@ impl Worker {
         &mut self,
         conversation: ConversationId,
         local_id: String,
-        html: String,
+        mut message: Outgoing,
         reply_to: Option<String>,
+        files: Vec<std::path::PathBuf>,
+        recipients: Vec<String>,
     ) {
         let Some(account) = &self.account else {
             self.out.send(Event::SendFailed {
@@ -623,14 +663,33 @@ impl Worker {
         let store = Arc::clone(&account.store);
         let out = self.out.clone();
         tokio::spawn(async move {
+            // Files first: upload, share with the conversation, reference.
+            for path in &files {
+                let name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .unwrap_or_default();
+                match share_file(&graph, &conversation, path, &recipients, &out).await {
+                    Ok(shared) => message.files.push(shared),
+                    Err(error) => {
+                        log::warn!("upload failed: {error}");
+                        out.send(Event::SendFailed {
+                            conversation,
+                            local_id,
+                            reason: format!("uploading {name} failed ({error})"),
+                        });
+                        return;
+                    }
+                }
+            }
             let result = match &conversation {
                 ConversationId::Chat(chat) => match &reply_to {
-                    Some(quoted) => graph.reply_with_quote(chat, quoted, &html).await,
-                    None => graph.send_chat_message(chat, &html).await,
+                    Some(quoted) => graph.reply_with_quote(chat, quoted, &message).await,
+                    None => graph.send_chat_message(chat, &message).await,
                 },
                 ConversationId::Channel { team, channel } => {
                     graph
-                        .send_channel_message(team, channel, reply_to.as_deref(), &html)
+                        .send_channel_message(team, channel, reply_to.as_deref(), &message)
                         .await
                 }
             };
@@ -655,6 +714,154 @@ impl Worker {
                 }
             }
         });
+    }
+
+    // -- People and presence --------------------------------------------------
+
+    fn search_people(&mut self, query: String) {
+        let Some(account) = &self.account else { return };
+        let graph = Arc::clone(&account.graph);
+        let out = self.out.clone();
+        tokio::spawn(async move {
+            match graph.search_people(&query).await {
+                Ok(people) => out.send(Event::People { query, people }),
+                Err(error) => log::info!("people search unavailable: {error}"),
+            }
+        });
+    }
+
+    fn create_chat(&mut self, others: Vec<String>, topic: Option<String>) {
+        let Some(account) = &self.account else { return };
+        let graph = Arc::clone(&account.graph);
+        let store = Arc::clone(&account.store);
+        let out = self.out.clone();
+        let me = account
+            .record
+            .id
+            .split('.')
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+        tokio::spawn(async move {
+            match graph.create_chat(&me, &others, topic.as_deref()).await {
+                Ok(chat) => {
+                    {
+                        let store = store.lock().unwrap_or_else(|p| p.into_inner());
+                        let _ = store.upsert_chat(&chat);
+                    }
+                    out.send(Event::ChatCreated(Box::new(chat)));
+                }
+                Err(error) => out.error("Starting the chat", &error),
+            }
+        });
+    }
+
+    fn set_availability(&mut self, availability: Option<crate::model::Availability>) {
+        let Some(account) = &self.account else { return };
+        let graph = Arc::clone(&account.graph);
+        let out = self.out.clone();
+        let me = account
+            .record
+            .id
+            .split('.')
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+        tokio::spawn(async move {
+            match graph.set_preferred_presence(&me, availability).await {
+                Ok(()) => {
+                    if let Ok(presence) = graph.my_presence().await {
+                        out.send(Event::MyPresence(presence));
+                    }
+                }
+                Err(error) => out.error("Setting your status", &error),
+            }
+        });
+    }
+
+    fn set_status_message(&mut self, text: String) {
+        let Some(account) = &self.account else { return };
+        let graph = Arc::clone(&account.graph);
+        let out = self.out.clone();
+        let me = account
+            .record
+            .id
+            .split('.')
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+        tokio::spawn(async move {
+            match graph.set_status_message(&me, &text).await {
+                Ok(()) => {
+                    if let Ok(presence) = graph.my_presence().await {
+                        out.send(Event::MyPresence(presence));
+                    }
+                }
+                Err(error) => out.error("Setting your status message", &error),
+            }
+        });
+    }
+
+    /// The person is using Wren. An Available presence session turns
+    /// inactive five minutes after its last refresh and Away five minutes
+    /// later, so Wren refreshes it only while someone is at the keyboard;
+    /// stepping away lets Graph mark them Away, as a Teams client would.
+    fn presence_active(&mut self) {
+        let Some(account) = &self.account else { return };
+        let (Some(config), true) = (&self.config, self.session_enabled) else {
+            return;
+        };
+        if !account
+            .graph
+            .session()
+            .has_scope(auth::PRESENCE_WRITE_SCOPE)
+        {
+            return;
+        }
+        let now = Instant::now();
+        if self
+            .session_refreshed
+            .is_some_and(|at| now.duration_since(at) < Duration::from_secs(4 * 60))
+        {
+            return;
+        }
+        self.session_refreshed = Some(now);
+        let graph = Arc::clone(&account.graph);
+        let me = account
+            .record
+            .id
+            .split('.')
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+        let client = config.client_id.clone();
+        tokio::spawn(async move {
+            if let Err(error) = graph.set_presence_session(&me, &client, false, 60).await {
+                log::info!("could not refresh the presence session: {error}");
+            }
+        });
+    }
+
+    /// Ends Wren's presence session, if it started one (at sign-out, when
+    /// turned off, and at exit).
+    async fn end_presence_session(&mut self) {
+        if self.session_refreshed.take().is_none() {
+            return;
+        }
+        let (Some(account), Some(config)) = (&self.account, &self.config) else {
+            return;
+        };
+        let me = account
+            .record
+            .id
+            .split('.')
+            .next()
+            .unwrap_or_default()
+            .to_owned();
+        let clear = account.graph.clear_presence_session(&me, &config.client_id);
+        if let Ok(Err(error)) = tokio::time::timeout(Duration::from_secs(3), clear).await {
+            log::info!("could not end the presence session: {error}");
+        }
     }
 
     fn edit(&mut self, conversation: ConversationId, message: String, html: String) {
@@ -876,6 +1083,7 @@ fn describe(resource: &Resource) -> &'static str {
         Resource::Channels(_) => "Loading channels",
         Resource::Calendar => "Loading the calendar",
         Resource::Presence => "Loading presence",
+        Resource::MyPresence => "Loading your status",
     }
 }
 
@@ -1105,8 +1313,45 @@ async fn fetch_resource(
             });
         }
         Resource::Presence => {}
+        Resource::MyPresence => {
+            let presence = graph.my_presence().await?;
+            out.send(Event::MyPresence(presence));
+        }
     }
     Ok(())
+}
+
+/// Uploads one file, shares it with the conversation, and returns the
+/// reference for the message. Sharing problems are reported but do not stop
+/// the send: the people may already have access.
+async fn share_file(
+    graph: &Graph,
+    conversation: &ConversationId,
+    path: &std::path::Path,
+    recipients: &[String],
+    out: &Outbox,
+) -> Result<SharedFile, GraphError> {
+    let item = graph.upload_file(path).await?;
+    let shared = match conversation {
+        ConversationId::Chat(_) => graph.share_with(&item.id, recipients).await,
+        ConversationId::Channel { .. } => graph.organization_link(&item.id).await,
+    };
+    if let Err(error) = shared {
+        log::warn!("sharing an upload failed: {error}");
+        out.send(Event::Error(format!(
+            "{} was uploaded, but sharing it failed; some people may not be able to open it ({error})",
+            item.name
+        )));
+    }
+    let (Some(id), Some(url)) = (item.attachment_id(), item.content_url().map(str::to_owned))
+    else {
+        return Err(GraphError::Decode);
+    };
+    Ok(SharedFile {
+        id,
+        name: item.name,
+        url,
+    })
 }
 
 /// Keeps one subscription alive while `stop` stays false: connect to the
