@@ -86,6 +86,31 @@ Ruled out for cost or rules:
    - Whether Teams web's "how do you want to join" page can be skipped with a
      documented parameter is UNVERIFIED; Wren must not rely on undocumented
      ones, so expect one extra click.
+   - **Signed in with Wren, through the browser's Microsoft session.** Wren
+     cannot hand its tokens to Teams on the web: Teams signs in with its own
+     Microsoft client, and Wren must not reuse that. Both sign-ins do share
+     Microsoft Entra's session cookie in the browser, which lets "the
+     established session be reused by other applications on the same device
+     without further prompting" [S36]. So Wren opens its own sign-in page in
+     the same browser and profile it uses for calls (today it uses the
+     default browser, which may differ). Teams on the web then signs in
+     without asking, or with one click in the account picker when the
+     browser holds several Microsoft accounts [S36]. Limits:
+     - Wren's first sign-in usually includes a consent step, where Entra
+       never offers "Stay signed in?"; that session cookie lasts "24 hours or
+       until the browser is closed" [S37]. Wren's refresh token outlives it,
+       so Teams on the web may ask once more later. Choosing "Stay signed in"
+       there makes the browser session persistent, unless Conditional Access
+       limits sessions.
+     - On managed devices, device single sign-on (Windows accounts in Edge
+       or Chrome, the Enterprise SSO plug-in on macOS) usually signs both in
+       silently anyway.
+     - Several Wren accounts: open each account's sign-in and calls in its
+       own browser profile (Chromium's `--profile-directory`), so each
+       profile holds exactly one Microsoft session (UNVERIFIED in practice).
+     - Signing out of Wren leaves the browser signed in. An optional "also
+       sign out of Microsoft in the browser" opens Entra's sign-out page,
+       which signs that browser out of every Microsoft site.
 2. **Call layout.** When Wren opens a call or meeting it:
    - opens the meeting's chat (Graph `chatType: meeting`; matched through the
      join URL Wren already reads from both the calendar and the chat);
@@ -398,3 +423,5 @@ Page → Wren:
 - [S33] https://support.microsoft.com/en-US/teams/calls-devices/connect-to-third-party-devices-in-microsoft-teams
 - [S34] https://lostdomain.notion.site/Microsoft-Teams-WebSocket-API-5c042838bc3e4731bdfe679e864ab52a (community, reverse engineered)
 - [S35] https://github.com/chromiumembedded/cef/issues/3559 (CEF builds have proprietary codecs disabled by default; patent licensing)
+- [S36] https://learn.microsoft.com/en-us/entra/identity-platform/msal-js-sso
+- [S37] https://learn.microsoft.com/en-us/entra/fundamentals/how-to-manage-stay-signed-in-prompt
