@@ -34,6 +34,31 @@ route for reference only; it is not pursued.
 | **H4** Join on your phone | Yes | Yes | Yes | A QR code of the join link; Teams mobile joins | No API at all |
 | **H5** Call controls in Wren through Teams' "third-party app API" | Teams desktop, platform support UNVERIFIED | Teams desktop | No | Mute, camera, leave, hand, reactions, blur from Wren while Teams desktop carries the call | Official, admin-controlled Teams feature for devices and plug-ins (Stream Deck) [S33], but **its protocol is not published**; only community reverse engineering exists [S34]. Excluded by Wren's "documented APIs only" rule unless the owner decides otherwise |
 
+**H6, Teams on the web inside Wren (an embedded engine):** free, since the
+call still runs in Microsoft's Teams web client, but Teams refuses embedded
+engines. Tested on macOS 27, 2026-10-11, with a minimal WKWebView host
+loading `https://teams.microsoft.com/v2/`:
+
+- With WKWebView's own user agent, Teams redirects to
+  `/v2/unsupported-browser` ("Your browser version isn't supported").
+- With the user agent claiming Safari (`Version/26.0 Safari/605.1.15`),
+  Teams continues to Microsoft's sign-in page.
+
+So on macOS it only works by pretending to be Safari, which bypasses a
+deliberate check and can break with any Teams release. A bundled Chromium
+(CEF) reports Chrome's user agent naturally, but CEF's prebuilt binaries
+ship without proprietary codecs (H.264) because of patent licensing [S35].
+Building them in needs a patent licence for distribution. It also adds a
+large download and Chromium's security updates to Wren's release duties, for
+an engine that would run a large remote web app. The engine's size barely
+matters anyway: in a call the weight is Teams web itself, the same as in a
+Chrome or Edge app window. The one plausible case is **WebView2 on
+Windows**: preinstalled and updated by Microsoft, with H.264, reporting
+itself as Edge by default, and the engine Teams desktop is built on. Whether
+Teams on the web accepts it without changes is UNVERIFIED. A native view
+also has limits inside an egui window: egui overlays cannot draw over it,
+and Wayland has no cross-toolkit child views.
+
 Ruled out for cost or rules:
 
 - **ACS Calling SDK** in any form (web page, Electron, native helpers):
@@ -372,3 +397,4 @@ Page → Wren:
 - [S32] https://learn.microsoft.com/en-us/microsoftteams/teams-client-system-requirements (Teams for web: Edge, Chrome, Firefox on Windows, macOS and Linux, Safari on macOS; "Linux users have access to Teams for Web and Teams as a progressive web app (PWA)")
 - [S33] https://support.microsoft.com/en-US/teams/calls-devices/connect-to-third-party-devices-in-microsoft-teams
 - [S34] https://lostdomain.notion.site/Microsoft-Teams-WebSocket-API-5c042838bc3e4731bdfe679e864ab52a (community, reverse engineered)
+- [S35] https://github.com/chromiumembedded/cef/issues/3559 (CEF builds have proprietary codecs disabled by default; patent licensing)
