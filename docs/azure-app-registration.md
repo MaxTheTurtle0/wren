@@ -12,8 +12,12 @@ reasons:
   ([research §11](microsoft-api-research.md#11-consent)).
 - Reusing one of Microsoft's own client IDs would breach the API terms.
 
-The registration takes about five minutes. It needs no client secret,
-because Wren is a public client using PKCE.
+The registration takes about five minutes and costs nothing. App
+registrations are part of the free tier of Entra ID that every Microsoft 365
+organisation has, and need no Azure subscription. The Graph calls Wren makes
+are not billed either: Microsoft stopped metering the Teams APIs on
+2025-08-25. It needs no client secret, because Wren is a public client using
+PKCE.
 
 ## 1. Create the registration
 
@@ -23,8 +27,9 @@ because Wren is a public client using PKCE.
    screen).
 3. **Supported account types**: *Accounts in this organizational directory
    only* (single tenant) is the simplest. Choose *any organizational
-   directory* (multi-tenant) only if you are publishing a registration for
-   other organisations.
+   directory* (multi-tenant) if you will add accounts from more than one
+   organisation, such as work and school (see
+   [Accounts in several organisations](#accounts-in-several-organisations)).
 4. **Redirect URI**: platform **Public client/native (mobile & desktop)**,
    value `http://localhost`. Entra ignores the port for `localhost`, so Wren
    can listen on any free port.
@@ -102,6 +107,23 @@ Use any of these:
 Then select **Sign in with Microsoft**. Your browser opens Microsoft's sign-in
 page. After you approve, the browser tab says "You're signed in" and Wren
 continues.
+
+## Accounts in several organisations
+
+Wren uses one registration for all its accounts. To add accounts from more
+than one organisation, for example a work account and a school account:
+
+- Register the app as multi-tenant (*Accounts in any organizational
+  directory*; `--sign-in-audience AzureADMultipleOrgs` with the Azure CLI),
+  in whichever organisation lets you, and set Wren's tenant to
+  `organizations`.
+- Each other organisation decides whether to allow it. To them it is an app
+  from another publisher. Most only let their administrator approve that,
+  and `Chat.ReadWrite` and `Calendars.Read` usually need an administrator
+  anyway. Their administrator can use
+  `https://login.microsoftonline.com/{their tenant}/adminconsent?client_id={your client ID}`.
+- Personal Microsoft accounts (Outlook.com, Teams free) cannot be added:
+  Graph's Teams APIs serve work and school accounts only.
 
 ## With the Azure CLI
 
