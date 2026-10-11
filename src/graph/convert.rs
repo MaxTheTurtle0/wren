@@ -57,7 +57,7 @@ pub fn chat(chat: g::Chat) -> Chat {
             .as_deref()
             .is_some_and(|t| t != "message")
         {
-            system_summary(None)
+            system_summary(preview.event_detail.as_ref())
         } else {
             body_text(preview.body.as_ref()).summary(140)
         };

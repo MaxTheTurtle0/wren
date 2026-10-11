@@ -32,14 +32,46 @@ impl Graph {
 
     /// `GET /me/chats` with members and the newest message, newest activity
     /// first (Chat.ReadWrite). Follows up to `pages` pages of 50.
+    ///
+    /// Graph documents both expansions but no example combines them; if it
+    /// refuses the combination, the members and the previews are fetched in
+    /// two listings and joined by chat id.
     pub async fn chats(&self, pages: usize) -> Result<Vec<Chat>, GraphError> {
-        let mut url = format!(
+        let combined = format!(
             "me/chats?$expand=members,lastMessagePreview&$orderby=lastMessagePreview/createdDateTime%20desc&$top={PAGE}"
         );
+        match self.chat_pages(&combined, pages).await {
+            Err(GraphError::Http { status: 400, .. }) => {}
+            other => return other.map(|chats| chats.into_iter().map(convert::chat).collect()),
+        }
+        log::info!(
+            "Graph refused the combined chat listing; listing members and previews separately"
+        );
+        let mut previews = self
+            .chat_pages(
+                &format!("me/chats?$expand=lastMessagePreview&$orderby=lastMessagePreview/createdDateTime%20desc&$top={PAGE}"),
+                pages,
+            )
+            .await?;
+        let members = self
+            .chat_pages(&format!("me/chats?$expand=members&$top={PAGE}"), pages + 2)
+            .await?;
+        let mut members: std::collections::HashMap<String, Vec<g::ConversationMember>> = members
+            .into_iter()
+            .filter_map(|chat| Some((chat.id, chat.members?)))
+            .collect();
+        for chat in &mut previews {
+            chat.members = members.remove(&chat.id);
+        }
+        Ok(previews.into_iter().map(convert::chat).collect())
+    }
+
+    async fn chat_pages(&self, first: &str, pages: usize) -> Result<Vec<g::Chat>, GraphError> {
+        let mut url = first.to_owned();
         let mut chats = Vec::new();
         for _ in 0..pages.max(1) {
             let page: g::Page<g::Chat> = self.get(&url).await?;
-            chats.extend(page.value.into_iter().map(convert::chat));
+            chats.extend(page.value);
             match page.next_link {
                 Some(next) => url = next,
                 None => break,
@@ -499,6 +531,42 @@ mod tests {
         let chats = graph(&server).await.chats(3).await.unwrap();
         assert_eq!(chats.len(), 2);
         assert_eq!(chats[1].topic.as_deref(), Some("Launch"));
+    }
+
+    #[tokio::test]
+    async fn chats_fall_back_to_two_listings() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/me/chats"))
+            .and(query_param("$expand", "members,lastMessagePreview"))
+            .respond_with(
+                ResponseTemplate::new(400).set_body_json(json!({"error": {"code": "BadRequest"}})),
+            )
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/me/chats"))
+            .and(query_param("$expand", "lastMessagePreview"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"value": [{
+                "id": "19:a@unq.gbl.spaces", "chatType": "oneOnOne",
+                "lastMessagePreview": {"id": "1", "createdDateTime": "2026-10-11T10:00:00Z",
+                    "body": {"contentType": "text", "content": "hi"}, "from": {"user": {"id": "u-ada", "displayName": "Ada"}}}
+            }]})))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/me/chats"))
+            .and(query_param("$expand", "members"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"value": [{
+                "id": "19:a@unq.gbl.spaces", "chatType": "oneOnOne",
+                "members": [{"userId": "u-ada", "displayName": "Ada"}, {"userId": "u-me", "displayName": "Me"}]
+            }]})))
+            .mount(&server)
+            .await;
+        let chats = graph(&server).await.chats(1).await.unwrap();
+        assert_eq!(chats.len(), 1);
+        assert_eq!(chats[0].title("u-me"), "Ada");
+        assert_eq!(chats[0].preview.as_ref().unwrap().text, "hi");
     }
 
     #[tokio::test]

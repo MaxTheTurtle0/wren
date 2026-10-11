@@ -73,8 +73,12 @@ endpoints that use it.
 
 Use any of these:
 
-- On Wren's welcome screen, enter the client ID and tenant (your tenant ID or
-  domain, or `organizations`), then select **Save**.
+- On Wren's welcome screen, enter the client ID and the tenant, then select
+  **Save**. For a single-tenant registration (the default above) the tenant
+  **must** be your directory (tenant) ID or a verified domain such as
+  `contoso.onmicrosoft.com`. `organizations` only works for multi-tenant
+  registrations; with a single-tenant one, Entra answers AADSTS50059 or
+  AADSTS50194.
 - Set them in the environment:
 
   ```sh
@@ -119,6 +123,7 @@ az ad app permission admin-consent --id $APP
 |---|---|
 | AADSTS50011 | The redirect URI is missing: add `http://localhost` under *Mobile and desktop applications*. |
 | AADSTS700016 | The client ID is wrong, or the registration lives in another tenant. Check the tenant setting. |
+| AADSTS50059, AADSTS50194 | A single-tenant registration used with `organizations`: set the tenant to your tenant ID or domain. |
 | AADSTS65001, AADSTS90094 | Consent is missing; an administrator must grant it. |
 | AADSTS7000218 | Device code sign-in needs *Allow public client flows*. |
 | AADSTS50173, AADSTS70043 | The session expired (password change, revoked sessions). Sign in again. |

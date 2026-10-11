@@ -178,6 +178,9 @@ fn refusal_text(error: &str, description: Option<&str>) -> String {
         (_, Some("AADSTS700016")) => {
             "The application (client) ID was not found in this tenant. Check Wren's app registration settings.".to_owned()
         }
+        (_, Some("AADSTS50059" | "AADSTS50194" | "AADSTS90002")) => {
+            "Microsoft could not find the app registration for this tenant. For a single-tenant registration, set the tenant to your tenant ID or domain.".to_owned()
+        }
         (_, Some("AADSTS50011")) => {
             "The app registration has no matching redirect URI. Add http://localhost under 'Mobile and desktop applications'.".to_owned()
         }

@@ -19,7 +19,7 @@ use crate::auth::{self, AuthConfig, CHANNEL_READ_SCOPE, IdClaims, loopback::Loop
 use crate::graph::{Graph, GraphError};
 use crate::model::{Access, ConversationId, Message};
 use crate::paths::AppDirs;
-use crate::secrets::{NativeStore, SecretStore};
+use crate::secrets::SecretStore;
 use crate::store::Store;
 use crate::sync::{Freshness, Resource, Trigger};
 
@@ -88,10 +88,12 @@ struct Worker {
     /// Channel paging links, by conversation.
     older_links: Arc<Mutex<HashMap<ConversationId, String>>>,
     downloads: Arc<Semaphore>,
+    options: super::BackendOptions,
 }
 
 pub(super) async fn run(
     dirs: AppDirs,
+    options: super::BackendOptions,
     events: std::sync::mpsc::Sender<Event>,
     mut commands: mpsc::UnboundedReceiver<Command>,
     waker: Waker,
@@ -107,7 +109,8 @@ pub(super) async fn run(
     let mut worker = Worker {
         dirs,
         http,
-        secrets: Arc::new(NativeStore::default()),
+        secrets: Arc::clone(&options.secrets),
+        options,
         out: Outbox { events, waker },
         internal: internal_tx,
         config: None,
@@ -210,7 +213,10 @@ impl Worker {
             self.out.send(Event::Auth(AuthStatus::NotConfigured));
             return;
         }
-        let config = AuthConfig::new(&client_id, &tenant);
+        let config = AuthConfig {
+            authority: self.options.authority.clone(),
+            ..AuthConfig::new(&client_id, &tenant)
+        };
         let changed = self.config.as_ref() != Some(&config);
         self.config = Some(config.clone());
         if !changed && self.account.is_some() {
@@ -253,7 +259,11 @@ impl Worker {
                 self.out
                     .send(Event::ChannelAccess(channel_access(&session)));
                 self.account = Some(Account {
-                    graph: Arc::new(Graph::new(self.http.clone(), session)),
+                    graph: Arc::new(Graph::with_base(
+                        self.http.clone(),
+                        session,
+                        &self.options.graph_base,
+                    )),
                     record: record.clone(),
                     store,
                 });
@@ -298,11 +308,21 @@ impl Worker {
         let secrets = Arc::clone(&self.secrets);
         let out = self.out.clone();
         let internal = self.internal.clone();
+        let open_browser = self.options.open_browser;
         tokio::spawn(async move {
             let result = if device_code {
                 device_code_sign_in(&http, &config, &extra, &out, cancelled).await
             } else {
-                browser_sign_in(&http, &config, &extra, hint.as_deref(), &out, cancelled).await
+                browser_sign_in(
+                    &http,
+                    &config,
+                    &extra,
+                    hint.as_deref(),
+                    &out,
+                    cancelled,
+                    open_browser,
+                )
+                .await
             };
             let outcome = match result {
                 Ok(response) => Session::from_sign_in(config, http, secrets, response)
@@ -349,7 +369,11 @@ impl Worker {
         self.out
             .send(Event::ChannelAccess(channel_access(&session)));
         self.account = Some(Account {
-            graph: Arc::new(Graph::new(self.http.clone(), session)),
+            graph: Arc::new(Graph::with_base(
+                self.http.clone(),
+                session,
+                &self.options.graph_base,
+            )),
             record: record.clone(),
             store: Arc::clone(&store),
         });
@@ -1015,13 +1039,14 @@ async fn browser_sign_in(
     hint: Option<&str>,
     out: &Outbox,
     cancelled: watch::Receiver<bool>,
+    open_browser: bool,
 ) -> Result<token::TokenResponse, String> {
     let loopback = Loopback::bind().await.map_err(|e| e.to_string())?;
     let flow = auth::begin_browser(config, loopback.port(), extra, hint, !extra.is_empty());
     out.send(Event::Auth(AuthStatus::WaitingForBrowser {
         url: flow.url.clone(),
     }));
-    if let Err(error) = open::that_detached(&flow.url) {
+    if open_browser && let Err(error) = open::that_detached(&flow.url) {
         log::warn!("could not open the browser: {error}");
     }
     let code = loopback

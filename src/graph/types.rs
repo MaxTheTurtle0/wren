@@ -73,6 +73,7 @@ pub struct ChatMessageInfo {
     pub created_date_time: Option<String>,
     pub is_deleted: Option<bool>,
     pub message_type: Option<String>,
+    pub event_detail: Option<serde_json::Value>,
     pub body: Option<ItemBody>,
     pub from: Option<IdentitySet>,
 }

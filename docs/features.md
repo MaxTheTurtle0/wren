@@ -79,6 +79,18 @@ Tested and run:
   `Retry-After`, refusing to send tokens to foreign hosts, every write
   endpoint.
 - The cache: ordering, FTS5, diacritics, permissions.
+- **The whole backend end to end** (`tests/backend_flow.rs`), against local
+  stand-ins for Entra ID and Graph:
+  - the browser sign-in through Wren's real loopback redirect, with PKCE;
+  - the token exchange, chat listing, message history and sending;
+  - a restart that restores the session from the credential store and shows
+    the cache before any request;
+  - refresh-token rotation;
+  - sign-out deleting the token and the cache.
+- Wren's requests against Microsoft's real token endpoint, with an
+  unregistered client ID. Entra parsed them and answered with the expected
+  AADSTS codes, which Wren now explains (single-tenant registrations need the
+  tenant set).
 - Model translation from Graph-shaped JSON.
 - Headless UI frames for every screen, including a 5,000-message
   conversation.

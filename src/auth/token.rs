@@ -90,6 +90,9 @@ fn classify(status: reqwest::StatusCode, body: &str) -> TokenError {
         (_, Some("AADSTS700016")) => TokenError::Rejected(format!(
             "The application (client) ID was not found. Check Wren's app registration settings{suffix}."
         )),
+        (_, Some("AADSTS50059" | "AADSTS50194" | "AADSTS90002")) => TokenError::Rejected(format!(
+            "Microsoft could not find the app registration for this tenant. For a single-tenant registration, set the tenant to your tenant ID or domain instead of 'organizations'{suffix}."
+        )),
         ("invalid_grant", _) => TokenError::Rejected(format!(
             "Your Microsoft session expired. Sign in again{suffix}."
         )),
@@ -358,6 +361,26 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(outage, TokenError::Unreachable(_)));
+    }
+
+    #[tokio::test]
+    async fn single_tenant_registrations_ask_for_the_tenant() {
+        // What login.microsoftonline.com answered on 2026-10-11 for a client
+        // ID that no multi-tenant registration has, with `organizations`.
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .respond_with(ResponseTemplate::new(400).set_body_json(serde_json::json!({
+                "error": "invalid_request", "error_codes": [50059],
+                "error_description": "AADSTS50059: No tenant-identifying information found in either the request or implied by any provided credentials."
+            })))
+            .mount(&server)
+            .await;
+        let error = start_device_code(&reqwest::Client::new(), &config(&server), "openid")
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(error, TokenError::Rejected(text) if text.contains("tenant ID or domain") && text.contains("AADSTS50059"))
+        );
     }
 
     #[tokio::test]

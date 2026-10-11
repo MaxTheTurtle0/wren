@@ -204,6 +204,29 @@ pub enum Event {
     Error(String),
 }
 
+/// Where the backend signs in and fetches from, and where it keeps secrets.
+/// The defaults are Microsoft's endpoints and the OS credential store; tests
+/// point them at local mock servers and an in-memory store.
+#[derive(Clone)]
+pub struct BackendOptions {
+    pub authority: String,
+    pub graph_base: String,
+    pub secrets: std::sync::Arc<dyn crate::secrets::SecretStore>,
+    /// Open the system browser for sign-in (off in tests).
+    pub open_browser: bool,
+}
+
+impl Default for BackendOptions {
+    fn default() -> Self {
+        Self {
+            authority: crate::auth::DEFAULT_AUTHORITY.to_owned(),
+            graph_base: crate::graph::GRAPH_BASE.to_owned(),
+            secrets: std::sync::Arc::new(crate::secrets::NativeStore::default()),
+            open_browser: true,
+        }
+    }
+}
+
 pub struct Backend {
     commands: mpsc::UnboundedSender<Command>,
     events: std::sync::mpsc::Receiver<Event>,
@@ -213,6 +236,10 @@ pub struct Backend {
 
 impl Backend {
     pub fn spawn(dirs: AppDirs, waker: Waker) -> Self {
+        Self::spawn_with(dirs, waker, BackendOptions::default())
+    }
+
+    pub fn spawn_with(dirs: AppDirs, waker: Waker, options: BackendOptions) -> Self {
         let (command_tx, command_rx) = mpsc::unbounded_channel();
         let (event_tx, event_rx) = std::sync::mpsc::channel();
         let runtime = tokio::runtime::Builder::new_multi_thread()
@@ -224,7 +251,7 @@ impl Backend {
         let thread = std::thread::Builder::new()
             .name("wren-backend".into())
             .spawn(move || {
-                runtime.block_on(worker::run(dirs, event_tx, command_rx, waker));
+                runtime.block_on(worker::run(dirs, options, event_tx, command_rx, waker));
                 runtime.shutdown_timeout(Duration::from_secs(2));
             })
             .expect("unable to start the backend thread");

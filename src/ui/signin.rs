@@ -212,9 +212,16 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
             .font(theme::medium(12.0))
             .color(palette.secondary),
     );
+    ui.label(
+        egui::RichText::new(
+            "Your tenant ID or domain. Use 'organizations' only for a multi-tenant registration.",
+        )
+        .font(theme::regular(11.0))
+        .color(palette.dim),
+    );
     ui.add(
         egui::TextEdit::singleline(&mut app.form_tenant)
-            .hint_text("organizations, or your tenant's ID or domain")
+            .hint_text("Your tenant ID or domain, e.g. contoso.onmicrosoft.com")
             .desired_width(f32::INFINITY)
             .margin(Margin::symmetric(8, 6)),
     );
