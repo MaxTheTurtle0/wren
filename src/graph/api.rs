@@ -251,11 +251,10 @@ impl Graph {
         .await
     }
 
-    /// `GET /me/joinedTeams` (Team.ReadBasic.All).
+    /// `GET /me/joinedTeams` (Team.ReadBasic.All). The endpoint takes no
+    /// OData parameters, so nothing is selected or filtered here.
     pub async fn joined_teams(&self) -> Result<Vec<Team>, GraphError> {
-        let page: g::Page<g::Team> = self
-            .get("me/joinedTeams?$select=id,displayName,description,webUrl")
-            .await?;
+        let page: g::Page<g::Team> = self.get("me/joinedTeams").await?;
         let mut teams: Vec<Team> = page.value.into_iter().map(convert::team).collect();
         teams.sort_by_key(|team| team.name.to_lowercase());
         Ok(teams)
