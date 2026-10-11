@@ -32,7 +32,8 @@ Roughly in order. Each step lands as its own focused change with tests.
 
 Calls cost nothing extra, so they stay in Microsoft's own clients and Wren
 integrates around them. The comparison is in
-[video-calling-options.md](video-calling-options.md).
+[video-calling-options.md](video-calling-options.md); the design draft is
+[call-window.md](call-window.md).
 
 1. A setting for where calls open: Teams desktop, Teams on the web in a
    Chrome or Edge app window (default on Linux), or the browser.

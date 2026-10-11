@@ -75,6 +75,8 @@ Ruled out for cost or rules:
 
 ### Recommended free plan
 
+The detailed design is drafted in [call-window.md](call-window.md).
+
 1. **Choose where calls open** (setting, per platform default):
    - Teams app, when installed (today's behaviour).
    - Teams on the web in an app window: Wren starts Chrome or Edge with
