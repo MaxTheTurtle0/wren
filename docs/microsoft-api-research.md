@@ -191,6 +191,14 @@ See [calling.md](calling.md) for the full write-up. In short:
   Edge send 3-layer simulcast by default. The Windows 2.0.0 and iOS 3.0.0
   licence files say "pre-release" and grant no right to distribute; the npm
   Web SDK 2.0.0 allows it with conditions.
+- Microsoft's pricing page: a Teams user's licence covers calls and meetings
+  "via built-in experience in Teams web, desktop, and mobile clients" and
+  "does not cover the usage generated in third-party Teams extensions and
+  Teams apps" [R64]. Teams desktop is no longer supported on Linux; Linux
+  users have Teams on the web and the Teams PWA.
+- Teams desktop has a "third-party app API" for devices and plug-ins (mute,
+  camera, leave, hand, reactions, blur), enabled by an admin policy and
+  approved per device by the person. Microsoft publishes no protocol for it.
 
 ## 8. Search
 

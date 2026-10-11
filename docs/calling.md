@@ -78,35 +78,37 @@ because calendar invitations can carry anyone's links.
 
 ## Paths forward
 
-The full comparison, with performance techniques, a prototype plan and
-sources, is in [video-calling-options.md](video-calling-options.md).
+Calls must cost nothing beyond the Microsoft 365 licence people already have.
+Microsoft's licence covers calls only in its own clients (Teams web, desktop
+and mobile); a third-party client carrying call media is billed through ACS
+per participant-minute. So the call itself stays in a Microsoft client, and
+Wren integrates around it. The comparison and sources are in
+[video-calling-options.md](video-calling-options.md).
 
-1. **Now (implemented):** hand off through deep links. This works on every
-   platform with no Azure resources, and the person keeps Teams' calling
-   quality and features.
-2. **macOS and Linux (planned): a call window driven by Wren.** Wren serves a
-   small page with the ACS Web SDK from a fixed loopback origin and opens it
-   as a chrome-less app window in Chrome or Edge (Safari as the fallback).
-   Call controls, the roster and incoming-call prompts stay in Wren's egui
-   interface and drive the page over a loopback WebSocket. The browser
-   decodes and composites video with hardware H.264, and Chrome and Edge send
-   simulcast, so Wren itself stays idle during calls. It needs an ACS
-   resource, a token exchange (planned in `wren-relay`) and consent for the
-   ACS scopes.
-3. **Windows (research): a native helper.** A small C# WinUI 3 app on the ACS
-   Windows SDK, speaking the same protocol, with video rendered by Media
-   Foundation. Calling the SDK directly from Rust is not practical: 2.0.0 has
-   no WinRT metadata and needs package identity.
-4. **Not planned:** drawing remote video inside egui (it would end Wren's
-   idle-at-zero during calls), the iOS SDK on the Mac, and any own WebRTC
-   stack talking to Teams.
-5. **Watch:** whether Microsoft documents delegated calling in Graph, or a
-   native macOS or Linux SDK. `calling::CallBackend` is the seam where an
-   in-app backend plugs in without changing the interface.
+1. **Now (implemented):** hand off through deep links to Teams desktop, or
+   Teams on the web.
+2. **Planned: choose where calls open.** Teams desktop, or Teams on the web
+   in a chrome-less Chrome or Edge app window (`--app`), or the default
+   browser. Teams on the web is the default on Linux, where Microsoft no
+   longer ships a desktop client.
+3. **Planned: Wren as the call companion.** Opening a call or meeting opens
+   its chat in Wren, docks Wren's window beside the call, and shows a slim
+   call bar with "Back to the call". Your own presence (`InACall`,
+   `InAMeeting`, `Presenting`) tells Wren a call is running, also for calls
+   started elsewhere. A QR code joins on your phone.
+4. **Owner decision:** in-call buttons (mute, camera, leave) in Wren through
+   Teams desktop's third-party app API. Free and approved by the person, but
+   its protocol is not published.
+5. **Not pursued:** the ACS Calling SDK (it costs per minute), Teams web in
+   an embedded webview, an own WebRTC stack, and drawing call video in egui.
+6. **Watch:** whether Microsoft documents delegated calling in Graph, a
+   native macOS or Linux SDK covered by the Teams licence, or the
+   third-party app API's protocol. `calling::CallBackend` is the seam where
+   an in-app backend plugs in without changing the interface.
 
 ## Microphone, camera and screen sharing
 
-These only become relevant once Wren hosts calls (path 2 or 3). On
+These only become relevant if Wren ever carries call media itself, which no free path allows today. On
 macOS, the bundle would then need `NSMicrophoneUsageDescription`,
 `NSCameraUsageDescription` and Screen Recording permission. The current
 bundle declares none, because Wren 0.1 never touches those devices.

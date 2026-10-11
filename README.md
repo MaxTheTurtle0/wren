@@ -47,7 +47,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Audio and video calls | ↗ Hand-off to Teams via deep links ([why](docs/calling.md)) |
 | Real-time updates | ✅ On open, focus and refresh. 🧪 Push through a self-hostable `wren-relay` (experimental), since Microsoft forbids polling ([why](docs/realtime.md)) |
 | Multiple accounts, setting your availability and status message | ✅ Implemented |
-| In-app calling, incoming calls, screen sharing | ❌ No official API for native desktop apps. 🗓 Planned through Azure Communication Services ([options](docs/video-calling-options.md)) |
+| In-app calling, incoming calls, screen sharing | ❌ No free official way: Microsoft's licence covers calls only in its own clients. 🗓 Planned: calls in a Teams web app window with Wren as the companion ([options](docs/video-calling-options.md)) |
 
 The full matrix, including what was verified and how, is in
 [docs/features.md](docs/features.md). The Microsoft API investigation behind
@@ -137,11 +137,11 @@ the egui and winit forks shared with Spotifast and ZapFast.
 ## Known Microsoft API limitations
 
 - **Calling.** Graph's calling API is application-only and meant for bots;
-  nothing lets a third-party desktop app call as the signed-in person. Azure
-  Communication Services can, but needs an Azure resource and a backend, and
-  has no native macOS or Linux SDK. Microsoft announced its retirement as a
-  standalone offering for 2028, with Teams interop unaffected. Wren hands
-  calls and meetings off to Teams ([details](docs/calling.md)).
+  nothing lets a third-party desktop app call as the signed-in person for
+  free. Azure Communication Services can, but bills every participant-minute
+  to an Azure resource, since the Teams licence covers calls only in
+  Microsoft's own clients. Wren hands calls and meetings off to Teams, on the
+  desktop or the web ([details](docs/calling.md)).
 - **Real-time.** Polling Graph for Teams changes more than once a day breaks
   the Microsoft APIs Terms of Use. Push needs a public webhook, Event Hubs or
   Event Grid. Wren refreshes when you look. For push, you run the small

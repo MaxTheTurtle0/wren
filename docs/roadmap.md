@@ -30,15 +30,13 @@ Roughly in order. Each step lands as its own focused change with tests.
 
 ## Calling
 
-The plan, with measurements and acceptance criteria, is in
+Calls cost nothing extra, so they stay in Microsoft's own clients and Wren
+integrates around them. The comparison is in
 [video-calling-options.md](video-calling-options.md).
 
-0. Token exchange in `wren-relay`, an ACS resource, and a licence review of
-   the Calling SDKs.
-1. macOS: a call window from the ACS Web SDK, served by Wren on loopback and
-   opened as a Chrome or Edge app window, with call controls in Wren. Meeting
-   join and 1:1 calls.
-2. Picture-in-picture, an opt-in resident agent for incoming calls, screen
-   sharing, Linux.
-3. Windows: a native C# WinUI 3 helper on the ACS Windows SDK, measured
-   against the web path.
+1. A setting for where calls open: Teams desktop, Teams on the web in a
+   Chrome or Edge app window (default on Linux), or the browser.
+2. Call companion: the meeting's chat opens in Wren, Wren docks beside the
+   call window, and a call bar offers "Back to the call".
+3. Call awareness from your own presence (on focus, and pushed through the
+   relay), and a QR code to join on your phone.

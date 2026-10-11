@@ -50,7 +50,7 @@ Status as of Wren 0.1 (unreleased).
 | Meeting reminders | Works | 5 minutes before, from the cached calendar (no network) |
 | Start audio or video call | Hand-off | Teams deep link; Teams asks to confirm |
 | Join by pasted link | Hand-off | Teams hosts only |
-| Incoming calls, in-app audio, video, screen sharing, participants | Not possible yet | Graph calling is application-only (bots); needs Azure Communication Services. See [calling.md](calling.md) |
+| Incoming calls, in-app audio, video, screen sharing, participants | Not possible at no cost | Graph calling is application-only (bots). Microsoft's licence covers call media only in its own clients; Azure Communication Services bills per participant-minute. Calls stay in Teams, with Wren as the companion (planned). See [calling.md](calling.md) |
 
 ## People and app
 
