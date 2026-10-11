@@ -1,0 +1,640 @@
+//! The Graph endpoints Wren uses, each with the delegated permission it
+//! needs. docs/permissions.md lists them for administrators.
+
+use serde_json::json;
+
+use super::types as g;
+use super::{Graph, GraphError, convert, segment};
+use crate::model::{
+    Channel, Chat, ConversationId, Meeting, Message, Presence, Profile, SearchHit, Team,
+};
+
+/// Graph's page size limit for chats and messages.
+pub const PAGE: usize = 50;
+/// Avatars and inline images larger than this are not downloaded.
+pub const MEDIA_LIMIT: usize = 8 * 1024 * 1024;
+
+/// A page of messages, newest first, and the link to the older ones.
+#[derive(Debug, Default)]
+pub struct MessagePage {
+    pub messages: Vec<Message>,
+    pub older: Option<String>,
+}
+
+impl Graph {
+    /// `GET /me` (User.Read).
+    pub async fn me(&self, tenant_id: Option<String>) -> Result<Profile, GraphError> {
+        let user: g::User = self
+            .get("me?$select=id,displayName,mail,userPrincipalName,jobTitle")
+            .await?;
+        Ok(convert::profile(user, tenant_id))
+    }
+
+    /// `GET /me/chats` with members and the newest message, newest activity
+    /// first (Chat.ReadWrite). Follows up to `pages` pages of 50.
+    pub async fn chats(&self, pages: usize) -> Result<Vec<Chat>, GraphError> {
+        let mut url = format!(
+            "me/chats?$expand=members,lastMessagePreview&$orderby=lastMessagePreview/createdDateTime%20desc&$top={PAGE}"
+        );
+        let mut chats = Vec::new();
+        for _ in 0..pages.max(1) {
+            let page: g::Page<g::Chat> = self.get(&url).await?;
+            chats.extend(page.value.into_iter().map(convert::chat));
+            match page.next_link {
+                Some(next) => url = next,
+                None => break,
+            }
+        }
+        Ok(chats)
+    }
+
+    /// One chat, for a chat Wren has not listed yet (Chat.ReadWrite).
+    pub async fn chat(&self, chat: &str) -> Result<Chat, GraphError> {
+        let raw: g::Chat = self
+            .get(&format!(
+                "chats/{}?$expand=members,lastMessagePreview",
+                segment(chat)
+            ))
+            .await?;
+        Ok(convert::chat(raw))
+    }
+
+    /// A chat's newest messages, or the 50 created before `before`
+    /// (Chat.ReadWrite). The cursor is a timestamp, so paging back works
+    /// from the cache too.
+    pub async fn chat_messages(
+        &self,
+        chat: &str,
+        before: Option<i64>,
+    ) -> Result<MessagePage, GraphError> {
+        let conversation = ConversationId::Chat(chat.to_owned());
+        let mut url = format!(
+            "chats/{}/messages?$top={PAGE}&$orderby=createdDateTime%20desc",
+            segment(chat)
+        );
+        if let Some(before) = before {
+            url.push_str(&format!(
+                "&$filter=createdDateTime%20lt%20{}",
+                crate::time::to_iso(before)
+            ));
+        }
+        let page: g::Page<g::ChatMessage> = self.get(&url).await?;
+        Ok(MessagePage {
+            messages: page
+                .value
+                .into_iter()
+                .map(|m| convert::message(m, Some(&conversation)))
+                .collect(),
+            older: page.next_link,
+        })
+    }
+
+    /// Messages created, edited, reacted to or deleted after `since`: the
+    /// date-ranged refresh the Teams API's polling rules ask for
+    /// (Chat.ReadWrite).
+    pub async fn chat_changes(&self, chat: &str, since: i64) -> Result<Vec<Message>, GraphError> {
+        let conversation = ConversationId::Chat(chat.to_owned());
+        let since = crate::time::to_iso(since);
+        let mut url = format!(
+            "chats/{}/messages?$top={PAGE}&$orderby=lastModifiedDateTime%20desc&$filter=lastModifiedDateTime%20gt%20{since}",
+            segment(chat)
+        );
+        let mut messages = Vec::new();
+        // A burst larger than a few pages is reloaded as a fresh page instead.
+        for _ in 0..4 {
+            let page: g::Page<g::ChatMessage> = self.get(&url).await?;
+            messages.extend(
+                page.value
+                    .into_iter()
+                    .map(|m| convert::message(m, Some(&conversation))),
+            );
+            match page.next_link {
+                Some(next) => url = next,
+                None => break,
+            }
+        }
+        Ok(messages)
+    }
+
+    /// `POST /chats/{id}/messages` (ChatMessage.Send).
+    pub async fn send_chat_message(&self, chat: &str, html: &str) -> Result<Message, GraphError> {
+        let raw: g::ChatMessage = self
+            .post(
+                &format!("chats/{}/messages", segment(chat)),
+                &json!({ "body": { "contentType": "html", "content": html } }),
+            )
+            .await?;
+        Ok(convert::message(
+            raw,
+            Some(&ConversationId::Chat(chat.to_owned())),
+        ))
+    }
+
+    /// `POST /chats/{id}/messages/replyWithQuote` (ChatMessage.Send).
+    pub async fn reply_with_quote(
+        &self,
+        chat: &str,
+        quoted: &str,
+        html: &str,
+    ) -> Result<Message, GraphError> {
+        let raw: g::ChatMessage = self
+            .post(
+                &format!("chats/{}/messages/replyWithQuote", segment(chat)),
+                &json!({
+                    "messageIds": [quoted],
+                    "replyMessage": { "body": { "contentType": "html", "content": html } }
+                }),
+            )
+            .await?;
+        Ok(convert::message(
+            raw,
+            Some(&ConversationId::Chat(chat.to_owned())),
+        ))
+    }
+
+    /// `PATCH` a message's body: chats need Chat.ReadWrite, channels
+    /// ChannelMessage.ReadWrite (admin consent).
+    pub async fn edit_message(
+        &self,
+        conversation: &ConversationId,
+        message: &str,
+        html: &str,
+    ) -> Result<(), GraphError> {
+        self.patch(
+            &message_path(conversation, message),
+            &json!({ "body": { "contentType": "html", "content": html } }),
+        )
+        .await
+    }
+
+    /// `softDelete` (Chat.ReadWrite; channels need ChannelMessage.ReadWrite).
+    pub async fn delete_message(
+        &self,
+        me: &str,
+        conversation: &ConversationId,
+        message: &str,
+    ) -> Result<(), GraphError> {
+        let path = match conversation {
+            ConversationId::Chat(chat) => format!(
+                "users/{}/chats/{}/messages/{}/softDelete",
+                segment(me),
+                segment(chat),
+                segment(message)
+            ),
+            ConversationId::Channel { .. } => {
+                format!("{}/softDelete", message_path(conversation, message))
+            }
+        };
+        self.post_no_content(&path, &json!({})).await
+    }
+
+    /// `setReaction` / `unsetReaction` with a Unicode emoji
+    /// (ChatMessage.Send, ChannelMessage.Send).
+    pub async fn react(
+        &self,
+        conversation: &ConversationId,
+        message: &str,
+        emoji: &str,
+        on: bool,
+    ) -> Result<(), GraphError> {
+        let action = if on { "setReaction" } else { "unsetReaction" };
+        self.post_no_content(
+            &format!("{}/{action}", message_path(conversation, message)),
+            &json!({ "reactionType": emoji }),
+        )
+        .await
+    }
+
+    /// `markChatReadForUser` (Chat.ReadWrite).
+    pub async fn mark_chat_read(
+        &self,
+        chat: &str,
+        me: &str,
+        tenant: &str,
+    ) -> Result<(), GraphError> {
+        self.post_no_content(
+            &format!("chats/{}/markChatReadForUser", segment(chat)),
+            &json!({ "user": { "id": me, "tenantId": tenant } }),
+        )
+        .await
+    }
+
+    /// `GET /me/joinedTeams` (Team.ReadBasic.All).
+    pub async fn joined_teams(&self) -> Result<Vec<Team>, GraphError> {
+        let page: g::Page<g::Team> = self
+            .get("me/joinedTeams?$select=id,displayName,description,webUrl")
+            .await?;
+        let mut teams: Vec<Team> = page.value.into_iter().map(convert::team).collect();
+        teams.sort_by_key(|team| team.name.to_lowercase());
+        Ok(teams)
+    }
+
+    /// `GET /teams/{id}/allChannels`, shared channels included
+    /// (Channel.ReadBasic.All).
+    pub async fn channels(&self, team: &str) -> Result<Vec<Channel>, GraphError> {
+        let page: g::Page<g::Channel> = self
+            .get(&format!(
+                "teams/{}/allChannels?$select=id,displayName,description,membershipType,webUrl",
+                segment(team)
+            ))
+            .await?;
+        let mut channels: Vec<Channel> = page
+            .value
+            .into_iter()
+            .map(|c| convert::channel(c, team))
+            .collect();
+        // General first, as Teams lists it, then by name.
+        channels.sort_by_key(|channel| (channel.name != "General", channel.name.to_lowercase()));
+        Ok(channels)
+    }
+
+    /// A channel's newest posts with their replies (ChannelMessage.Read.All,
+    /// which needs admin consent).
+    pub async fn channel_messages(
+        &self,
+        team: &str,
+        channel: &str,
+        older: Option<&str>,
+    ) -> Result<MessagePage, GraphError> {
+        let conversation = ConversationId::Channel {
+            team: team.to_owned(),
+            channel: channel.to_owned(),
+        };
+        let url = match older {
+            Some(link) => link.to_owned(),
+            None => format!(
+                "teams/{}/channels/{}/messages?$top=25&$expand=replies",
+                segment(team),
+                segment(channel)
+            ),
+        };
+        let page: g::Page<g::ChatMessage> = self.get(&url).await?;
+        Ok(MessagePage {
+            messages: page
+                .value
+                .into_iter()
+                .map(|m| convert::message(m, Some(&conversation)))
+                .collect(),
+            older: page.next_link,
+        })
+    }
+
+    /// A post's replies (ChannelMessage.Read.All).
+    pub async fn channel_replies(
+        &self,
+        team: &str,
+        channel: &str,
+        root: &str,
+    ) -> Result<Vec<Message>, GraphError> {
+        let conversation = ConversationId::Channel {
+            team: team.to_owned(),
+            channel: channel.to_owned(),
+        };
+        let page: g::Page<g::ChatMessage> = self
+            .get(&format!(
+                "teams/{}/channels/{}/messages/{}/replies?$top={PAGE}",
+                segment(team),
+                segment(channel),
+                segment(root)
+            ))
+            .await?;
+        let mut replies: Vec<Message> = page
+            .value
+            .into_iter()
+            .map(|m| convert::message(m, Some(&conversation)))
+            .collect();
+        replies.sort_by_key(|m| m.created);
+        Ok(replies)
+    }
+
+    /// A new post, or a reply to `root` (ChannelMessage.Send).
+    pub async fn send_channel_message(
+        &self,
+        team: &str,
+        channel: &str,
+        root: Option<&str>,
+        html: &str,
+    ) -> Result<Message, GraphError> {
+        let conversation = ConversationId::Channel {
+            team: team.to_owned(),
+            channel: channel.to_owned(),
+        };
+        let mut path = format!(
+            "teams/{}/channels/{}/messages",
+            segment(team),
+            segment(channel)
+        );
+        if let Some(root) = root {
+            path.push_str(&format!("/{}/replies", segment(root)));
+        }
+        let raw: g::ChatMessage = self
+            .post(
+                &path,
+                &json!({ "body": { "contentType": "html", "content": html } }),
+            )
+            .await?;
+        Ok(convert::message(raw, Some(&conversation)))
+    }
+
+    /// `POST /communications/getPresencesByUserId`, up to 650 people per
+    /// call (Presence.Read.All).
+    pub async fn presences(&self, users: &[String]) -> Result<Vec<(String, Presence)>, GraphError> {
+        let mut all = Vec::new();
+        for chunk in users.chunks(650) {
+            let page: g::Page<g::Presence> = self
+                .post(
+                    "communications/getPresencesByUserId",
+                    &json!({ "ids": chunk }),
+                )
+                .await?;
+            all.extend(page.value.into_iter().map(convert::presence));
+        }
+        Ok(all)
+    }
+
+    /// The calendar between two instants, in UTC (Calendars.Read).
+    pub async fn calendar(&self, from: i64, to: i64) -> Result<Vec<Meeting>, GraphError> {
+        let url = format!(
+            "me/calendarView?startDateTime={}&endDateTime={}&$top=100&$orderby=start/dateTime&$select=id,subject,bodyPreview,start,end,isAllDay,isCancelled,location,organizer,isOnlineMeeting,onlineMeeting,webLink",
+            crate::time::to_iso(from),
+            crate::time::to_iso(to)
+        );
+        let page: g::Page<g::Event> = self
+            .get_with(&url, &[("Prefer", "outlook.timezone=\"UTC\"")])
+            .await?;
+        Ok(page
+            .value
+            .into_iter()
+            .filter_map(convert::meeting)
+            .collect())
+    }
+
+    /// A person's small photo, or `None` without one (User.ReadBasic.All).
+    pub async fn photo(&self, user: &str) -> Result<Option<Vec<u8>>, GraphError> {
+        match self
+            .get_bytes(
+                &format!("users/{}/photos/96x96/$value", segment(user)),
+                super::api::MEDIA_LIMIT,
+            )
+            .await
+        {
+            Ok(bytes) => Ok(Some(bytes)),
+            Err(GraphError::NotFound) => Ok(None),
+            Err(error) => Err(error),
+        }
+    }
+
+    /// Microsoft Search over chat messages (Chat.ReadWrite; channel posts
+    /// also need ChannelMessage.Read.All).
+    pub async fn search_messages(&self, query: &str) -> Result<Vec<SearchHit>, GraphError> {
+        let response: g::SearchResponse = self
+            .post(
+                "search/query",
+                &json!({ "requests": [{
+                    "entityTypes": ["chatMessage"],
+                    "query": { "queryString": query },
+                    "from": 0,
+                    "size": 25
+                }]}),
+            )
+            .await?;
+        let mut hits = Vec::new();
+        for set in response.value {
+            for container in set.hits_containers {
+                for hit in container.hits {
+                    if let Some(hit) = search_hit(hit) {
+                        hits.push(hit);
+                    }
+                }
+            }
+        }
+        Ok(hits)
+    }
+}
+
+fn message_path(conversation: &ConversationId, message: &str) -> String {
+    match conversation {
+        ConversationId::Chat(chat) => {
+            format!("chats/{}/messages/{}", segment(chat), segment(message))
+        }
+        ConversationId::Channel { team, channel } => format!(
+            "teams/{}/channels/{}/messages/{}",
+            segment(team),
+            segment(channel),
+            segment(message)
+        ),
+    }
+}
+
+fn search_hit(hit: g::SearchHit) -> Option<SearchHit> {
+    let resource = hit.resource?;
+    let chat = resource.get("chatId").and_then(|v| v.as_str());
+    let team = resource
+        .pointer("/channelIdentity/teamId")
+        .and_then(|v| v.as_str());
+    let channel = resource
+        .pointer("/channelIdentity/channelId")
+        .and_then(|v| v.as_str());
+    let conversation = match (chat, team, channel) {
+        (Some(chat), _, _) => ConversationId::Chat(chat.to_owned()),
+        (None, Some(team), Some(channel)) => ConversationId::Channel {
+            team: team.to_owned(),
+            channel: channel.to_owned(),
+        },
+        _ => return None,
+    };
+    Some(SearchHit {
+        conversation,
+        message_id: resource.get("id").and_then(|v| v.as_str())?.to_owned(),
+        author: resource
+            .pointer("/from/emailAddress/name")
+            .or_else(|| resource.pointer("/from/user/displayName"))
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_owned(),
+        snippet: crate::html::parse(hit.summary.as_deref().unwrap_or_default()).summary(200),
+        at: resource
+            .get("createdDateTime")
+            .and_then(|v| v.as_str())
+            .and_then(crate::time::parse_iso)
+            .unwrap_or_default(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::testing;
+    use super::*;
+    use wiremock::matchers::{body_json, method, path, query_param};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    async fn graph(server: &MockServer) -> Graph {
+        Graph::with_base(
+            reqwest::Client::new(),
+            testing::session("at", &server.uri()).await,
+            &server.uri(),
+        )
+    }
+
+    #[tokio::test]
+    async fn chats_follow_next_links() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/me/chats"))
+            .and(query_param("$top", "50"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "value": [{"id": "19:a@thread.v2", "chatType": "oneOnOne"}],
+                "@odata.nextLink": format!("{}/me/chats?$skiptoken=page2", server.uri())
+            })))
+            .mount(&server)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/me/chats"))
+            .and(query_param("$skiptoken", "page2"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "value": [{"id": "19:b@thread.v2", "chatType": "group", "topic": "Launch"}]
+            })))
+            .mount(&server)
+            .await;
+        let chats = graph(&server).await.chats(3).await.unwrap();
+        assert_eq!(chats.len(), 2);
+        assert_eq!(chats[1].topic.as_deref(), Some("Launch"));
+    }
+
+    #[tokio::test]
+    async fn sending_posts_html_and_returns_the_message() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/chats/19:a@thread.v2/messages"))
+            .and(body_json(
+                json!({"body": {"contentType": "html", "content": "<p>hi</p>"}}),
+            ))
+            .respond_with(ResponseTemplate::new(201).set_body_json(json!({
+                "id": "1702", "messageType": "message", "createdDateTime": "2026-10-11T10:00:00Z",
+                "from": {"user": {"id": "u-me", "displayName": "Me"}},
+                "body": {"contentType": "html", "content": "<p>hi</p>"}
+            })))
+            .expect(1)
+            .mount(&server)
+            .await;
+        let message = graph(&server)
+            .await
+            .send_chat_message("19:a@thread.v2", "<p>hi</p>")
+            .await
+            .unwrap();
+        assert_eq!(message.id, "1702");
+        assert_eq!(message.body.to_plain(), "hi");
+    }
+
+    #[tokio::test]
+    async fn quoting_uses_reply_with_quote() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/chats/19:a@thread.v2/messages/replyWithQuote"))
+            .and(body_json(json!({"messageIds": ["1690"], "replyMessage": {"body": {"contentType": "html", "content": "<p>yes</p>"}}})))
+            .respond_with(ResponseTemplate::new(201).set_body_json(json!({"id": "1703", "messageType": "message"})))
+            .expect(1)
+            .mount(&server)
+            .await;
+        graph(&server)
+            .await
+            .reply_with_quote("19:a@thread.v2", "1690", "<p>yes</p>")
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn reactions_edits_deletes_and_read_marks_hit_their_endpoints() {
+        let server = MockServer::start().await;
+        for (verb, route) in [
+            ("POST", "/chats/19:a@thread.v2/messages/1/setReaction"),
+            ("POST", "/chats/19:a@thread.v2/messages/1/unsetReaction"),
+            ("PATCH", "/chats/19:a@thread.v2/messages/1"),
+            (
+                "POST",
+                "/users/u-me/chats/19:a@thread.v2/messages/1/softDelete",
+            ),
+            ("POST", "/chats/19:a@thread.v2/markChatReadForUser"),
+        ] {
+            Mock::given(method(verb))
+                .and(path(route))
+                .respond_with(ResponseTemplate::new(204))
+                .expect(1)
+                .mount(&server)
+                .await;
+        }
+        let graph = graph(&server).await;
+        let chat = ConversationId::Chat("19:a@thread.v2".into());
+        graph.react(&chat, "1", "👍", true).await.unwrap();
+        graph.react(&chat, "1", "👍", false).await.unwrap();
+        graph
+            .edit_message(&chat, "1", "<p>fixed</p>")
+            .await
+            .unwrap();
+        graph.delete_message("u-me", &chat, "1").await.unwrap();
+        graph
+            .mark_chat_read("19:a@thread.v2", "u-me", "t1")
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn changes_are_date_ranged() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/chats/19:a@thread.v2/messages"))
+            .and(query_param(
+                "$filter",
+                "lastModifiedDateTime gt 2026-10-11T10:00:00.000Z",
+            ))
+            .and(query_param("$orderby", "lastModifiedDateTime desc"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"value": []})))
+            .expect(1)
+            .mount(&server)
+            .await;
+        let since = crate::time::parse_iso("2026-10-11T10:00:00Z").unwrap();
+        graph(&server)
+            .await
+            .chat_changes("19:a@thread.v2", since)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn missing_photos_are_none() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/users/u-x/photos/96x96/$value"))
+            .respond_with(
+                ResponseTemplate::new(404)
+                    .set_body_json(json!({"error": {"code": "ImageNotFound"}})),
+            )
+            .mount(&server)
+            .await;
+        assert_eq!(graph(&server).await.photo("u-x").await.unwrap(), None);
+    }
+
+    #[tokio::test]
+    async fn search_hits_name_their_conversation() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/search/query"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "value": [{"hitsContainers": [{"hits": [{
+                    "hitId": "h1", "summary": "the <c0>launch</c0> plan",
+                    "resource": {"@odata.type": "#microsoft.graph.chatMessage", "id": "1704", "chatId": "19:a@thread.v2",
+                        "createdDateTime": "2026-10-11T10:00:00Z", "from": {"emailAddress": {"name": "Ada"}}}
+                }]}]}]
+            })))
+            .mount(&server)
+            .await;
+        let hits = graph(&server)
+            .await
+            .search_messages("launch")
+            .await
+            .unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].snippet, "the launch plan");
+        assert_eq!(hits[0].author, "Ada");
+    }
+}

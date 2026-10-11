@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EE9B45"/>
+      <stop offset="1" stop-color="#B9561B"/>
+    </linearGradient>
+  </defs>
+  <rect x="72" y="72" width="880" height="880" rx="210" fill="url(#bg)"/>
+  <g transform="translate(-44 6)">
+  <g fill="#FFF7EE">
+    <!-- tail, cocked up as a wren holds it -->
+    <path d="M392 556 L262 318 Q252 296 276 292 L330 284 Q350 282 360 300 L470 512 Z"/>
+    <!-- body and head -->
+    <path d="M356 586 C356 452 466 372 590 372 C668 372 728 410 756 466 L842 486 Q856 490 844 500 L758 532 C750 650 662 724 548 724 L452 724 C396 724 356 668 356 586 Z"/>
+  </g>
+  <!-- wing -->
+  <path d="M452 584 C498 524 590 520 642 562 C594 624 506 640 452 584 Z" fill="#F3C392"/>
+  <!-- eye -->
+  <circle cx="668" cy="452" r="20" fill="#9A4514"/>
+  </g>
+</svg>

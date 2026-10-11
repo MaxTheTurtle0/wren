@@ -1,0 +1,5 @@
+/target
+*.app
+*.dmg
+/dist
+.DS_Store

@@ -1,0 +1,172 @@
+<p align="center"><img src="packaging/icons/wren.svg" width="96" alt=""></p>
+
+<h1 align="center">Wren</h1>
+
+<p align="center">A fast, native client for Microsoft Teams chats, channels and meetings.<br>
+Rust and egui. No browser engine. Works with Microsoft Teams through Microsoft's official APIs.</p>
+
+![Wren in dark mode](docs/screenshots/chats-dark.png)
+
+> **Status: early preview (0.1).** The interface, sign-in, Graph integration
+> and cache are built and tested against mocks. It has not yet run against a
+> live tenant, so expect rough edges with real data. See
+> [what works](docs/features.md).
+
+## Why
+
+Microsoft's Teams client is a large web application. Wren is a purpose-built
+native messaging client in the spirit of
+[Spotifast](https://github.com/crmne/spotifast) and
+[ZapFast](https://github.com/crmne/zapfast): one 15 MB binary, a window that
+draws only when something changes, and every view served from a local cache
+first.
+
+Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
+([details and method](docs/performance.md)):
+
+| | Wren 0.1 |
+|---|---|
+| Launch to first frame | 143–157 ms |
+| Idle CPU, window open | 0.0% |
+| Memory (physical footprint) | 135–141 MB |
+| Binary / app bundle | 15 MB |
+
+## Features
+
+| | Status |
+|---|---|
+| Chats: list, unread, history, send, quote replies, reactions, edit, delete, mark read | ✅ Implemented (Graph) |
+| Rich text, mentions, emoji, links, code, inline images | ✅ Implemented (native rendering of Teams HTML) |
+| Teams and channels, threaded posts and replies | ✅ Implemented; reading channel posts needs admin consent |
+| Local full-text search plus Microsoft Search, ⌘K switcher | ✅ Implemented |
+| Calendar, meeting reminders, Join | ✅ Implemented; joining hands off to Teams |
+| Presence, photos | ✅ Implemented |
+| Light, dark and system themes, 8 palettes, keyboard shortcuts, tray, notifications | ✅ Implemented |
+| Offline demo mode | ✅ `wren --demo` |
+| Audio and video calls | ↗ Hand-off to Teams via deep links ([why](docs/calling.md)) |
+| Instant updates in the background | ⚠️ Partial: Microsoft forbids polling, so push needs a relay ([why](docs/realtime.md)) |
+| Sending files, new chats, multiple accounts, own status | 🗓 Planned ([roadmap](docs/roadmap.md)) |
+| In-app calling, incoming calls, screen sharing | ❌ No official API for native desktop apps (Azure Communication Services route documented) |
+
+The full matrix, including what was verified and how, is in
+[docs/features.md](docs/features.md). The Microsoft API investigation behind
+it, with sources, is in
+[docs/microsoft-api-research.md](docs/microsoft-api-research.md).
+
+## Getting started
+
+### Try the demo (no account needed)
+
+```sh
+git clone https://github.com/MaxTheTurtle0/wren && cd wren
+cargo run --release -- --demo
+```
+
+Linux needs `libxkbcommon-dev libwayland-dev libgl1-mesa-dev` (Debian and Ubuntu
+package names) to build.
+
+### Use it with your Microsoft 365 account
+
+Wren signs in through an app registration in your organisation's Entra ID.
+It ships no shared client ID: Microsoft throttles per client ID across all
+tenants, and most tenants block unverified multi-tenant apps.
+
+1. Register the app (about five minutes, no secrets):
+   [docs/azure-app-registration.md](docs/azure-app-registration.md).
+2. Start Wren, enter the **Application (client) ID** and your **tenant**, and
+   select **Sign in with Microsoft**. Or set `WREN_CLIENT_ID` and
+   `WREN_TENANT` in the environment.
+3. In most tenants an administrator must approve `Chat.ReadWrite` and
+   `Calendars.Read`, which the default consent policy excludes, and
+   `ChannelMessage.Read.All` for channel posts. Wren shows an admin-consent
+   link under **Settings**. Each permission is explained in
+   [docs/permissions.md](docs/permissions.md).
+
+Personal Microsoft accounts and Teams (free) are not supported; Graph's Teams
+APIs serve work and school accounts only.
+
+### Build packages
+
+| Platform | Command |
+|---|---|
+| macOS | `cargo build --release && packaging/macos/bundle.sh target/release/wren Wren.app 0.1.0` |
+| Linux | `cargo build --release && packaging/linux/install.sh` (installs to `~/.local`) |
+| Windows | `cargo build --release` (icon and version embedded by `build.rs`) |
+
+CI builds all three on every push to `main` and keeps them as workflow
+artifacts. Nothing is published as a release yet.
+
+## Keyboard
+
+`⌘K` jump anywhere or search messages · `⌘1–4` sections · `Alt ↑/↓` previous
+or next conversation · `Enter` send · `Shift Enter` new line · `↑` edit last
+message · `⌘R` refresh · `⌘,` settings · `⌘/` all shortcuts. (`⌘` is Ctrl on
+Windows and Linux.)
+
+## Architecture
+
+The views read state and emit actions, a single reducer applies them, and a
+tokio runtime on its own thread does all network and disk work. Details are in
+[docs/architecture.md](docs/architecture.md).
+
+```
+src/
+  main.rs        window, CLI, single instance, tray, screenshot mode
+  app.rs         state and the action reducer
+  model.rs       Wren's types and actions
+  ui/            views: rail, chat list, teams, conversation, calendar, calls, overlays
+  backend/       tokio runtime: sign-in, Graph calls, cache, sends
+  auth/          Entra ID: PKCE, loopback redirect, device code, refresh-token rotation
+  graph/         Graph client (throttling, retries, token scoping), endpoints, JSON shapes
+  store.rs       SQLite cache with FTS5 search, one database per account
+  sync.rs        when to fetch (never polls)
+  html.rs        Teams HTML in, composer markdown out
+  calling.rs     meeting/call hand-off and the in-app calling seam
+  secrets.rs     refresh tokens in the OS credential store
+```
+
+Built on [fastframe](https://github.com/crmne/fastframe) (fonts, colour emoji,
+icons, palettes, tray, window shell, single instance, scrolling, logging) and
+the egui and winit forks shared with Spotifast and ZapFast.
+
+## Known Microsoft API limitations
+
+- **Calling.** Graph's calling API is application-only and meant for bots;
+  nothing lets a third-party desktop app call as the signed-in person. Azure
+  Communication Services can, but needs an Azure resource and a backend, and
+  has no native macOS or Linux SDK. Microsoft announced its retirement as a
+  standalone offering for 2028, with Teams interop unaffected. Wren hands
+  calls and meetings off to Teams ([details](docs/calling.md)).
+- **Real-time.** Polling Graph for Teams changes more than once a day breaks
+  the Microsoft APIs Terms of Use. Push needs a public webhook, Event Hubs or
+  Event Grid. Wren refreshes when you look, and a self-hostable relay is
+  planned ([details](docs/realtime.md)).
+- **Consent.** Expect an administrator to approve Wren's permissions in your
+  tenant.
+
+## Privacy
+
+There is no telemetry and no Wren server. Refresh tokens live in the OS
+credential store. Your messages are cached only on your computer, and signing
+out deletes them. More in [docs/privacy.md](docs/privacy.md).
+
+## Development
+
+```sh
+cargo fmt --all --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked --all-targets     # unit, mock-Graph and headless UI tests
+```
+
+Read [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md) first.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Wren is an independent project, not affiliated with or endorsed by Microsoft.
+Microsoft Teams is a trademark of the Microsoft group of companies.
+
+<p align="center">
+<img src="docs/screenshots/channel-dark.png" width="49%" alt="A channel with threaded replies">
+<img src="docs/screenshots/calendar-light.png" width="49%" alt="The calendar in light mode">
+</p>

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Wren
+GenericName=Team chat
+Comment=Fast, native client for Microsoft Teams chats, channels and meetings
+Exec=wren %U
+Icon=wren
+Terminal=false
+Categories=Network;InstantMessaging;Chat;Office;
+Keywords=teams;chat;microsoft;meetings;
+StartupWMClass=wren
+SingleMainWindow=true
