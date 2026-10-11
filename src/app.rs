@@ -1159,6 +1159,13 @@ impl App {
             Action::SetKeepRunning(on) => {
                 self.settings.keep_running = on;
                 self.mark_settings_dirty();
+                // The tray is the way back to a closed window: make it now.
+                if on && self.tray.is_none() && !self.demo {
+                    self.tray = crate::platform::tray(&self.waker);
+                    if let Some(tray) = &mut self.tray {
+                        tray.attach();
+                    }
+                }
             }
             Action::SetRelay(url) => {
                 let url = url.trim().to_owned();

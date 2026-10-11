@@ -26,7 +26,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 
 | | Wren 0.1 |
 |---|---|
-| Launch to first frame | 143–157 ms |
+| Launch to first frame | 143–157 ms (301 ms cold) |
 | Idle CPU, window open | 0.0% |
 | Memory (physical footprint) | 135–141 MB |
 | Binary / app bundle | 15 MB |

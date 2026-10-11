@@ -7,7 +7,7 @@ rendering or the history, and update this page.
 
 | Metric | Result | How |
 |---|---|---|
-| Launch to first frame | **143–157 ms** (3 runs) | `open -W -n Wren.app --args --demo --measure-startup` (prints the time from `main` to the first painted frame) |
+| Launch to first frame | **143–157 ms** warm (6 runs); **301 ms** for the first launch after a rebuild (cold disk cache) | `open -W -n Wren.app --args --demo --measure-startup` (prints the time from `main` to the first painted frame) |
 | Idle CPU, window open and visible | **0.0%** | `top -l 3 -s 10 -pid <pid> -stats cpu`, after 8 s idle |
 | Physical memory footprint | **135–141 MB** | `footprint <pid>` |
 | …of which system fallback fonts (CJK, Arabic, …) | ~29 MB | Same run with fallbacks off (`--screenshot` mode) measures 112 MB |

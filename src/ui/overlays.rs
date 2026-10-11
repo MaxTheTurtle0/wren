@@ -464,7 +464,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     actions.push(Action::SetKeepRunning(keep));
                 }
                 ui.label(
-                    egui::RichText::new("New messages are fetched when you open a chat, come back to the window or press ⌘R. Microsoft's rules for Teams forbid background polling, so instant alerts need push notifications (see docs/realtime.md).")
+                    egui::RichText::new("New messages are fetched when you open a chat, come back to the window or press ⌘R. Microsoft's rules for Teams forbid background polling; for instant alerts, connect a push relay below (docs/realtime.md).")
                         .font(theme::regular(12.0))
                         .color(palette.dim),
                 );
