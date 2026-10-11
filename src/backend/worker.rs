@@ -455,11 +455,25 @@ impl Worker {
             return;
         };
         account.graph.session().sign_out().await;
-        drop(account.store);
         // The cache holds the person's messages: remove it with the session.
+        // Fetches still running hold the database open, and Windows will
+        // not delete an open file, so wait for them to let go first.
+        let store = account.store;
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while Arc::strong_count(&store) > 1 && Instant::now() < deadline {
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+        drop(store);
         let dir = self.dirs.account(&account.record.id);
-        if let Err(error) = tokio::fs::remove_dir_all(&dir).await {
-            log::warn!("could not remove the account's cache: {error}");
+        for attempt in 1..=10 {
+            match tokio::fs::remove_dir_all(&dir).await {
+                Ok(()) => break,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => break,
+                Err(error) if attempt == 10 => {
+                    log::warn!("could not remove the account's cache: {error}");
+                }
+                Err(_) => tokio::time::sleep(Duration::from_millis(100)).await,
+            }
         }
         self.freshness.clear();
         self.out.send(Event::Auth(AuthStatus::SignedOut));
