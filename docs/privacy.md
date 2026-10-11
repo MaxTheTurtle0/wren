@@ -6,7 +6,12 @@
   uploaded to the one-time upload URL Graph returns (your organisation's
   OneDrive host), without the Graph token; and an optional `wren-relay` that
   you run yourself ([realtime.md](realtime.md)). Wren opens Microsoft Teams
-  links in your browser or the Teams app when you ask it to.
+  links in your browser when you ask it to.
+- **Calls** run in Teams on the web, in your own Edge or Chrome (or the
+  browser you choose). Wren starts the browser with the meeting or call link
+  and nothing else, and opens its own Microsoft sign-in page there so Teams
+  finds the same session. It never reads the browser's files, cookies or
+  pages, and never passes it a token. Join links are not logged.
 - **Your password never reaches Wren.** You sign in on Microsoft's page in
   your browser. Wren receives a one-time code on `localhost` and exchanges it
   with a PKCE verifier only it knows.
@@ -36,6 +41,9 @@
   session when you quit or sign out; otherwise it expires after an hour.
   Nothing is sent until you grant Presence.ReadWrite by setting your status
   once.
+- **Call status** comes from your own presence: fetched when you return to
+  Wren and, with the relay, announced by a presence notification that
+  carries no presence data.
 - **Several accounts** each have their own cache folder and refresh token.
   Signing out of one removes only its data.
 - **Images in messages** are only fetched from Graph's own hosted content.

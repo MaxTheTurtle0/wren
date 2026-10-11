@@ -75,7 +75,8 @@ Ruled out for cost or rules:
 
 ### Recommended free plan
 
-The detailed design is drafted in [call-window.md](call-window.md).
+**Built:** see [call-window.md](call-window.md). The steps below are the
+plan it started from.
 
 1. **Choose where calls open** (setting, per platform default):
    - Teams app, when installed (today's behaviour).

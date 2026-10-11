@@ -469,3 +469,70 @@ fn new_dialogs_draw() {
     h.app.overlay = Some(Overlay::StatusMessage);
     assert!(h.frames(2) > 50);
 }
+
+#[test]
+fn joining_a_meeting_follows_it_beside_its_chat() {
+    let mut h = Harness::new();
+    h.frames(2);
+    let url = h
+        .app
+        .meetings
+        .iter()
+        .find(|m| m.id == "demo-design-review")
+        .and_then(|m| m.join_url.clone())
+        .unwrap();
+    h.app.section = Section::Calendar;
+    h.act(Action::JoinMeeting(url.clone()));
+    let call = h.app.call.clone().expect("a call session");
+    assert_eq!(call.title(), "Design review: Wren 0.2");
+    let chat = ConversationId::Chat("19:meeting_demo-design-review@thread.v2".into());
+    assert_eq!(call.chat.as_ref(), Some(&chat), "the meeting chat is found");
+    assert_eq!(h.app.open.as_ref(), Some(&chat));
+    assert_eq!(h.app.section, Section::Chats);
+
+    // Joining again brings the call forward instead of joining twice.
+    h.act(Action::JoinMeeting(url));
+    assert_eq!(h.app.call.as_ref().unwrap().opened_at, call.opened_at);
+
+    // The bar along the bottom, then docked as a narrow panel.
+    assert!(h.frames(2) > 50);
+    h.app.pretend_docked();
+    assert!(h.frames(2) > 30, "the docked panel draws");
+
+    // The QR code to join on a phone.
+    h.act(Action::JoinOnPhone);
+    assert!(matches!(h.app.overlay, Some(Overlay::JoinOnPhone(_))));
+    assert!(h.frames(2) > 200, "the QR code draws its modules");
+    h.act(Action::CloseOverlay);
+
+    h.act(Action::CallDone);
+    assert!(h.app.call.is_none());
+    assert!(h.app.docked.is_none(), "Done restores the window");
+    assert!(h.frames(2) > 50);
+}
+
+#[test]
+fn call_settings_draw_and_apply() {
+    let mut h = Harness::new();
+    h.act(Action::OpenSettings);
+    assert!(h.frames(2) > 50);
+    let mut calls = h.app.settings.calls.clone();
+    assert_eq!(calls.open_in, wren::calling::CallsOpenIn::AppWindow);
+    assert!(calls.dock);
+    calls.open_in = wren::calling::CallsOpenIn::Browser;
+    h.act(Action::SetCallSettings(calls));
+    assert_eq!(
+        h.app.settings.calls.open_in,
+        wren::calling::CallsOpenIn::Browser
+    );
+    assert_eq!(h.app.opener(), wren::calling::Opener::Browser);
+    // A call from the Calls page, with the bar along the bottom.
+    h.act(Action::CloseOverlay);
+    h.app.section = Section::Calls;
+    h.act(Action::StartCall {
+        users: vec!["ada@contoso.com".into()],
+        video: false,
+    });
+    assert!(h.app.call.is_some());
+    assert!(h.frames(2) > 50);
+}

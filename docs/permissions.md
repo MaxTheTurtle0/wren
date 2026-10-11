@@ -18,11 +18,12 @@ someone opens a channel.
 | `Team.ReadBasic.All` | At sign-in | `GET /me/joinedTeams` | No |
 | `Channel.ReadBasic.All` | At sign-in | `GET /teams/{id}/allChannels` | No |
 | `ChannelMessage.Send` | At sign-in | `POST /teams/{id}/channels/{id}/messages`, `…/replies`, reactions | No |
-| `Presence.Read.All` | At sign-in | `POST /communications/getPresencesByUserId`, `GET /me/presence` | No |
+| `Presence.Read.All` | At sign-in | `POST /communications/getPresencesByUserId`, `GET /me/presence`, `POST /subscriptions` on `communications/presences/{id}` (your own presence, push relay only) | No |
 | `Calendars.Read` | At sign-in | `GET /me/calendarView` | Excluded from the default user-consent policy |
 | `Chat.Create` | First new chat | `POST /chats`, then `GET /chats/{id}?$expand=members` | No |
 | `Files.ReadWrite` | First file sent | `PUT /me/drive/root:/Microsoft Teams Chat Files/{name}:/content`, `POST …:/createUploadSession` (above 4 MiB), `GET /me/drive/items/{id}`, `POST /me/drive/items/{id}/invite` (chats), `POST …/createLink` (channels) | No |
 | `Presence.ReadWrite` | First status change, or the presence session | `POST /users/{id}/presence/setUserPreferredPresence`, `clearUserPreferredPresence`, `setStatusMessage`, `setPresence`, `clearPresence` | No |
+| `OnlineMeetings.Read` | First "Meeting chat" during a call | `GET /me/onlineMeetings?$filter=JoinWebUrl eq '…'` (finds a meeting's chat from its join link) | No |
 | `ChannelMessage.Read.All` | First channel opened | `GET /teams/{id}/channels/{id}/messages`, `…/replies` | **Yes** |
 
 ## Not requested

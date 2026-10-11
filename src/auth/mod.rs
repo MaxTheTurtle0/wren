@@ -50,6 +50,10 @@ pub const FILES_SCOPE: &str = "Files.ReadWrite";
 /// User-consentable; asked for on first use.
 pub const PRESENCE_WRITE_SCOPE: &str = "Presence.ReadWrite";
 
+/// Finding a meeting's chat from its join link, to show it beside the call.
+/// User-consentable; asked for on first use.
+pub const ONLINE_MEETINGS_SCOPE: &str = "OnlineMeetings.Read";
+
 /// The scopes Wren may ask for beyond sign-in, each when a feature first
 /// needs it (incremental consent).
 pub const OPTIONAL_SCOPES: &[&str] = &[
@@ -57,6 +61,7 @@ pub const OPTIONAL_SCOPES: &[&str] = &[
     CHAT_CREATE_SCOPE,
     FILES_SCOPE,
     PRESENCE_WRITE_SCOPE,
+    ONLINE_MEETINGS_SCOPE,
 ];
 
 /// Why a feature needs an optional scope, for the consent prompt.
@@ -70,6 +75,9 @@ pub fn scope_reason(scope: &str) -> &'static str {
             "Uploading files to your OneDrive ('Microsoft Teams Chat Files') and sharing them with the people in the conversation."
         }
         PRESENCE_WRITE_SCOPE => "Setting your availability and status message.",
+        ONLINE_MEETINGS_SCOPE => {
+            "Finding a meeting's chat from its join link, to show it beside the call."
+        }
         _ => "This feature.",
     }
 }

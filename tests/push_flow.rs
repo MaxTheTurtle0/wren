@@ -60,7 +60,15 @@ async fn a_change_notification_fetches_the_chat() {
         .respond_with(ResponseTemplate::new(201).set_body_json(serde_json::json!({
             "id": "sub-1", "expirationDateTime": "2026-10-11T13:00:00Z"
         })))
-        .expect(1)
+        // Chat messages, and the person's own presence for the call bar.
+        .expect(2)
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/v1.0/me/presence"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "id": "u-me", "availability": "Busy", "activity": "InACall"
+        })))
         .mount(&server)
         .await;
     Mock::given(method("DELETE"))
@@ -140,6 +148,16 @@ async fn a_change_notification_fetches_the_chat() {
     let body: serde_json::Value = serde_json::from_slice(&subscribe.body).unwrap();
     assert_eq!(body["resource"], "/users/u-me/chats/getAllMessages");
     assert_eq!(body["includeResourceData"], false);
+    let presence = requests
+        .iter()
+        .filter(|r| r.url.path() == "/v1.0/subscriptions" && r.method.as_str() == "POST")
+        .nth(1)
+        .expect("a presence subscription");
+    let presence: serde_json::Value = serde_json::from_slice(&presence.body).unwrap();
+    assert_eq!(presence["resource"], "communications/presences/u-me");
+    assert_eq!(presence["changeType"], "updated");
+    assert_eq!(presence["includeResourceData"], false);
+    assert_eq!(presence["notificationUrl"], body["notificationUrl"]);
     let notification_url = body["notificationUrl"].as_str().unwrap().to_owned();
     let client_state = body["clientState"].as_str().unwrap().to_owned();
     assert!(notification_url.starts_with(&format!("{relay_url}/graph/")));
@@ -179,6 +197,39 @@ async fn a_change_notification_fetches_the_chat() {
         _ => None,
     });
     assert_eq!(messages[0].body.to_plain(), "Pushed!");
+
+    // A presence change: Wren fetches the person's presence (the call bar
+    // follows calls this way).
+    let presence_fetches = |requests: &[wiremock::Request]| {
+        requests
+            .iter()
+            .filter(|r| r.url.path() == "/v1.0/me/presence")
+            .count()
+    };
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let before = presence_fetches(&server.received_requests().await.unwrap());
+    let notification = serde_json::json!({"value": [{
+        "subscriptionId": "sub-1", "clientState": client_state, "changeType": "updated",
+        "resource": "communications/presences/u-me",
+        "resourceData": {"id": "u-me"}
+    }]});
+    let status = http
+        .post(&notification_url)
+        .json(&notification)
+        .send()
+        .await
+        .unwrap()
+        .status();
+    assert_eq!(status, 202);
+    let presence = wait_for(&backend, 10, |e| match e {
+        Event::MyPresence(presence) => Some(presence),
+        _ => None,
+    });
+    assert_eq!(presence.activity.as_deref(), Some("InACall"));
+    assert!(
+        presence_fetches(&server.received_requests().await.unwrap()) > before,
+        "the notification caused a presence fetch"
+    );
 
     // Turning push off deletes the subscription.
     backend.send(Command::Relay(None));

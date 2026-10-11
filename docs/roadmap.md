@@ -30,14 +30,11 @@ Roughly in order. Each step lands as its own focused change with tests.
 
 ## Calling
 
-Calls cost nothing extra, so they stay in Microsoft's own clients and Wren
-integrates around them. The comparison is in
-[video-calling-options.md](video-calling-options.md); the design draft is
-[call-window.md](call-window.md).
+Calls run in Teams on the web beside Wren ([call-window.md](call-window.md)).
+Next:
 
-1. A setting for where calls open: Teams desktop, Teams on the web in a
-   Chrome or Edge app window (default on Linux), or the browser.
-2. Call companion: the meeting's chat opens in Wren, Wren docks beside the
-   call window, and a call bar offers "Back to the call".
-3. Call awareness from your own presence (on focus, and pushed through the
-   relay), and a QR code to join on your phone.
+1. Answer the open questions in [call-window.md §7](call-window.md#7-open-questions)
+   with a real browser, meeting and tenant: window placement with a running
+   browser, the join page, silent sign-in, presence timing.
+2. Decide on Teams desktop's third-party app API for in-call buttons (its
+   protocol is unpublished).

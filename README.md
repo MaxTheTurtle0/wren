@@ -40,14 +40,14 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Rich text, mentions, emoji, links, code, inline images | ✅ Implemented (native rendering of Teams HTML) |
 | Teams and channels, threaded posts and replies | ✅ Implemented; reading channel posts needs admin consent |
 | Local full-text search plus Microsoft Search, ⌘K switcher | ✅ Implemented |
-| Calendar, meeting reminders, Join | ✅ Implemented; joining hands off to Teams |
+| Calendar, meeting reminders, Join | ✅ Implemented |
+| Calls and meetings | ✅ In Teams on the web, in its own Edge or Chrome window beside Wren, with the meeting chat and a call bar in Wren; free, since the call runs in Microsoft's client ([how](docs/call-window.md)) |
 | Presence, photos | ✅ Implemented |
 | Light, dark and system themes, 8 palettes, keyboard shortcuts, tray, notifications | ✅ Implemented |
 | Offline demo mode | ✅ `wren --demo` |
-| Audio and video calls | ↗ Hand-off to Teams via deep links ([why](docs/calling.md)) |
 | Real-time updates | ✅ On open, focus and refresh. 🧪 Push through a self-hostable `wren-relay` (experimental), since Microsoft forbids polling ([why](docs/realtime.md)) |
 | Multiple accounts, setting your availability and status message | ✅ Implemented |
-| In-app calling, incoming calls, screen sharing | ❌ No free official way: Microsoft's licence covers calls only in its own clients. 🗓 Planned: calls in a Teams web app window with Wren as the companion ([options](docs/video-calling-options.md)) |
+| Audio and video inside Wren's own window, incoming calls | ❌ No free official way: Microsoft's licence covers call media only in its own clients ([why](docs/calling.md)) |
 
 The full matrix, including what was verified and how, is in
 [docs/features.md](docs/features.md). The Microsoft API investigation behind
@@ -125,7 +125,7 @@ src/
   sync.rs        when to fetch (never polls)
   html.rs        Teams HTML in, composer markdown out
   realtime.rs    push updates through a wren-relay (experimental)
-  calling.rs     meeting/call hand-off and the in-app calling seam
+  calling/       calls in a Teams web window: browsers, docking, call session
   secrets.rs     refresh tokens in the OS credential store
 relay/           wren-relay: forwards Graph change notifications over WebSocket
 ```
@@ -140,8 +140,8 @@ the egui and winit forks shared with Spotifast and ZapFast.
   nothing lets a third-party desktop app call as the signed-in person for
   free. Azure Communication Services can, but bills every participant-minute
   to an Azure resource, since the Teams licence covers calls only in
-  Microsoft's own clients. Wren hands calls and meetings off to Teams, on the
-  desktop or the web ([details](docs/calling.md)).
+  Microsoft's own clients. So Wren opens calls in Teams on the web beside
+  itself and follows them from there ([details](docs/calling.md)).
 - **Real-time.** Polling Graph for Teams changes more than once a day breaks
   the Microsoft APIs Terms of Use. Push needs a public webhook, Event Hubs or
   Event Grid. Wren refreshes when you look. For push, you run the small

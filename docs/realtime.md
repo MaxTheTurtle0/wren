@@ -61,7 +61,10 @@ How it works:
 3. Wren subscribes to Graph change notifications for all of your chat
    messages: `POST /subscriptions` on `/users/{id}/chats/getAllMessages`,
    delegated `Chat.Read` (covered by `Chat.ReadWrite`), delivered to
-   `{relay}/graph/{channel}`, **without resource data**.
+   `{relay}/graph/{channel}`, **without resource data**. A second
+   subscription, on your own presence (`communications/presences/{id}`,
+   `Presence.Read.All`), lets the call bar follow calls; if Graph refuses
+   it, chat updates still work.
 4. Graph validates the URL (the relay echoes the `validationToken`), then
    posts each change. The relay forwards it over the WebSocket.
 5. Wren checks the `clientState` secret and fetches the changed chat with the
@@ -72,7 +75,8 @@ How it works:
    it when push is turned off or Wren exits.
 
 What the relay sees: notification envelopes with a subscription id, the
-`clientState`, and resource paths such as `chats('19:…')/messages('1702')`.
+`clientState`, and resource paths such as `chats('19:…')/messages('1702')`
+or `communications/presences/{id}`.
 **No message content and no tokens.** It keeps nothing on disk. Anyone who
 could forge a notification could only make Wren re-fetch from Graph.
 

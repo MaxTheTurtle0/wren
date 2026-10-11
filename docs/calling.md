@@ -1,10 +1,12 @@
 # Calling and meetings
 
-**Status: hand-off.** Wren 0.1 starts calls and joins meetings by opening
-Microsoft's documented deep links in Microsoft Teams: the desktop app if it
-is installed, otherwise Teams on the web. It shows no incoming calls and has
-no audio or video of its own. This page explains why, and what it would take
-to do more. Sources are in
+**Status: calls in a Teams web window, with Wren as the companion.** Wren
+opens calls and meetings in Teams on the web, by default in a chrome-less
+Edge or Chrome window placed beside Wren, and docks itself next to it with
+the meeting chat and a call bar that follows your presence
+([call-window.md](call-window.md)). The call itself runs in Microsoft's own
+client, so it costs nothing extra. Wren has no audio or video of its own and
+shows no incoming calls. This page explains why. Sources are in
 [microsoft-api-research.md §7](microsoft-api-research.md#7-calling).
 
 ## What Microsoft offers
@@ -85,30 +87,29 @@ per participant-minute. So the call itself stays in a Microsoft client, and
 Wren integrates around it. The comparison and sources are in
 [video-calling-options.md](video-calling-options.md).
 
-1. **Now (implemented):** hand off through deep links to Teams desktop, or
-   Teams on the web.
-2. **Planned: choose where calls open.** Teams desktop, or Teams on the web
-   in a chrome-less Chrome or Edge app window (`--app`), or the default
-   browser. Teams on the web is the default on Linux, where Microsoft no
-   longer ships a desktop client.
-3. **Planned: Wren as the call companion.** Opening a call or meeting opens
-   its chat in Wren, docks Wren's window beside the call, and shows a slim
-   call bar with "Back to the call". Your own presence (`InACall`,
-   `InAMeeting`, `Presenting`) tells Wren a call is running, also for calls
-   started elsewhere. A QR code joins on your phone.
-4. **Owner decision:** in-call buttons (mute, camera, leave) in Wren through
+1. **Implemented: Teams on the web beside Wren.** Calls and meetings open
+   in a chrome-less Edge or Chrome window (`--app`), by default; or in the
+   default browser; or, if chosen in Settings, the Teams app. Wren docks
+   itself beside the call window, shows the meeting chat, and follows the
+   call through your own presence (`InACall`, `InAConferenceCall`,
+   `Presenting`, and `InAMeeting` for meetings Wren opened). Wren signs in
+   through the same browser, so Teams on the web finds your Microsoft
+   session. A QR code joins on your phone. Design and limits:
+   [call-window.md](call-window.md).
+2. **Owner decision:** in-call buttons (mute, camera, leave) in Wren through
    Teams desktop's third-party app API. Free and approved by the person, but
    its protocol is not published.
-5. **Not pursued:** the ACS Calling SDK (it costs per minute), Teams web in
-   an embedded webview, an own WebRTC stack, and drawing call video in egui.
-6. **Watch:** whether Microsoft documents delegated calling in Graph, a
+3. **Not pursued:** the ACS Calling SDK (it costs per minute), Teams web in
+   an embedded webview (Teams refuses it, see
+   [video-calling-options.md](video-calling-options.md)), an own WebRTC
+   stack, and drawing call video in egui.
+4. **Watch:** whether Microsoft documents delegated calling in Graph, a
    native macOS or Linux SDK covered by the Teams licence, or the
-   third-party app API's protocol. `calling::CallBackend` is the seam where
-   an in-app backend plugs in without changing the interface.
+   third-party app API's protocol.
 
 ## Microphone, camera and screen sharing
 
-These only become relevant if Wren ever carries call media itself, which no free path allows today. On
-macOS, the bundle would then need `NSMicrophoneUsageDescription`,
-`NSCameraUsageDescription` and Screen Recording permission. The current
-bundle declares none, because Wren 0.1 never touches those devices.
+The browser asks for them, for Teams on the web, as it does for any site.
+Wren itself never touches those devices, so its macOS bundle declares no
+`NSMicrophoneUsageDescription`, `NSCameraUsageDescription` or Screen
+Recording permission.

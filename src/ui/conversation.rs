@@ -152,6 +152,15 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         )));
                     }
                 });
+                // During a call in this chat the call bar has the controls.
+                let in_call = app
+                    .call
+                    .as_ref()
+                    .is_some_and(|c| !c.is_ended() && c.chat.as_ref() == Some(conversation));
+                if in_call {
+                    call_users.clear();
+                    join = None;
+                }
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.spacing_mut().item_spacing.x = 4.0;
                     if let Some(web) = web {
@@ -164,12 +173,7 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         widgets::on_click(&open, &mut app.actions, Action::OpenUrl(web));
                     }
                     if !call_users.is_empty() {
-                        let audio = widgets::icon_button(
-                            ui,
-                            &palette,
-                            Icon::Phone,
-                            "Audio call (opens Microsoft Teams)",
-                        );
+                        let audio = widgets::icon_button(ui, &palette, Icon::Phone, "Audio call");
                         widgets::on_click(
                             &audio,
                             &mut app.actions,
@@ -178,12 +182,7 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 video: false,
                             },
                         );
-                        let video = widgets::icon_button(
-                            ui,
-                            &palette,
-                            Icon::Video,
-                            "Video call (opens Microsoft Teams)",
-                        );
+                        let video = widgets::icon_button(ui, &palette, Icon::Video, "Video call");
                         widgets::on_click(
                             &video,
                             &mut app.actions,
@@ -196,7 +195,7 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                     if let Some(join) = join {
                         ui.add_space(4.0);
                         let response = widgets::pill(ui, &palette, Icon::Video, "Join", true)
-                            .on_hover_text("Join the meeting in Microsoft Teams");
+                            .on_hover_text("Join the meeting");
                         widgets::on_click(&response, &mut app.actions, Action::JoinMeeting(join));
                     }
                     if app

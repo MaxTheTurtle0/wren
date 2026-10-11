@@ -5,8 +5,10 @@
 //! 1. opens a WebSocket to `{relay}/ws/{channel}` with a random channel;
 //! 2. subscribes to Graph change notifications for all of the signed-in
 //!    person's chat messages (`/users/{id}/chats/getAllMessages`, Chat.Read,
-//!    delegated), delivered to `{relay}/graph/{channel}`, without resource
-//!    data, so only IDs travel through the relay;
+//!    delegated) and their own presence (`communications/presences/{id}`,
+//!    Presence.Read.All, so the call bar follows calls), delivered to
+//!    `{relay}/graph/{channel}`, without resource data, so only IDs travel
+//!    through the relay;
 //! 3. on each notification whose `clientState` matches, fetches the changed
 //!    chat with the usual date-ranged request. This is the pattern
 //!    Microsoft's polling rules ask for;
@@ -84,6 +86,8 @@ pub fn lifecycle_url(relay: &str, channel: &str) -> String {
 pub enum Notice {
     /// A message in this chat was created, edited or deleted.
     Chat(String),
+    /// The person's own presence changed.
+    Presence,
     /// Graph wants the subscription reauthorized (the token behind it is
     /// about to lapse).
     Reauthorize,
@@ -127,7 +131,13 @@ pub fn parse(body: &str, client_state: &str) -> Vec<Notice> {
             Some("missed") => Some(Notice::Missed),
             Some("subscriptionRemoved") => Some(Notice::Removed),
             Some(_) => None,
-            None => item.resource.as_deref().and_then(chat_of).map(Notice::Chat),
+            None => item.resource.as_deref().and_then(|resource| {
+                if is_presence(resource) {
+                    Some(Notice::Presence)
+                } else {
+                    chat_of(resource).map(Notice::Chat)
+                }
+            }),
         };
         if let Some(notice) = notice
             && !notices.contains(&notice)
@@ -136,6 +146,13 @@ pub fn parse(body: &str, client_state: &str) -> Vec<Notice> {
         }
     }
     notices
+}
+
+fn is_presence(resource: &str) -> bool {
+    resource
+        .trim_start_matches('/')
+        .to_ascii_lowercase()
+        .starts_with("communications/presences")
 }
 
 /// The chat id in a notification's resource path, in either of Graph's
@@ -194,6 +211,16 @@ mod tests {
                 Notice::Chat("19:def@unq.gbl.spaces".into())
             ]
         );
+    }
+
+    #[test]
+    fn presence_notifications_ask_for_a_presence_fetch() {
+        let body = r#"{"value":[
+            {"subscriptionId":"s2","clientState":"ours","changeType":"updated","resource":"communications/presences/u-me","resourceData":{"id":"u-me"}},
+            {"subscriptionId":"s2","clientState":"ours","changeType":"updated","resource":"/communications/presences/u-me"},
+            {"subscriptionId":"s2","clientState":"theirs","changeType":"updated","resource":"communications/presences/u-me"}
+        ]}"#;
+        assert_eq!(parse(body, "ours"), vec![Notice::Presence]);
     }
 
     #[test]

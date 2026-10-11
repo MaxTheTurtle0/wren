@@ -520,6 +520,20 @@ pub enum Action {
         users: Vec<String>,
         video: bool,
     },
+    /// Closes the call bar (the call itself is in Teams) and restores the
+    /// window.
+    CallDone,
+    /// Brings the call window forward.
+    ShowCall,
+    /// Docks Wren beside the call window (`true`) or restores its size.
+    DockWindow(bool),
+    /// Looks up the meeting's chat, asking for OnlineMeetings.Read first.
+    FindMeetingChat,
+    /// Shows the call's join link as a QR code, to join on a phone.
+    JoinOnPhone,
+    /// Opens Teams on the web once, to sign in there ahead of calls.
+    PrepareTeamsWeb,
+    SetCallSettings(crate::settings::CallSettings),
     OpenUrl(String),
     CopyText(String),
 

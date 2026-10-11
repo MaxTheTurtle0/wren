@@ -46,11 +46,17 @@ Status as of Wren 0.1 (unreleased).
 
 | Feature | Status | Notes |
 |---|---|---|
-| Upcoming meetings (14 days) and Join | Works / Hand-off | Calendars.Read; Join opens Teams |
+| Upcoming meetings (14 days) and Join | Works | Calendars.Read. Join opens the meeting in Teams on the web, beside Wren (below) |
 | Meeting reminders | Works | 5 minutes before, from the cached calendar (no network) |
-| Start audio or video call | Hand-off | Teams deep link; Teams asks to confirm |
-| Join by pasted link | Hand-off | Teams hosts only |
-| Incoming calls, in-app audio, video, screen sharing, participants | Not possible at no cost | Graph calling is application-only (bots). Microsoft's licence covers call media only in its own clients; Azure Communication Services bills per participant-minute. Calls stay in Teams, with Wren as the companion (planned). See [calling.md](calling.md) |
+| Start audio or video call | Works | Microsoft's call deep link in Teams on the web; Teams asks to confirm |
+| Join by pasted link | Works | Teams hosts only |
+| Where calls open | Works | Default: a chrome-less Edge or Chrome window (`--app`); without either, the default browser. The Teams app only if chosen in Settings. The browser is started with an argument list, never a shell, and only with Teams links ([call-window.md](call-window.md)) |
+| Docking beside the call | Works | Wren becomes a 380-point panel on the right of its frame and asks the browser to open the call on the left; restored when the call ends. Not on Wayland (no window positions) or for windows under 960 points |
+| Call bar and call status | Works | Follows your own presence: on focus, and with the relay through a presence subscription (Presence.Read.All). Ends a minute after presence leaves the call. Shows calls started elsewhere too |
+| Meeting chat beside the call | Works | From the cache by join link; otherwise `GET /me/onlineMeetings?$filter=JoinWebUrl eq '…'` with OnlineMeetings.Read, requested on first use |
+| Signed in like Wren | Works | Wren's sign-in opens in the call browser, so Teams on the web finds the same Microsoft session; "Sign in to Teams on the web" in Settings for "Stay signed in"; optional browser profile per account and browser sign-out |
+| Join on a phone | Works | QR code of the join link |
+| Incoming calls, audio and video inside Wren's window, call controls | Not possible at no cost | Graph calling is application-only (bots). Microsoft's licence covers call media only in its own clients; Azure Communication Services bills per participant-minute. See [calling.md](calling.md) |
 
 ## People and app
 
@@ -90,6 +96,14 @@ Tested and run:
   with the client ID as session ID, and `clearPresence` on exit.
 - Large uploads: the upload-session request and 5 MiB chunks without the
   Graph token (unit tests in `graph/files.rs`).
+- Calls: finding Edge and Chrome on each platform, the exact argument lists,
+  refusing anything but Teams links, docking geometry, the call session's
+  states against presence sequences (flicker, calls elsewhere, calendar-only
+  meetings), join-link matching, the meeting-chat lookup end to end
+  (`tests/features_flow.rs`), and a presence notification through the real
+  relay causing a presence fetch (`tests/push_flow.rs`). The docked panel,
+  the call bar and the QR code are drawn in the UI tests and screenshotted
+  on macOS.
 - **The whole backend end to end** (`tests/backend_flow.rs`), against local
   stand-ins for Entra ID and Graph:
   - the browser sign-in through Wren's real loopback redirect, with PKCE;
@@ -122,3 +136,5 @@ Not yet run:
   in most tenants, admin consent ([azure-app-registration.md](azure-app-registration.md)).
 - Windows and Linux windows. Both compile and pass tests in CI, but nobody
   has looked at a window there yet.
+- A real call in the Teams web window: the open questions are listed in
+  [call-window.md §7](call-window.md#7-open-questions).

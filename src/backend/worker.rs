@@ -78,6 +78,8 @@ enum Internal {
     Pushed(String),
     /// Graph lost notifications: refresh the chat list.
     PushMissed,
+    /// Graph said the person's own presence changed.
+    PresencePushed,
 }
 
 struct Worker {
@@ -102,6 +104,9 @@ struct Worker {
     /// refreshed it.
     session_enabled: bool,
     session_refreshed: Option<Instant>,
+    /// Where Microsoft's sign-in page opens (the call browser), if not the
+    /// default browser.
+    sign_in_browser: Option<crate::calling::browser::BrowserProfile>,
 }
 
 pub(super) async fn run(
@@ -128,6 +133,7 @@ pub(super) async fn run(
         stop_push: None,
         session_enabled: true,
         session_refreshed: None,
+        sign_in_browser: None,
         out: Outbox { events, waker },
         internal: internal_tx,
         config: None,
@@ -201,6 +207,8 @@ impl Worker {
             Command::SetAvailability(availability) => self.set_availability(availability),
             Command::SetStatusMessage(text) => self.set_status_message(text),
             Command::PresenceActive => self.presence_active(),
+            Command::SignInBrowser(browser) => self.sign_in_browser = browser,
+            Command::FindMeetingChat(join_url) => self.find_meeting_chat(join_url),
             Command::PresenceSession(enabled) => {
                 self.session_enabled = enabled;
                 if !enabled {
@@ -263,6 +271,7 @@ impl Worker {
                 self.fetch(Resource::Chats, Trigger::Push);
             }
             Internal::PushMissed => self.fetch(Resource::Chats, Trigger::Push),
+            Internal::PresencePushed => self.fetch(Resource::MyPresence, Trigger::Push),
         }
     }
 
@@ -371,6 +380,7 @@ impl Worker {
         let out = self.out.clone();
         let internal = self.internal.clone();
         let open_browser = self.options.open_browser;
+        let sign_in_browser = self.sign_in_browser.clone();
         tokio::spawn(async move {
             let result = if device_code {
                 device_code_sign_in(&http, &config, &extra, &out, cancelled).await
@@ -382,7 +392,7 @@ impl Worker {
                     hint.as_deref(),
                     &out,
                     cancelled,
-                    open_browser,
+                    open_browser.then_some(sign_in_browser),
                 )
                 .await
             };
@@ -753,6 +763,28 @@ impl Worker {
                 }
                 Err(error) => out.error("Starting the chat", &error),
             }
+        });
+    }
+
+    fn find_meeting_chat(&mut self, join_url: String) {
+        let Some(account) = &self.account else { return };
+        let graph = Arc::clone(&account.graph);
+        let store = Arc::clone(&account.store);
+        let out = self.out.clone();
+        tokio::spawn(async move {
+            let chat = match graph.meeting_chat(&join_url).await {
+                Ok(Some(chat)) => {
+                    let store = store.lock().unwrap_or_else(|p| p.into_inner());
+                    let _ = store.upsert_chat(&chat);
+                    Some(Box::new(chat))
+                }
+                Ok(None) => None,
+                Err(error) => {
+                    log::info!("meeting chat lookup failed: {error}");
+                    None
+                }
+            };
+            out.send(Event::MeetingChat { join_url, chat });
         });
     }
 
@@ -1395,6 +1427,27 @@ async fn push_loop(
                     break 'session format!("Microsoft Graph refused the subscription ({error})");
                 }
             };
+            // The person's presence, so the call bar follows calls. Optional:
+            // chat updates still work without it.
+            let presence = match graph
+                .subscribe_presence(
+                    &me,
+                    &realtime::notification_url(&relay, &channel),
+                    &realtime::lifecycle_url(&relay, &channel),
+                    &client_state,
+                    realtime::LIFETIME,
+                )
+                .await
+            {
+                Ok(subscription) => Some(subscription),
+                Err(error) => {
+                    log::info!("push: no presence subscription ({error})");
+                    None
+                }
+            };
+            let subscriptions: Vec<String> = std::iter::once(subscription.id.clone())
+                .chain(presence.map(|p| p.id))
+                .collect();
             out.send(Event::Push(PushStatus::Live));
             // A change may have happened while connecting.
             let _ = internal.send(Internal::PushMissed);
@@ -1411,8 +1464,14 @@ async fn push_loop(
                         }
                     }
                     _ = renew.tick() => {
-                        if let Err(error) = graph.renew_subscription(&subscription.id, realtime::LIFETIME).await {
-                            break Some(format!("renewing the subscription failed ({error})"));
+                        let mut failed = None;
+                        for id in &subscriptions {
+                            if let Err(error) = graph.renew_subscription(id, realtime::LIFETIME).await {
+                                failed = Some(format!("renewing the subscription failed ({error})"));
+                            }
+                        }
+                        if failed.is_some() {
+                            break failed;
                         }
                     }
                     _ = keepalive.tick() => {
@@ -1432,12 +1491,17 @@ async fn push_loop(
                                 Notice::Chat(chat) => {
                                     let _ = internal.send(Internal::Pushed(chat));
                                 }
+                                Notice::Presence => {
+                                    let _ = internal.send(Internal::PresencePushed);
+                                }
                                 Notice::Missed => {
                                     let _ = internal.send(Internal::PushMissed);
                                 }
                                 Notice::Reauthorize => {
-                                    if graph.reauthorize_subscription(&subscription.id).await.is_err() {
-                                        recreate = true;
+                                    for id in &subscriptions {
+                                        if graph.reauthorize_subscription(id).await.is_err() {
+                                            recreate = true;
+                                        }
                                     }
                                 }
                                 Notice::Removed => recreate = true,
@@ -1450,7 +1514,9 @@ async fn push_loop(
                 }
             };
             // Best effort: a subscription left behind expires within the hour.
-            let _ = graph.delete_subscription(&subscription.id).await;
+            for id in &subscriptions {
+                let _ = graph.delete_subscription(id).await;
+            }
             match reason {
                 Some(reason) => reason,
                 None => return,
@@ -1476,15 +1542,26 @@ async fn browser_sign_in(
     hint: Option<&str>,
     out: &Outbox,
     cancelled: watch::Receiver<bool>,
-    open_browser: bool,
+    // `None`: don't open a browser (tests); `Some(None)`: the default one.
+    open_browser: Option<Option<crate::calling::browser::BrowserProfile>>,
 ) -> Result<token::TokenResponse, String> {
     let loopback = Loopback::bind().await.map_err(|e| e.to_string())?;
     let flow = auth::begin_browser(config, loopback.port(), extra, hint, !extra.is_empty());
     out.send(Event::Auth(AuthStatus::WaitingForBrowser {
         url: flow.url.clone(),
     }));
-    if open_browser && let Err(error) = open::that_detached(&flow.url) {
-        log::warn!("could not open the browser: {error}");
+    if let Some(browser) = open_browser {
+        // The call browser, so Teams on the web later finds this Microsoft
+        // session; the default browser otherwise or if that fails.
+        let launched = browser.and_then(|b| {
+            crate::calling::browser::page(&b.browser, &flow.url, b.profile.as_deref())
+                .map(|launch| crate::calling::browser::spawn(&launch))
+        });
+        if !matches!(launched, Some(Ok(())))
+            && let Err(error) = open::that_detached(&flow.url)
+        {
+            log::warn!("could not open the browser: {error}");
+        }
     }
     let code = loopback
         .wait_for_code(&flow.state, cancelled)

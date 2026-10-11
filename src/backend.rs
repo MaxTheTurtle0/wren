@@ -118,6 +118,11 @@ pub enum Command {
     PresenceActive,
     /// Whether Wren keeps a presence session at all.
     PresenceSession(bool),
+    /// The browser (and profile) to open Microsoft's sign-in page in, so
+    /// Teams on the web shares the session; `None` uses the default browser.
+    SignInBrowser(Option<crate::calling::browser::BrowserProfile>),
+    /// Finds the chat of the meeting with this join link.
+    FindMeetingChat(String),
     Edit {
         conversation: ConversationId,
         message: String,
@@ -232,6 +237,11 @@ pub enum Event {
     ChatCreated(Box<Chat>),
     /// The signed-in person's own presence.
     MyPresence(Presence),
+    /// The chat of a meeting, looked up by its join link (`None`: not found).
+    MeetingChat {
+        join_url: String,
+        chat: Option<Box<Chat>>,
+    },
     /// Something the person should hear about, in plain words.
     Error(String),
 }

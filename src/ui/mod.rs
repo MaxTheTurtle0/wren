@@ -2,6 +2,7 @@
 //! overlays. Every view reads [`App`] and pushes actions.
 
 pub mod calendar;
+pub mod callbar;
 pub mod calls;
 pub mod chat_list;
 pub mod conversation;
@@ -22,9 +23,14 @@ use crate::theme::{self, Icon};
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let ctx = ui.ctx().clone();
     keys::handle(app, &ctx);
-    if app.shows_workspace() {
+    if app.shows_workspace() && app.docked.is_some() {
+        docked(app, ui);
+    } else if app.shows_workspace() {
         rail::show(app, ui);
         sidebar(app, ui);
+        if app.call.is_some() {
+            callbar::panel(app, ui, false);
+        }
         main(app, ui);
     } else {
         signin::show(app, ui);
@@ -81,6 +87,30 @@ fn drop_files(app: &mut App, ctx: &egui::Context) {
                     });
             });
     }
+}
+
+/// Beside a call window: the call bar on top, then the call's chat (or the
+/// open conversation), with no rail or sidebar.
+fn docked(app: &mut App, ui: &mut egui::Ui) {
+    callbar::panel(app, ui, true);
+    let palette = app.palette;
+    let chat = app
+        .call
+        .as_ref()
+        .and_then(|call| call.chat.clone())
+        .or_else(|| app.open.clone());
+    egui::CentralPanel::no_frame()
+        .frame(Frame::new().fill(palette.window))
+        .show(ui, |ui| match chat {
+            Some(chat) => conversation::show(app, ui, chat),
+            None => widgets::empty_state(
+                ui,
+                &palette,
+                Icon::Chat,
+                "No chat for this call",
+                "A meeting's chat shows here once Wren finds it. Restore the window to see all your chats.",
+            ),
+        });
 }
 
 /// Left padding for a header that sits under the macOS traffic lights.

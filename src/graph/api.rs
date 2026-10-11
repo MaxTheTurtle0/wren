@@ -556,6 +556,54 @@ impl Graph {
         .await
     }
 
+    /// `POST /subscriptions` for the person's own presence, without resource
+    /// data (Presence.Read.All). Graph allows at most an hour.
+    pub async fn subscribe_presence(
+        &self,
+        me: &str,
+        notification_url: &str,
+        lifecycle_url: &str,
+        client_state: &str,
+        lifetime: std::time::Duration,
+    ) -> Result<Subscription, GraphError> {
+        let lifetime = lifetime.min(std::time::Duration::from_secs(60 * 60));
+        let expiration = crate::time::to_iso(crate::time::now() + lifetime.as_millis() as i64);
+        self.post(
+            "subscriptions",
+            &json!({
+                "changeType": "updated",
+                "notificationUrl": notification_url,
+                "lifecycleNotificationUrl": lifecycle_url,
+                "resource": format!("communications/presences/{}", segment(me)),
+                "expirationDateTime": expiration,
+                "clientState": client_state,
+                "includeResourceData": false,
+            }),
+        )
+        .await
+    }
+
+    /// The chat of the meeting with this join link:
+    /// `GET /me/onlineMeetings?$filter=JoinWebUrl eq '…'` (OnlineMeetings.Read;
+    /// organisers and invited attendees), then the chat itself.
+    pub async fn meeting_chat(&self, join_url: &str) -> Result<Option<Chat>, GraphError> {
+        let meetings: g::Page<g::OnlineMeeting> = self
+            .get(&format!(
+                "me/onlineMeetings?$filter=JoinWebUrl%20eq%20'{}'",
+                urlencoding::encode(join_url)
+            ))
+            .await?;
+        let Some(thread) = meetings
+            .value
+            .into_iter()
+            .find_map(|meeting| meeting.chat_info.and_then(|info| info.thread_id))
+            .filter(|thread| !thread.is_empty())
+        else {
+            return Ok(None);
+        };
+        self.chat(&thread).await.map(Some)
+    }
+
     pub async fn delete_subscription(&self, id: &str) -> Result<(), GraphError> {
         self.delete(&format!("subscriptions/{}", segment(id))).await
     }

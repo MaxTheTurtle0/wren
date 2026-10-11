@@ -220,10 +220,20 @@ pub struct Recipient {
     pub email_address: Option<EmailAddress>,
 }
 
+/// An event's `onlineMeeting`, or an `onlineMeeting` resource found by its
+/// join link.
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct OnlineMeeting {
     pub join_url: Option<String>,
+    pub join_web_url: Option<String>,
+    pub chat_info: Option<ChatInfo>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ChatInfo {
+    pub thread_id: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]

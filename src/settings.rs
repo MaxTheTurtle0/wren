@@ -47,6 +47,37 @@ pub struct Settings {
     pub window: Option<WindowGeometry>,
     /// A wren-relay for push updates (experimental), `https://…`.
     pub relay_url: Option<String>,
+    pub calls: CallSettings,
+}
+
+/// How calls and meetings open (docs/call-window.md).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CallSettings {
+    pub open_in: crate::calling::CallsOpenIn,
+    /// Edge or Chrome for app windows; `None` takes the first installed.
+    pub browser: Option<crate::calling::browser::BrowserKind>,
+    /// Move Wren beside the call window while a call runs.
+    pub dock: bool,
+    /// One browser profile per account, so each profile holds one Microsoft
+    /// sign-in. Profile folders by account ID.
+    pub profile_per_account: bool,
+    pub profiles: std::collections::BTreeMap<String, String>,
+    /// Signing out of Wren also signs the call browser out of Microsoft.
+    pub sign_out_browser: bool,
+}
+
+impl Default for CallSettings {
+    fn default() -> Self {
+        Self {
+            open_in: crate::calling::CallsOpenIn::AppWindow,
+            browser: None,
+            dock: true,
+            profile_per_account: false,
+            profiles: std::collections::BTreeMap::new(),
+            sign_out_browser: false,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -76,6 +107,7 @@ impl Default for Settings {
             perf_overlay: false,
             window: None,
             relay_url: None,
+            calls: CallSettings::default(),
         }
     }
 }

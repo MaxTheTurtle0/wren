@@ -5,7 +5,7 @@ use egui::{CornerRadius, Frame, Margin, Sense, Stroke, vec2};
 
 use super::widgets;
 use crate::app::App;
-use crate::calling::{CAPABILITIES, CallBackend};
+use crate::calling::CAPABILITIES;
 use crate::model::{Action, ChatKind};
 use crate::theme::{self, Icon};
 
@@ -62,12 +62,7 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                     label_width,
                 )));
                 child.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let video = widgets::icon_button(
-                        ui,
-                        &palette,
-                        Icon::Video,
-                        "Video call (opens Microsoft Teams)",
-                    );
+                    let video = widgets::icon_button(ui, &palette, Icon::Video, "Video call");
                     widgets::on_click(
                         &video,
                         &mut actions,
@@ -76,12 +71,7 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                             video: true,
                         },
                     );
-                    let audio = widgets::icon_button(
-                        ui,
-                        &palette,
-                        Icon::Phone,
-                        "Audio call (opens Microsoft Teams)",
-                    );
+                    let audio = widgets::icon_button(ui, &palette, Icon::Phone, "Audio call");
                     widgets::on_click(
                         &audio,
                         &mut actions,
@@ -109,7 +99,12 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             ui.set_max_width(680.0);
             ui.label(egui::RichText::new("Calls and meetings").font(theme::bold(24.0)).color(palette.text));
             ui.add_space(6.0);
-            ui.label(egui::RichText::new(CallBackend::current().describe()).color(palette.secondary));
+            let place = match app.opener() {
+                crate::calling::Opener::AppWindow(browser) => format!("Teams on the web, in a {} window beside Wren", browser.kind.short()),
+                crate::calling::Opener::Browser => "Teams on the web, in your default browser".to_owned(),
+                crate::calling::Opener::TeamsApp => "the Microsoft Teams app".to_owned(),
+            };
+            ui.label(egui::RichText::new(format!("Calls and meetings open in {place}. The call itself runs in Microsoft's own client, so it costs nothing extra; Wren shows the meeting chat and follows the call. Change this in Settings.")).color(palette.secondary));
             ui.add_space(18.0);
 
             // Join by link.
@@ -148,8 +143,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 for capability in CAPABILITIES {
                     ui.label(egui::RichText::new(capability.name).font(theme::medium(13.0)).color(palette.text));
                     let color = match capability.status {
-                        "Hand-off" => palette.accent,
-                        "Not possible yet" => palette.danger,
+                        "Works" => palette.success,
+                        "Not possible" => palette.danger,
                         _ => palette.warning,
                     };
                     ui.label(egui::RichText::new(capability.status).font(theme::semibold(12.0)).color(color));
@@ -159,7 +154,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             });
             ui.add_space(14.0);
             ui.label(
-                egui::RichText::new("Why: Microsoft Graph's calling API works only for bots with application permissions. In-app calling as yourself needs Azure Communication Services, whose Calling SDK exists for the web, Windows, iOS and Android. The full investigation is in docs/calling.md.")
+                egui::RichText::new("Why: Microsoft Graph's calling API works only for bots. The Teams licence covers calls in Microsoft's own clients only; Azure Communication Services would bill every minute. The full investigation is in docs/calling.md and docs/video-calling-options.md.")
                     .font(theme::regular(12.0))
                     .color(palette.dim),
             );

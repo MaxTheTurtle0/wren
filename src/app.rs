@@ -28,6 +28,9 @@ use crate::settings::Settings;
 use crate::sync::{Resource, Trigger};
 use crate::theme::Palette;
 
+mod calls;
+pub use calls::Docked;
+
 /// Messages and view state of one conversation.
 #[derive(Debug, Default)]
 pub struct Conversation {
@@ -147,6 +150,8 @@ pub enum Overlay {
     StatusMessage,
     /// A feature needs a permission the account has not granted yet.
     Consent(&'static str),
+    /// A join link as a QR code, to join on a phone.
+    JoinOnPhone(String),
 }
 
 #[derive(Debug, Default)]
@@ -248,6 +253,10 @@ pub struct Account {
     pub drafts: HashMap<ConversationId, Draft>,
     pub push: crate::realtime::PushStatus,
 
+    /// The browser profile folder for this account's calls, when each
+    /// account has its own (`settings.calls.profile_per_account`).
+    pub browser_profile: String,
+
     pending_sends: HashMap<String, PendingSend>,
     next_local: u64,
     reminded: HashSet<String>,
@@ -278,6 +287,7 @@ impl Account {
             chat_filter: String::new(),
             drafts: HashMap::new(),
             push: crate::realtime::PushStatus::Off,
+            browser_profile: format!("Wren {}", crate::auth::random_token(4)),
             pending_sends: HashMap::new(),
             next_local: 0,
             reminded: HashSet::new(),
@@ -461,6 +471,13 @@ pub struct App {
     last_input: Option<f64>,
     /// Opens the account menu on the next frame (screenshots, tests).
     pub open_account_menu: bool,
+
+    /// The call or meeting the call bar follows.
+    pub call: Option<crate::calling::session::CallSession>,
+    /// Wren's window before it moved beside a call window.
+    pub docked: Option<Docked>,
+    /// Edge and Chrome, found on first use.
+    browsers: Option<Vec<crate::calling::browser::Browser>>,
 }
 
 impl Deref for App {
@@ -553,6 +570,9 @@ impl App {
             scroll_to_end: 4,
             last_input: None,
             open_account_menu: false,
+            call: None,
+            docked: None,
+            browsers: None,
         }
     }
 
@@ -561,10 +581,17 @@ impl App {
     fn add_slot(&mut self, id: Option<String>) -> usize {
         let backend = Backend::spawn(self.dirs.clone(), self.waker.clone());
         let mut account = Account::new(backend);
+        if let Some(profile) = id
+            .as_ref()
+            .and_then(|id| self.settings.calls.profiles.get(id))
+        {
+            account.browser_profile = profile.clone();
+        }
         account.id = id;
         self.accounts.push(account);
         let index = self.accounts.len() - 1;
         self.start_account(index);
+        self.sync_call_browser();
         index
     }
 
@@ -788,6 +815,7 @@ impl App {
         if (ctx.zoom_factor() - zoom).abs() > f32::EPSILON {
             ctx.set_zoom_factor(zoom);
         }
+        self.tick_call(ctx);
     }
 
     fn handle_tray(&mut self) {
@@ -939,8 +967,10 @@ impl App {
                 if !me.is_empty() {
                     self.presence.insert(me, presence.clone());
                 }
+                self.observe_call(presence.activity.as_deref());
                 self.my_presence = Some(presence);
             }
+            Event::MeetingChat { join_url, chat } => self.on_meeting_chat(join_url, chat),
             Event::Photo { user, bytes } => {
                 let state = match bytes
                     .and_then(|bytes| register_image(ctx, &format!("photo-{user}"), bytes))
@@ -1023,6 +1053,7 @@ impl App {
                     return;
                 }
                 self.id = Some(account.clone());
+                self.remember_browser_profile();
                 if !self.hidden {
                     self.adding_from = None;
                 }
@@ -1633,20 +1664,18 @@ impl App {
                 }
             }
             Action::CreateChat { members, topic } => self.create_chat(members, topic),
-            Action::JoinMeeting(url) => {
-                if crate::calling::is_teams_link(&url) {
-                    open_external(&url);
-                } else {
-                    self.toast(ToastKind::Error, "That is not a Microsoft Teams link.");
-                }
+            Action::JoinMeeting(url) => self.join_meeting(url, ctx),
+            Action::StartCall { users, video } => self.start_call(users, video, ctx),
+            Action::CallDone => self.end_call(ctx),
+            Action::ShowCall => self.show_call(),
+            Action::DockWindow(true) => {
+                self.dock(ctx);
             }
-            Action::StartCall { users, video } => match crate::calling::call_link(&users, video) {
-                Some(link) => open_external(&link),
-                None => self.toast(
-                    ToastKind::Error,
-                    "No one to call: the chat's members have no email address.",
-                ),
-            },
+            Action::DockWindow(false) => self.undock(ctx),
+            Action::FindMeetingChat => self.find_meeting_chat(),
+            Action::JoinOnPhone => self.join_on_phone(),
+            Action::PrepareTeamsWeb => self.prepare_teams_web(),
+            Action::SetCallSettings(calls) => self.set_call_settings(calls),
             Action::OpenUrl(url) => {
                 if url.starts_with("https://")
                     || url.starts_with("http://")
@@ -2020,6 +2049,7 @@ impl App {
         if self.demo {
             return;
         }
+        self.sign_out_browser();
         self.backend.send(Command::SignOut);
         let index = self.active;
         self.retire_slot(index);

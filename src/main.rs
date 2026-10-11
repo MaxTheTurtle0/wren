@@ -130,7 +130,11 @@ fn main() -> eframe::Result<()> {
                     size.or(geometry.map(|g| [g.width, g.height]))
                         .unwrap_or([1240.0, 800.0]),
                 )
-                .with_min_inner_size([720.0, 480.0])
+                // A smaller --size (screenshots of the docked panel) lowers
+                // the minimum to match.
+                .with_min_inner_size(
+                    size.map_or([720.0, 480.0], |[w, h]| [w.min(720.0), h.min(480.0)]),
+                )
                 .with_icon(wren::platform::window_icon())
                 // macOS: Wren draws its own title bar under the traffic lights.
                 .with_fullsize_content_view(true)
@@ -247,6 +251,24 @@ fn apply_page(app: &mut App, page: &str) {
                 );
             }
             "status" => app.actions.push(Action::OpenStatusMessage),
+            // A meeting joined from the calendar: docked beside the call, or
+            // with the call bar along the bottom, or its QR code.
+            "call" | "callbar" | "phone" => {
+                if part == "call" {
+                    app.pretend_docked();
+                }
+                if let Some(url) = app
+                    .meetings
+                    .iter()
+                    .find(|m| m.id == "demo-design-review")
+                    .and_then(|m| m.join_url.clone())
+                {
+                    app.actions.push(Action::JoinMeeting(url));
+                }
+                if part == "phone" {
+                    app.actions.push(Action::JoinOnPhone);
+                }
+            }
             "signin" => {
                 app.demo = false;
                 app.chats.clear();
@@ -368,8 +390,10 @@ impl eframe::App for Window {
                 viewport.maximized.unwrap_or(false),
             )
         });
+        // Not while docked beside a call: the next start gets the full size.
         if let Some(size) = size
             && !app.demo
+            && app.docked.is_none()
         {
             let geometry = wren::settings::WindowGeometry {
                 width: size.x,

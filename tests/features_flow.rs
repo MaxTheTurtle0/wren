@@ -1,8 +1,8 @@
 //! The 0.2 features end to end through the real backend, against a local
 //! stand-in for Graph: people search, a new chat, a message with a mention
 //! and a file (upload, share, reference), availability, the presence
-//! session and the status message. Each request's shape is checked against
-//! what Microsoft documents.
+//! session, the status message, and finding a meeting's chat from its join
+//! link. Each request's shape is checked against what Microsoft documents.
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -17,8 +17,8 @@ use wren::secrets::{MemoryStore, SecretStore};
 
 const CLIENT: &str = "6731de76-14a6-49ae-97bc-6eba6914391e";
 const ACCOUNT: &str = "u-me.t-1";
-const GRANTED: &str =
-    "User.Read Chat.ReadWrite ChatMessage.Send Chat.Create Files.ReadWrite Presence.ReadWrite";
+const GRANTED: &str = "User.Read Chat.ReadWrite ChatMessage.Send Chat.Create Files.ReadWrite Presence.ReadWrite OnlineMeetings.Read";
+const JOIN: &str = "https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc%40thread.v2/0";
 
 static PENDING: std::sync::Mutex<Vec<Event>> = std::sync::Mutex::new(Vec::new());
 
@@ -159,6 +159,26 @@ async fn chats_mentions_files_and_status() {
         .mount(&server)
         .await;
 
+    // A meeting found by its join link, then its chat.
+    Mock::given(method("GET"))
+        .and(path("/v1.0/me/onlineMeetings"))
+        .and(query_param("$filter", format!("JoinWebUrl eq '{JOIN}'")))
+        .respond_with(ok(serde_json::json!({"value": [{
+            "id": "meeting-1", "joinWebUrl": JOIN,
+            "chatInfo": {"threadId": "19:meeting_abc@thread.v2", "messageId": "0"}
+        }]})))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/v1.0/chats/19:meeting_abc@thread.v2"))
+        .respond_with(ok(serde_json::json!({
+            "id": "19:meeting_abc@thread.v2", "chatType": "meeting", "topic": "Design review",
+            "onlineMeetingInfo": {"joinWebUrl": JOIN},
+            "members": [{"userId": "u-me", "displayName": "Alex Rivera", "email": "alex@contoso.com"}]
+        })))
+        .mount(&server)
+        .await;
+
     // A signed-in account with the new permissions granted.
     let dir = tempfile::tempdir().unwrap();
     let dirs = AppDirs::under(dir.path());
@@ -292,6 +312,21 @@ async fn chats_mentions_files_and_status() {
     wait_for(&backend, 5, |e| {
         matches!(e, Event::MyPresence(_)).then_some(())
     });
+
+    // Joining a meeting whose chat Wren has not seen: look it up.
+    backend.send(Command::FindMeetingChat(JOIN.into()));
+    let (join_url, chat) = wait_for(&backend, 5, |e| match e {
+        Event::MeetingChat { join_url, chat } => Some((join_url, chat)),
+        _ => None,
+    });
+    assert_eq!(join_url, JOIN);
+    let chat = chat.expect("the meeting's chat");
+    assert_eq!(chat.id, "19:meeting_abc@thread.v2");
+    assert_eq!(chat.kind, wren::model::ChatKind::Meeting);
+    assert!(wren::calling::same_meeting(
+        chat.join_url.as_deref().unwrap(),
+        JOIN
+    ));
 
     // Using Wren keeps a presence session; quitting ends it.
     backend.send(Command::PresenceActive);

@@ -615,8 +615,8 @@ pub fn populate(app: &mut App) {
             true,
         ),
         meeting(
-            "m2",
-            "Design review: sidebar density",
+            "demo-design-review",
+            "Design review: Wren 0.2",
             now + 25 * MINUTE,
             45,
             Some("Teams"),

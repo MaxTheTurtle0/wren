@@ -65,7 +65,7 @@ account already open is retired.
 | `graph/` | Graph client (token only to the Graph origin, 401 refresh, `Retry-After`), endpoints (`api.rs`; OneDrive uploads and sharing in `files.rs`; people, new chats and your own presence in `people.rs`), JSON shapes (`types.rs`), translation (`convert.rs`) |
 | `store.rs` | Per-account SQLite cache with FTS5 search |
 | `sync.rs` | Fetch policy (no polling; dedupe repeated requests) |
-| `calling.rs` | Deep-link hand-off and the capability model for future in-app calling |
+| `calling/` | Calls in Teams on the web: finding Edge and Chrome and starting their app windows (`browser.rs`), docking geometry (`dock.rs`), the call session behind the call bar (`session.rs`); the app side is in `app/calls.rs` ([call-window.md](call-window.md)) |
 | `realtime.rs` | Push updates: relay WebSocket, Graph subscription lifecycle, notification parsing (experimental) |
 | `relay/` (crate `wren-relay`) | The self-hostable relay: validation handshake and forwarding of Graph notifications |
 | `theme.rs` | Palettes (fastframe-theme compatible), visuals, type scale, Lucide icon table |

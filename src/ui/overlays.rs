@@ -5,6 +5,8 @@ use egui::{CornerRadius, Frame, Key, Margin, Modifiers, Sense, Stroke, vec2};
 use super::widgets;
 use crate::app::{App, Overlay};
 use crate::backend::AuthStatus;
+use crate::calling::CallsOpenIn;
+use crate::calling::browser::BrowserKind;
 use crate::model::{Access, Action, ConversationId, Member, SearchHit};
 use crate::settings::ThemeChoice;
 use crate::theme::{self, Icon};
@@ -17,6 +19,7 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
         Some(Overlay::NewChat) => new_chat(app, ctx),
         Some(Overlay::StatusMessage) => status_message(app, ctx),
         Some(Overlay::Consent(scope)) => consent(app, ctx, scope),
+        Some(Overlay::JoinOnPhone(url)) => join_on_phone(app, ctx, &url),
         None => {}
     }
 }
@@ -367,6 +370,7 @@ fn result_row(
 fn settings(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
     let mut actions = Vec::new();
+    let browsers: Vec<BrowserKind> = app.call_browsers().iter().map(|b| b.kind).collect();
     let close = modal(palette, ctx, "settings", 560.0, 70.0, |ui| {
         Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
             ui.horizontal(|ui| {
@@ -498,6 +502,9 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                 if ui.checkbox(&mut perf, "Show the performance overlay (⌘⇧P)").changed() {
                     actions.push(Action::TogglePerfOverlay);
                 }
+                ui.add_space(8.0);
+
+                call_settings(app, ui, &browsers, &mut actions);
                 ui.add_space(8.0);
 
                 if !app.demo {
@@ -904,6 +911,157 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
 }
 
 /// Explains a permission before Wren asks Microsoft for it.
+/// Settings → Calls and meetings.
+fn call_settings(
+    app: &mut App,
+    ui: &mut egui::Ui,
+    browsers: &[BrowserKind],
+    actions: &mut Vec<Action>,
+) {
+    let palette = app.palette;
+    widgets::section_label(ui, &palette, "Calls and meetings");
+    let mut calls = app.settings.calls.clone();
+    egui::ComboBox::from_label(egui::RichText::new("Open in").color(palette.secondary))
+        .selected_text(calls.open_in.label())
+        .width(300.0)
+        .show_ui(ui, |ui| {
+            for choice in CallsOpenIn::ALL {
+                ui.selectable_value(&mut calls.open_in, choice, choice.label());
+            }
+        });
+    if calls.open_in == CallsOpenIn::AppWindow {
+        match browsers {
+            [] => {
+                ui.label(
+                    egui::RichText::new("A separate window needs Microsoft Edge or Google Chrome. Until one is installed, calls open in your default browser.")
+                        .font(theme::regular(12.0))
+                        .color(palette.warning),
+                );
+            }
+            found => {
+                let current = calls
+                    .browser
+                    .filter(|b| found.contains(b))
+                    .unwrap_or(found[0]);
+                egui::ComboBox::from_label(egui::RichText::new("Browser").color(palette.secondary))
+                    .selected_text(current.name())
+                    .show_ui(ui, |ui| {
+                        for kind in found {
+                            if ui.selectable_label(current == *kind, kind.name()).clicked() {
+                                calls.browser = Some(*kind);
+                            }
+                        }
+                    });
+                ui.checkbox(
+                    &mut calls.dock,
+                    "Move Wren beside the call window during calls",
+                );
+                if app.accounts.len() > 1 || calls.profile_per_account {
+                    ui.checkbox(&mut calls.profile_per_account, "A separate browser profile for each account")
+                        .on_hover_text("Each account signs in to Microsoft in its own browser profile, so Teams on the web never asks which account to use.");
+                }
+                ui.checkbox(
+                    &mut calls.sign_out_browser,
+                    format!(
+                        "Signing out of Wren also signs {} out of Microsoft",
+                        current.short()
+                    ),
+                )
+                .on_hover_text(
+                    "Signs that browser out of every Microsoft site, including Teams on the web.",
+                );
+                ui.label(
+                    egui::RichText::new(format!(
+                        "Calls run in Teams on the web, Microsoft's own client, so they cost nothing extra. Wren signs in through {} too, so Teams there finds your Microsoft session. To stay signed in, sign in to Teams on the web once and choose \"Stay signed in\".",
+                        current.short()
+                    ))
+                    .font(theme::regular(12.0))
+                    .color(palette.dim),
+                );
+                if widgets::secondary_button(ui, &palette, "Sign in to Teams on the web").clicked()
+                {
+                    actions.push(Action::PrepareTeamsWeb);
+                }
+            }
+        }
+    }
+    if calls != app.settings.calls {
+        actions.push(Action::SetCallSettings(calls));
+    }
+}
+
+/// A meeting's join link as a QR code, for the phone's camera.
+fn join_on_phone(app: &mut App, ctx: &egui::Context, url: &str) {
+    let palette = app.palette;
+    let mut actions = Vec::new();
+    let close = modal(palette, ctx, "join-on-phone", 340.0, 100.0, |ui| {
+        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(
+                    egui::RichText::new("Join on your phone")
+                        .font(theme::bold(18.0))
+                        .color(palette.text),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
+                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
+                });
+            });
+            ui.add_space(6.0);
+            ui.label(
+                egui::RichText::new("Point your phone's camera here; Teams opens the meeting.")
+                    .color(palette.secondary),
+            );
+            ui.add_space(12.0);
+            ui.vertical_centered(|ui| qr_code(ui, url, 232.0));
+            ui.add_space(12.0);
+            if widgets::secondary_button(ui, &palette, "Copy the link").clicked() {
+                actions.push(Action::CopyText(url.to_owned()));
+            }
+        });
+    });
+    if close {
+        actions.push(Action::CloseOverlay);
+    }
+    app.actions.extend(actions);
+}
+
+/// Draws `text` as a QR code: black modules on white, with a quiet zone,
+/// whole pixels per module so it stays crisp.
+pub fn qr_code(ui: &mut egui::Ui, text: &str, size: f32) {
+    let Ok(code) = qrcodegen::QrCode::encode_text(text, qrcodegen::QrCodeEcc::Medium) else {
+        ui.label("This link is too long for a QR code.");
+        return;
+    };
+    const QUIET: i32 = 3;
+    let modules = code.size() + 2 * QUIET;
+    let cell = (size / modules as f32).floor().max(1.0);
+    let side = cell * modules as f32;
+    let (rect, _) = ui.allocate_exact_size(vec2(side, side), egui::Sense::hover());
+    let painter = ui.painter();
+    painter.rect_filled(rect, CornerRadius::same(6), egui::Color32::WHITE);
+    // One rectangle per run of dark modules in a row.
+    for y in 0..code.size() {
+        let mut x = 0;
+        while x < code.size() {
+            if !code.get_module(x, y) {
+                x += 1;
+                continue;
+            }
+            let start = x;
+            while x < code.size() && code.get_module(x, y) {
+                x += 1;
+            }
+            let min = rect.min + vec2((start + QUIET) as f32 * cell, (y + QUIET) as f32 * cell);
+            painter.rect_filled(
+                egui::Rect::from_min_size(min, vec2((x - start) as f32 * cell, cell)),
+                0.0,
+                egui::Color32::BLACK,
+            );
+        }
+    }
+}
+
 fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
     let palette = app.palette;
     let mut actions = Vec::new();

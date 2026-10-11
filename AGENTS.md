@@ -32,6 +32,10 @@ Microsoft Graph. These rules are for coding agents and contributors. Follow
   `docs/microsoft-api-research.md` are the source of truth. Before promising
   a Teams feature, check it there. If the API gained a capability, update
   those pages in the same change.
+- Calls run in Microsoft's own clients (Teams on the web by default), never
+  in Wren: Microsoft's licence covers call media only there. Wren starts the
+  browser from an argument list with Teams links only (`calling::browser`),
+  and never shares tokens with Teams on the web (docs/call-window.md).
 - Don't use Microsoft or Teams logos or names in a way that implies
   endorsement. Wren "works with Microsoft Teams".
 - Don't broaden a task into adjacent features or a general refactor.

@@ -177,7 +177,7 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
         ui.add_space(16.0);
         ui.horizontal(|ui| {
             if let Some(url) = &meeting.join_url {
-                let join = widgets::pill(ui, &palette, Icon::Video, "Join in Teams", true);
+                let join = widgets::pill(ui, &palette, Icon::Video, "Join", true);
                 widgets::on_click(&join, &mut app.actions, Action::JoinMeeting(url.clone()));
                 let copy = widgets::pill(ui, &palette, Icon::Copy, "Copy link", false);
                 widgets::on_click(&copy, &mut app.actions, Action::CopyText(url.clone()));
@@ -219,7 +219,7 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
             });
         ui.add_space(14.0);
         ui.label(
-            egui::RichText::new("Joining opens the meeting in Microsoft Teams (the app if installed, otherwise Teams on the web). Wren reminds you five minutes before online meetings start.")
+            egui::RichText::new("Joining opens the meeting in Teams on the web beside Wren, with its chat here. Wren reminds you five minutes before online meetings start.")
                 .font(theme::regular(12.0))
                 .color(palette.dim),
         );
