@@ -101,3 +101,5 @@ Signing out deletes that account's refresh token and folder.
   with no per-word widgets.
 - **Lazy media.** Avatars and inline images are fetched only when drawn on
   screen, a few at a time. Photos are cached for a week.
+
+App-wide update work uses a separate backend handle, so downloads survive account switching and sign-out. `updates.rs` configures fastframe-update and its pinned publisher key. All checks, downloads, helper handoffs and startup receipts run off the UI thread. `clipboard.rs` reads and PNG-encodes images on a blocking backend task only after a composer paste action; the image bytes stay in the draft and pending-send record until Graph accepts the message.

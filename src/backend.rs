@@ -70,6 +70,13 @@ impl AuthStatus {
 
 #[derive(Debug)]
 pub enum Command {
+    CheckUpdate {
+        download: bool,
+    },
+    DownloadUpdate(fastframe_update::Release),
+    InstallUpdate(Box<fastframe_update::Prepared>),
+    AcknowledgeUpdate(fastframe_update::Receipt),
+    DiscardUpdate(Box<fastframe_update::Prepared>),
     /// The app registration and the account to restore, once at start and
     /// whenever the registration changes.
     Start {
@@ -87,7 +94,15 @@ pub enum Command {
         resource: Resource,
         trigger: Trigger,
     },
-    LoadOlder(ConversationId),
+    LoadOlder {
+        conversation: ConversationId,
+        before: Option<i64>,
+    },
+    Paste {
+        conversation: ConversationId,
+        range: (usize, usize),
+        text: String,
+    },
     LoadReplies {
         conversation: ConversationId,
         root: String,
@@ -102,6 +117,7 @@ pub enum Command {
         mentions: Vec<MentionRef>,
         /// Files to upload to OneDrive and share in the message.
         files: Vec<std::path::PathBuf>,
+        images: Vec<crate::clipboard::InlineImage>,
         /// Who to share the files with (the chat's members' addresses).
         recipients: Vec<String>,
     },
@@ -162,6 +178,13 @@ pub enum Merge {
 
 #[derive(Debug)]
 pub enum Event {
+    Update(crate::updates::Event),
+    Pasted {
+        conversation: ConversationId,
+        range: (usize, usize),
+        text: String,
+        image: Result<Option<crate::clipboard::InlineImage>, &'static str>,
+    },
     Auth(AuthStatus),
     Profile(Box<Profile>),
     /// The scopes the session holds, space-separated.

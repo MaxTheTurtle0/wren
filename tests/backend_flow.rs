@@ -245,6 +245,7 @@ async fn sign_in_sync_send_restore_and_sign_out() {
         reply_to: None,
         mentions: Vec::new(),
         files: Vec::new(),
+        images: Vec::new(),
         recipients: Vec::new(),
     });
     let sent = wait_for(&backend, 10, |e| match e {
@@ -286,11 +287,47 @@ async fn sign_in_sync_send_restore_and_sign_out() {
         Event::Messages {
             messages,
             cached: true,
+            more: Some(true),
             ..
         } => Some(messages),
         _ => None,
     });
     assert_eq!(cached_messages.len(), 3, "two fetched and one sent");
+    let before = cached_messages.iter().map(|m| m.created).min().unwrap();
+    Mock::given(method("GET"))
+        .and(path(format!("/v1.0/chats/{CHAT}/messages")))
+        .and(query_param(
+            "$filter",
+            format!("createdDateTime lt {}", wren::time::to_iso(before)),
+        ))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(serde_json::json!({"value": [{
+                "id": "1600", "messageType": "message", "createdDateTime": "2026-10-10T09:00:00Z",
+                "body": {"contentType": "text", "content": "Earlier history"}
+            }]})),
+        )
+        .expect(1)
+        .with_priority(1)
+        .mount(&server)
+        .await;
+    backend.send(Command::LoadOlder {
+        conversation: conversation.clone(),
+        before: Some(before),
+    });
+    let earlier = wait_for(&backend, 5, |e| match e {
+        Event::Messages {
+            messages,
+            merge: wren::backend::Merge::Older,
+            more: Some(false),
+            cached: false,
+            ..
+        } => Some(messages),
+        _ => None,
+    });
+    assert_eq!(
+        earlier[0].id, "1600",
+        "reopened cached chats can load yesterday's predecessors"
+    );
     // The refresh token was used and rotated by the date-ranged refresh.
     let deadline = Instant::now() + Duration::from_secs(5);
     while secrets

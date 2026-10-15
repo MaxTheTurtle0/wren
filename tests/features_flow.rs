@@ -266,6 +266,7 @@ async fn chats_mentions_files_and_status() {
         reply_to: None,
         mentions,
         files: vec![file],
+        images: Vec::new(),
         recipients: vec!["barbara@contoso.com".into()],
     });
     let sent = wait_for(&backend, 10, |e| match e {

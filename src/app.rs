@@ -44,6 +44,9 @@ pub struct Conversation {
     pub heights: HashMap<String, f32>,
     /// Channel threads shown expanded.
     pub expanded: HashSet<String>,
+    /// First visible row and its offset from the viewport top.
+    pub history_anchor: Option<(String, f32)>,
+    pub restore_history_anchor: bool,
 }
 
 impl Conversation {
@@ -139,6 +142,9 @@ pub struct Draft {
     pub mentions: Vec<MentionRef>,
     /// Files to send with the message.
     pub files: Vec<PathBuf>,
+    pub images: Vec<crate::clipboard::InlineImage>,
+    pub pending_pastes: usize,
+    pub paste_cursor: Option<usize>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -152,6 +158,7 @@ pub enum Overlay {
     Consent(&'static str),
     /// A join link as a QR code, to join on a phone.
     JoinOnPhone(String),
+    ImagePreview(String),
 }
 
 #[derive(Debug, Default)]
@@ -193,6 +200,7 @@ struct PendingSend {
     reply_to: Option<String>,
     mentions: Vec<MentionRef>,
     files: Vec<PathBuf>,
+    images: Vec<crate::clipboard::InlineImage>,
     recipients: Vec<String>,
 }
 
@@ -423,6 +431,10 @@ impl Account {
 }
 
 pub struct App {
+    /// Process-wide work survives account switching and sign-out.
+    pub service: Backend,
+    pub update: crate::updates::Status,
+    pub update_receipt: Option<fastframe_update::Receipt>,
     pub dirs: AppDirs,
     pub settings: Settings,
     settings_dirty: bool,
@@ -480,6 +492,14 @@ pub struct App {
     browsers: Option<Vec<crate::calling::browser::Browser>>,
 }
 
+impl Drop for App {
+    fn drop(&mut self) {
+        if let crate::updates::Status::Ready(prepared) = std::mem::take(&mut self.update) {
+            self.service.send(Command::DiscardUpdate(prepared));
+        }
+    }
+}
+
 impl Deref for App {
     type Target = Account;
 
@@ -535,6 +555,9 @@ impl App {
         let palette = crate::theme::resolve(&settings.theme, true);
         Self {
             form_client_id: settings.client_id.clone(),
+            service: Backend::detached().0,
+            update: crate::updates::Status::default(),
+            update_receipt: None,
             form_tenant: settings.tenant.clone(),
             form_relay: settings.relay_url.clone().unwrap_or_default(),
             form_status: String::new(),
@@ -741,6 +764,23 @@ impl App {
     /// Work every frame does, with or without a window: backend events of
     /// every account, tray clicks, reminders.
     pub fn background(&mut self, ctx: &egui::Context) {
+        for event in self.service.poll() {
+            self.handle(event, ctx);
+        }
+        if !self.demo
+            && !self.service.is_detached()
+            && self.settings.automatic_updates
+            && !self.update.busy()
+            && !matches!(self.update, crate::updates::Status::Ready(_))
+        {
+            let now = crate::time::now();
+            if crate::updates::due(self.settings.last_update_check, now) {
+                self.check_update(true);
+            }
+            let remaining = (86_400_000 - now.saturating_sub(self.settings.last_update_check))
+                .clamp(1000, 86_400_000);
+            ctx.request_repaint_after(Duration::from_millis(remaining as u64));
+        }
         let shown = self.active;
         for index in 0..self.accounts.len() {
             let events = self.accounts[index].backend.poll();
@@ -888,6 +928,59 @@ impl App {
     /// Applies one event to the account at `self.active`.
     pub fn handle(&mut self, event: Event, ctx: &egui::Context) {
         match event {
+            Event::Update(event) => match event {
+                crate::updates::Event::Status(status) => {
+                    if matches!(status, crate::updates::Status::Ready(_)) {
+                        self.toast(
+                            ToastKind::Info,
+                            "An update is downloaded and ready to install when you restart.",
+                        );
+                    }
+                    self.update = status;
+                }
+                crate::updates::Event::Quit => self.quit_requested = true,
+            },
+            Event::Pasted {
+                conversation,
+                range,
+                text,
+                image,
+            } => {
+                let draft = self.drafts.entry(conversation.clone()).or_default();
+                draft.pending_pastes = draft.pending_pastes.saturating_sub(1);
+                match image {
+                    Ok(Some(image)) if draft.editing.is_none() => {
+                        if draft.images.iter().map(|i| i.png.len()).sum::<usize>() + image.png.len()
+                            > crate::clipboard::MAX_BYTES
+                        {
+                            self.toast(ToastKind::Error, "The pasted images are too large for one message. Send them separately.");
+                        } else {
+                            ctx.include_bytes(image.uri(), image.png.clone());
+                            draft.images.push(image);
+                        }
+                    }
+                    Ok(Some(_)) => self.toast(
+                        ToastKind::Info,
+                        "Finish editing before pasting an image into a new message.",
+                    ),
+                    result => {
+                        if !text.is_empty() {
+                            let chars: Vec<char> = draft.text.chars().collect();
+                            let start = range.0.min(chars.len());
+                            let end = range.1.min(chars.len()).max(start);
+                            draft.text = format!(
+                                "{}{}{}",
+                                chars[..start].iter().collect::<String>(),
+                                text,
+                                chars[end..].iter().collect::<String>()
+                            );
+                            draft.paste_cursor = Some(start + text.chars().count());
+                        } else if let Err(error) = result {
+                            self.toast(ToastKind::Error, error);
+                        }
+                    }
+                }
+            }
             Event::Auth(status) => self.on_auth(status),
             Event::Profile(profile) => self.profile = Some(*profile),
             Event::Granted(granted) => self.granted = granted,
@@ -1194,9 +1287,16 @@ impl App {
             .filter(|m| newest_before.is_some_and(|newest| m.created > newest))
             .map(|m| (m.author.clone(), m.body.summary(140)))
             .collect();
+        if merge == Merge::Older && !messages.is_empty() {
+            entry.restore_history_anchor = true;
+        }
         entry.merge(messages, merge);
         if let Some(more) = more {
-            entry.more = more;
+            // A cached page says history may exist. It must not undo an
+            // end-of-history answer Graph already gave in this process.
+            if !cached || !entry.fresh {
+                entry.more = more;
+            }
         }
         if !cached {
             entry.fresh = true;
@@ -1286,6 +1386,45 @@ impl App {
 
     pub fn apply(&mut self, action: Action, ctx: &egui::Context) {
         match action {
+            Action::CheckUpdate => self.check_update(self.settings.automatic_updates),
+            Action::SetAutomaticUpdates(enabled) => {
+                self.settings.automatic_updates = enabled;
+                self.mark_settings_dirty();
+            }
+            Action::DownloadUpdate => {
+                if let crate::updates::Status::Available {
+                    release,
+                    reason: None,
+                } = &self.update
+                {
+                    self.service.send(Command::DownloadUpdate(release.clone()));
+                    self.update = crate::updates::Status::Downloading {
+                        received: 0,
+                        total: 0,
+                    };
+                }
+            }
+            Action::InstallUpdate => {
+                let unsent = self.accounts.iter().any(|account| {
+                    !account.pending_sends.is_empty()
+                        || account.drafts.values().any(|draft| {
+                            !draft.text.is_empty()
+                                || !draft.files.is_empty()
+                                || !draft.images.is_empty()
+                                || draft.pending_pastes > 0
+                        })
+                });
+                if unsent {
+                    self.toast(ToastKind::Info, "Send or clear your drafts and finish pending sends before restarting to update.");
+                } else if matches!(self.update, crate::updates::Status::Ready(_)) {
+                    let crate::updates::Status::Ready(prepared) =
+                        std::mem::replace(&mut self.update, crate::updates::Status::Installing)
+                    else {
+                        unreachable!()
+                    };
+                    self.service.send(Command::InstallUpdate(prepared));
+                }
+            }
             Action::Navigate(section) => {
                 if self.section != section {
                     self.section = section;
@@ -1326,7 +1465,8 @@ impl App {
                 reply_to,
                 mentions,
                 files,
-            } => self.send(conversation, text, reply_to, mentions, files),
+                images,
+            } => self.send(conversation, text, reply_to, mentions, files, images),
             Action::Edit {
                 conversation,
                 message,
@@ -1425,7 +1565,22 @@ impl App {
             }
             Action::LoadOlder(conversation) => {
                 if !self.demo {
-                    self.backend.send(Command::LoadOlder(conversation));
+                    let resource = Resource::Messages(conversation.clone());
+                    if self.loading.contains(&resource) {
+                        return;
+                    }
+                    let before = self.conversations.get(&conversation).and_then(|c| {
+                        c.messages
+                            .iter()
+                            .filter(|m| m.delivery == Delivery::Sent)
+                            .map(|m| m.created)
+                            .min()
+                    });
+                    self.loading.insert(resource);
+                    self.backend.send(Command::LoadOlder {
+                        conversation,
+                        before,
+                    });
                 } else if let Some(entry) = self.conversations.get_mut(&conversation) {
                     entry.more = false;
                 }
@@ -1466,6 +1621,7 @@ impl App {
                         reply_to: pending.reply_to,
                         mentions: pending.mentions,
                         files: pending.files,
+                        images: pending.images,
                         recipients: pending.recipients,
                     });
                 }
@@ -1481,6 +1637,21 @@ impl App {
                 {
                     self.actions.push(Action::AddFiles(paths));
                 }
+            }
+            Action::Paste {
+                conversation,
+                range,
+                text,
+            } => {
+                self.drafts
+                    .entry(conversation.clone())
+                    .or_default()
+                    .pending_pastes += 1;
+                self.backend.send(Command::Paste {
+                    conversation,
+                    range,
+                    text,
+                });
             }
             Action::AddFiles(paths) => self.add_files(paths),
             Action::RemoveFile(index) => {
@@ -1693,6 +1864,7 @@ impl App {
                 self.overlay = Some(Overlay::Switcher);
             }
             Action::CloseOverlay => self.overlay = None,
+            Action::PreviewImage(uri) => self.overlay = Some(Overlay::ImagePreview(uri)),
             Action::SearchMessages(query) => {
                 self.switcher.searched = query.clone();
                 self.switcher.hits.clear();
@@ -1828,6 +2000,16 @@ impl App {
         self.open_conversation(list[next].clone());
     }
 
+    fn check_update(&mut self, download: bool) {
+        if self.update.busy() || matches!(self.update, crate::updates::Status::Ready(_)) {
+            return;
+        }
+        self.update = crate::updates::Status::Checking;
+        self.settings.last_update_check = crate::time::now();
+        self.mark_settings_dirty();
+        self.service.send(Command::CheckUpdate { download });
+    }
+
     fn add_files(&mut self, paths: Vec<PathBuf>) {
         let Some(open) = self.open.clone() else {
             self.toast(ToastKind::Info, "Open a chat or channel to send files to.");
@@ -1872,12 +2054,23 @@ impl App {
         reply_to: Option<String>,
         mentions: Vec<MentionRef>,
         files: Vec<PathBuf>,
+        images: Vec<crate::clipboard::InlineImage>,
     ) {
         let text = text.trim_end().to_owned();
-        if text.trim().is_empty() && files.is_empty() {
+        if text.trim().is_empty() && files.is_empty() && images.is_empty() {
             return;
         }
         let (html, mentions) = html::compose_with_mentions(&text, &mentions);
+        let mut preview_html = html.clone();
+        for image in &images {
+            preview_html.push_str(&format!(
+                "<img src=\"{}\" width=\"{}\" height=\"{}\">",
+                image.uri(),
+                image.width,
+                image.height
+            ));
+            self.media.insert(image.uri(), Image::Ready(image.uri()));
+        }
         self.next_local += 1;
         let local_id = format!("local-{}", self.next_local);
         let me = self.me().to_owned();
@@ -1900,7 +2093,7 @@ impl App {
             author,
             created: crate::time::now(),
             modified: crate::time::now(),
-            body: html::parse(&html),
+            body: html::parse(&preview_html),
             delivery: if demo {
                 Delivery::Sent
             } else {
@@ -1993,6 +2186,7 @@ impl App {
                     reply_to: reply_to.clone(),
                     mentions: mentions.clone(),
                     files: files.clone(),
+                    images: images.clone(),
                     recipients: recipients.clone(),
                 },
             );
@@ -2003,6 +2197,7 @@ impl App {
                 reply_to,
                 mentions,
                 files,
+                images,
                 recipients,
             });
         }
@@ -2280,6 +2475,169 @@ mod tests {
     }
 
     #[test]
+    fn pasted_images_send_without_text_and_survive_retry() {
+        let (mut app, mut commands) = app();
+        let ctx = egui::Context::default();
+        let chat = ConversationId::Chat("19:images".into());
+        let image = crate::clipboard::encode_rgba(1, 1, &[0, 128, 255, 255]).unwrap();
+        app.handle(
+            Event::Pasted {
+                conversation: chat.clone(),
+                range: (0, 0),
+                text: String::new(),
+                image: Ok(Some(image.clone())),
+            },
+            &ctx,
+        );
+        assert_eq!(app.drafts[&chat].images.len(), 1);
+        app.apply(
+            Action::Send {
+                conversation: chat.clone(),
+                text: String::new(),
+                reply_to: None,
+                mentions: Vec::new(),
+                files: Vec::new(),
+                images: vec![image.clone()],
+            },
+            &ctx,
+        );
+        let Command::Send {
+            local_id, images, ..
+        } = commands.try_recv().unwrap()
+        else {
+            panic!("send expected")
+        };
+        assert_eq!(images.as_slice(), std::slice::from_ref(&image));
+        assert_eq!(
+            app.conversations[&chat].messages[0].body.images().count(),
+            1
+        );
+        app.handle(
+            Event::SendFailed {
+                conversation: chat.clone(),
+                local_id: local_id.clone(),
+                reason: "offline".into(),
+            },
+            &ctx,
+        );
+        app.apply(
+            Action::RetrySend {
+                conversation: chat,
+                local_id,
+            },
+            &ctx,
+        );
+        let Command::Send { images, .. } = commands.try_recv().unwrap() else {
+            panic!("retry expected")
+        };
+        assert_eq!(images, [image]);
+    }
+
+    #[test]
+    fn text_paste_replaces_the_selected_unicode_range_in_its_original_chat() {
+        let (mut app, _) = app();
+        let chat = ConversationId::Chat("19:paste".into());
+        app.drafts.insert(
+            chat.clone(),
+            Draft {
+                text: "A👋Z".into(),
+                pending_pastes: 1,
+                ..Default::default()
+            },
+        );
+        app.open = Some(ConversationId::Chat("19:elsewhere".into()));
+        app.handle(
+            Event::Pasted {
+                conversation: chat.clone(),
+                range: (1, 2),
+                text: "é".into(),
+                image: Ok(None),
+            },
+            &egui::Context::default(),
+        );
+        assert_eq!(app.drafts[&chat].text, "AéZ");
+        assert_eq!(app.drafts[&chat].paste_cursor, Some(2));
+        assert_eq!(app.drafts[&chat].pending_pastes, 0);
+    }
+
+    #[test]
+    fn history_uses_the_visible_boundary_and_deduplicates_inflight_requests() {
+        let (mut app, mut commands) = app();
+        let chat = ConversationId::Chat("19:history".into());
+        app.conversations.entry(chat.clone()).or_default().messages =
+            vec![message("first", 200), message("last", 300)];
+        let ctx = egui::Context::default();
+        app.apply(Action::LoadOlder(chat.clone()), &ctx);
+        app.apply(Action::LoadOlder(chat.clone()), &ctx);
+        assert!(matches!(
+            commands.try_recv().unwrap(),
+            Command::LoadOlder {
+                before: Some(200),
+                ..
+            }
+        ));
+        assert!(commands.try_recv().is_err());
+        app.handle(
+            Event::Messages {
+                conversation: chat.clone(),
+                messages: vec![message("earlier", 100)],
+                merge: Merge::Older,
+                more: Some(true),
+                cached: true,
+            },
+            &ctx,
+        );
+        assert!(app.conversations[&chat].restore_history_anchor);
+        assert_eq!(app.conversations[&chat].messages[0].id, "earlier");
+    }
+
+    #[test]
+    fn updates_wait_for_an_explicit_restart_and_do_not_discard_drafts() {
+        let (mut app, _) = app();
+        let (service, mut commands) = Backend::recording();
+        app.service = service;
+        let ctx = egui::Context::default();
+        app.apply(Action::CheckUpdate, &ctx);
+        assert!(matches!(
+            commands.try_recv().unwrap(),
+            Command::CheckUpdate { download: true }
+        ));
+        assert!(!app.quit_requested);
+        let prepared = fastframe_update::Prepared::sample(
+            fastframe_update::Installation {
+                executable: PathBuf::from("/tmp/wren"),
+                kind: fastframe_update::Kind::Portable,
+            },
+            "0.1.1",
+        );
+        app.handle(
+            Event::Update(crate::updates::Event::Status(
+                crate::updates::Status::Ready(Box::new(prepared)),
+            )),
+            &ctx,
+        );
+        app.drafts
+            .entry(ConversationId::Chat("19:draft".into()))
+            .or_default()
+            .text = "Unsent".into();
+        app.apply(Action::InstallUpdate, &ctx);
+        assert!(commands.try_recv().is_err());
+        assert!(!app.quit_requested);
+        app.drafts.clear();
+        app.apply(Action::InstallUpdate, &ctx);
+        assert!(matches!(
+            commands.try_recv().unwrap(),
+            Command::InstallUpdate(_)
+        ));
+        assert!(
+            !app.quit_requested,
+            "only a successful helper handoff may quit"
+        );
+        app.handle(Event::Update(crate::updates::Event::Quit), &ctx);
+        assert!(app.quit_requested);
+    }
+
+    #[test]
     fn changes_update_in_place_and_older_pages_prepend() {
         let mut conversation = Conversation::default();
         conversation.merge(vec![message("5", 5), message("6", 6)], Merge::Latest);
@@ -2308,6 +2666,7 @@ mod tests {
                 reply_to: None,
                 mentions: Vec::new(),
                 files: Vec::new(),
+                images: Vec::new(),
             },
             &ctx,
         );
@@ -2418,6 +2777,7 @@ mod tests {
                     name: "Ada".into(),
                 }],
                 files: vec![file.clone()],
+                images: Vec::new(),
             },
             &ctx,
         );

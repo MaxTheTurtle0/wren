@@ -21,6 +21,7 @@ pub struct Outgoing {
     pub html: String,
     pub mentions: Vec<crate::model::MentionRef>,
     pub files: Vec<super::files::SharedFile>,
+    pub images: Vec<crate::clipboard::InlineImage>,
 }
 
 impl Outgoing {
@@ -37,7 +38,23 @@ impl Outgoing {
         for file in &self.files {
             content.push_str(&format!("<attachment id=\"{}\"></attachment>", file.id));
         }
+        for (index, image) in self.images.iter().enumerate() {
+            content.push_str(&format!(
+                "<img src=\"../hostedContents/{}/$value\" width=\"{}\" height=\"{}\">",
+                index + 1,
+                image.width,
+                image.height
+            ));
+        }
         let mut body = json!({ "body": { "contentType": "html", "content": content } });
+        if !self.images.is_empty() {
+            use base64::Engine;
+            body["hostedContents"] = self.images.iter().enumerate().map(|(index, image)| json!({
+                "@microsoft.graph.temporaryId": (index + 1).to_string(),
+                "contentType": "image/png",
+                "contentBytes": base64::engine::general_purpose::STANDARD.encode(&image.png),
+            })).collect();
+        }
         if !self.mentions.is_empty() {
             body["mentions"] = self
                 .mentions
@@ -159,7 +176,6 @@ impl Graph {
         chat: &str,
         before: Option<i64>,
     ) -> Result<MessagePage, GraphError> {
-        let conversation = ConversationId::Chat(chat.to_owned());
         let mut url = format!(
             "chats/{}/messages?$top={PAGE}&$orderby=createdDateTime%20desc",
             segment(chat)
@@ -170,7 +186,17 @@ impl Graph {
                 crate::time::to_iso(before)
             ));
         }
-        let page: g::Page<g::ChatMessage> = self.get(&url).await?;
+        self.chat_message_page(chat, &url).await
+    }
+
+    /// Follow Graph's opaque paging link without rebuilding its cursor.
+    pub async fn chat_message_page(
+        &self,
+        chat: &str,
+        url: &str,
+    ) -> Result<MessagePage, GraphError> {
+        let conversation = ConversationId::Chat(chat.to_owned());
+        let page: g::Page<g::ChatMessage> = self.get(url).await?;
         Ok(MessagePage {
             messages: page
                 .value
@@ -767,6 +793,7 @@ mod tests {
                 user_id: "u-ada".into(),
                 name: "Ada".into(),
             }],
+            images: Vec::new(),
             files: vec![crate::graph::files::SharedFile {
                 id: "153fa47d-18c9-4179-be08-9879815a9f90".into(),
                 name: "plan.pdf".into(),
@@ -786,6 +813,62 @@ mod tests {
             Outgoing::html("<p>x</p>").body(),
             json!({"body": {"contentType": "html", "content": "<p>x</p>"}})
         );
+    }
+
+    #[tokio::test]
+    async fn pasted_images_are_sent_as_hosted_content_without_onedrive_permissions() {
+        use base64::Engine;
+        let server = MockServer::start().await;
+        let image = crate::clipboard::encode_rgba(1, 1, &[255, 0, 0, 255]).unwrap();
+        let expected = json!({
+            "body": {"contentType": "html", "content": "<img src=\"../hostedContents/1/$value\" width=\"1\" height=\"1\">"},
+            "hostedContents": [{"@microsoft.graph.temporaryId": "1", "contentType": "image/png", "contentBytes": base64::engine::general_purpose::STANDARD.encode(&image.png)}]
+        });
+        Mock::given(method("POST"))
+            .and(path("/chats/chat/messages"))
+            .and(body_json(expected))
+            .respond_with(ResponseTemplate::new(201).set_body_json(
+                json!({"id":"image-message", "body":{"contentType":"text","content":"image"}}),
+            ))
+            .expect(1)
+            .mount(&server)
+            .await;
+        let outgoing = Outgoing {
+            images: vec![image],
+            ..Default::default()
+        };
+        graph(&server)
+            .await
+            .send_chat_message("chat", &outgoing)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn opaque_history_links_keep_messages_with_identical_timestamps() {
+        let server = MockServer::start().await;
+        let link = format!("{}/next-page?$skiptoken=opaque", server.uri());
+        Mock::given(method("GET")).and(path("/chats/chat/messages"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"@odata.nextLink":link, "value":[{"id":"first", "createdDateTime":"2026-10-10T09:00:00Z"}]})))
+            .expect(1).mount(&server).await;
+        Mock::given(method("GET"))
+            .and(path("/next-page"))
+            .and(query_param("$skiptoken", "opaque"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(
+                json!({"value":[{"id":"second", "createdDateTime":"2026-10-10T09:00:00Z"}]}),
+            ))
+            .expect(1)
+            .mount(&server)
+            .await;
+        let graph = graph(&server).await;
+        let first = graph.chat_messages("chat", None).await.unwrap();
+        let second = graph
+            .chat_message_page("chat", first.older.as_deref().unwrap())
+            .await
+            .unwrap();
+        assert_eq!(first.messages[0].created, second.messages[0].created);
+        assert_eq!(second.messages[0].id, "second");
+        assert!(second.older.is_none());
     }
 
     #[tokio::test]

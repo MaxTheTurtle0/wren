@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libwayland-dev libgl1-mesa-dev
+      - uses: Swatinem/rust-cache@v2
+      - name: Check tag matches Cargo version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cargo metadata --locked --no-deps --format-version 1 | python3 -c 'import json,os,sys; p=next(p for p in json.load(sys.stdin)["packages"] if p["name"]=="wren"); assert os.environ["RELEASE_TAG"]=="v"+p["version"], "tag must match Cargo.toml"'
+      - run: cargo fmt --all --check
+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
+      - run: cargo test --locked --workspace --all-targets
+
+  package:
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libwayland-dev libgl1-mesa-dev
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --locked --release --target ${{ matrix.target }} --bin wren
+      - name: Package Linux or macOS
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TARGET: ${{ matrix.target }}
+        run: bash packaging/release.sh "$RELEASE_TARGET" "${RELEASE_TAG#v}"
+      - name: Package Windows portable app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TARGET: ${{ matrix.target }}
+        run: |
+          $name = "wren-$env:RELEASE_TAG-$env:RELEASE_TARGET"
+          New-Item -ItemType Directory -Force "dist/$name/assets/fonts", "dist/$name/assets/icons" | Out-Null
+          Copy-Item "target/$env:RELEASE_TARGET/release/wren.exe", packaging/wren-portable.txt, LICENSE, THIRD-PARTY-NOTICES.md "dist/$name/"
+          Copy-Item assets/fonts/Inter-LICENSE.txt "dist/$name/assets/fonts/"
+          Copy-Item assets/icons/LICENSE.txt "dist/$name/assets/icons/"
+          Compress-Archive -Path "dist/$name" -DestinationPath "dist/$name.zip"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.target }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.dmg
+
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Collect packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --pattern 'release-*' --dir packages
+      - name: Sign checksums and create draft release
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          test -n "$UPDATE_SIGNING_KEY"
+          umask 077
+          key="$RUNNER_TEMP/wren-signing.pem"
+          trap 'rm -f "$key"' EXIT
+          printf '%s\n' "$UPDATE_SIGNING_KEY" > "$key"
+          openssl pkey -in "$key" -pubout -outform DER | tail -c 32 | od -An -v -tx1 | tr -d ' \n' > "$RUNNER_TEMP/public-key.hex"
+          test "$(cat "$RUNNER_TEMP/public-key.hex")" = "$(tr -d '\n\r ' < packaging/update-public-key.hex)"
+          mkdir -p dist
+          find packages -type f -exec cp '{}' dist/ \;
+          cd dist
+          sha256sum wren-* > checksums.txt
+          openssl pkeyutl -sign -rawin -inkey "$key" -in checksums.txt -out checksums.txt.sig
+          flags=()
+          case "$RELEASE_TAG" in *-*) flags+=(--prerelease);; esac
+          gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --generate-notes "${flags[@]}" wren-* checksums.txt checksums.txt.sig

@@ -274,6 +274,10 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             return;
         };
         let more = view.more;
+        let restore = std::mem::take(&mut view.restore_history_anchor)
+            .then(|| view.history_anchor.clone())
+            .flatten();
+        let mut anchor = None;
         let mut heights = std::mem::take(&mut view.heights);
         let expanded = view.expanded.clone();
         let messages = std::mem::take(&mut view.messages);
@@ -286,6 +290,7 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             .stick_to_bottom(jump.is_none())
             .show(ui, |ui| {
                 let clip = ui.clip_rect();
+                let scroll_spacing = ui.spacing().item_spacing.y;
                 let margin = (clip.height() * 2.0).max(600.0);
                 Frame::new()
                     .inner_margin(Margin {
@@ -344,7 +349,8 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 .get(&message.id)
                                 .copied()
                                 .unwrap_or_else(|| estimate(message, width, grouped));
-                            let target = jump.as_deref() == Some(message.id.as_str());
+                            let target = jump.as_deref() == Some(message.id.as_str())
+                                || restore.as_ref().is_some_and(|(id, _)| id == &message.id);
                             let near = top + height >= clip.top() - margin
                                 && top <= clip.bottom() + margin;
                             if !near && !target && jump.is_none() {
@@ -376,8 +382,28 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 )
                             };
                             heights.insert(message.id.clone(), rect.height());
-                            if target {
+                            if jump.as_deref() == Some(message.id.as_str()) {
                                 ui.scroll_to_rect(rect, Some(Align::Center));
+                            }
+                            if let Some((id, offset)) = &restore
+                                && id == &message.id
+                            {
+                                ui.scroll_to_rect_animation(
+                                    egui::Rect::from_min_size(
+                                        // ScrollArea adds item spacing to an
+                                        // aligned target; cancel that here.
+                                        rect.min - vec2(0.0, *offset - scroll_spacing),
+                                        vec2(1.0, clip.height()),
+                                    ),
+                                    Some(Align::TOP),
+                                    egui::style::ScrollAnimation::none(),
+                                );
+                            }
+                            if anchor.is_none()
+                                && rect.bottom() >= clip.top()
+                                && rect.top() <= clip.bottom()
+                            {
+                                anchor = Some((message.id.clone(), rect.top() - clip.top()));
                             }
                             if !message.system && !message.deleted {
                                 let keep = previous_hover.as_ref().is_some_and(|(id, toolbar)| {
@@ -433,6 +459,9 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                 view.messages = merged;
             }
             view.heights = heights;
+            if restore.is_none() {
+                view.history_anchor = anchor;
+            }
         }
     });
     app.actions.extend(actions);
@@ -1200,6 +1229,15 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let context_line = draft_context(app, conversation, &draft);
     let can_post = !channel || app.has_scope("ChannelMessage.Send");
     let id = ui.make_persistent_id(("composer", conversation.key()));
+    if let Some(cursor) = draft.paste_cursor.take() {
+        let mut state = egui::TextEdit::load_state(ui.ctx(), id).unwrap_or_default();
+        state
+            .cursor
+            .set_char_range(Some(egui::text::CCursorRange::one(
+                egui::text::CCursor::new(cursor),
+            )));
+        state.store(ui.ctx(), id);
+    }
     // The mention being typed, from the cursor the editor had last frame.
     let cursor = egui::TextEdit::load_state(ui.ctx(), id)
         .and_then(|state| state.cursor.char_range())
@@ -1321,11 +1359,69 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         }
                         ui.add_space(4.0);
                     }
-                    ui.horizontal_top(|ui| {
+                    if !draft.images.is_empty() {
+                        let mut remove = None;
+                        ui.horizontal_wrapped(|ui| {
+                            for (index, image) in draft.images.iter().enumerate() {
+                                let group_size = vec2(144.0 + ui.spacing().item_spacing.x + 22.0, 96.0);
+                                ui.allocate_ui_with_layout(group_size, Layout::left_to_right(Align::Center), |ui| {
+                                        // Crop a fixed-size thumbnail instead of shrinking a
+                                        // wide screenshot into a line. The preview keeps
+                                        // the full image and its original proportions.
+                                        let size = vec2(144.0, 96.0);
+                                        let natural = vec2(image.width as f32, image.height as f32);
+                                        let scale = (size.x / natural.x).max(size.y / natural.y);
+                                        let uv = egui::Rect::from_center_size(
+                                            egui::pos2(0.5, 0.5), size / (natural * scale),
+                                        );
+                                        let response = ui.add(
+                                            egui::Image::from_bytes(image.uri(), image.png.clone())
+                                                .fit_to_exact_size(size)
+                                                .maintain_aspect_ratio(false)
+                                                .uv(uv)
+                                                .corner_radius(6)
+                                                .sense(Sense::click())
+                                                .alt_text("Preview pasted image"),
+                                        ).on_hover_cursor(egui::CursorIcon::PointingHand).on_hover_text("Preview image");
+                                        if response.clicked() {
+                                            actions.push(Action::PreviewImage(image.uri()));
+                                        }
+                                        if widgets::icon_button_sized(ui, &palette, Icon::Close, "Remove image", 22.0, 14.0, palette.dim).clicked() {
+                                            remove = Some(index);
+                                        }
+                                });
+                            }
+                        });
+                        if let Some(index) = remove { draft.images.remove(index); }
+                        ui.add_space(4.0);
+                    }
+                    ui.horizontal(|ui| {
                         let focused = ui.memory(|m| m.has_focus(id));
                         let mut send = false;
+                        let mut paste_requested = false;
+                        let range = egui::TextEdit::load_state(ui.ctx(), id)
+                            .and_then(|state| state.cursor.char_range())
+                            .map(|r| (r.primary.index.0.min(r.secondary.index.0), r.primary.index.0.max(r.secondary.index.0)))
+                            .unwrap_or((draft.text.chars().count(), draft.text.chars().count()));
                         if focused {
                             ui.input_mut(|input| {
+                                let mut pastes = Vec::new();
+                                let mut enter = false;
+                                input.events.retain(|event| {
+                                    if let egui::Event::Paste(text) = event {
+                                        pastes.push(text.clone()); false
+                                    } else if matches!(event, egui::Event::Key {
+                                        key: Key::Enter, pressed: true, modifiers, ..
+                                    } if modifiers.matches_exact(Modifiers::NONE)) {
+                                        // consume_key ignores extra Shift and Alt.
+                                        // Keep Shift+Enter for the multiline editor.
+                                        enter = true; false
+                                    } else { true }
+                                });
+                                for text in pastes {
+                                    paste_requested = true;
+                                    actions.push(Action::Paste { conversation: conversation.clone(), range, text });
+                                }
                                 // The mention list takes the arrows, Enter
                                 // and Tab while it shows.
                                 if !candidates.is_empty() {
@@ -1335,10 +1431,11 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                     if input.consume_key(Modifiers::NONE, Key::ArrowUp) {
                                         selected = (selected + candidates.len() - 1) % candidates.len();
                                     }
-                                    if input.consume_key(Modifiers::NONE, Key::Enter)
+                                    if enter
                                         || input.consume_key(Modifiers::NONE, Key::Tab)
                                     {
                                         picked = candidates.get(selected).cloned();
+                                        enter = false;
                                     }
                                     if input.consume_key(Modifiers::NONE, Key::Escape)
                                         && let Some((at, ..)) = &mention
@@ -1346,9 +1443,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                         ui.ctx().data_mut(|d| d.insert_temp(dismissed_id, *at));
                                     }
                                 }
-                                if input.consume_key(Modifiers::NONE, Key::Enter) {
-                                    send = true;
-                                }
+                                send |= enter;
                                 if input.consume_key(Modifiers::NONE, Key::Escape) {
                                     actions.push(Action::CancelCompose);
                                 }
@@ -1408,16 +1503,18 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                             .hint_text(hint)
                             .desired_rows(1)
                             .desired_width(width)
-                            .frame(egui::Frame::NONE)
+                            // A custom Frame overrides TextEdit::margin.
+                            // Put the padding on the frame itself.
+                            .frame(Frame::new().inner_margin(Margin::symmetric(0, 6)))
                             .font(theme::regular(14.0))
-                            .margin(Margin::symmetric(0, 6));
+                            .vertical_align(Align::Center);
                         let response = ui.add_enabled(can_post, edit);
                         if std::mem::take(&mut app.focus_composer) {
                             response.request_focus();
                         }
-                        ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                             ui.spacing_mut().item_spacing.x = 2.0;
-                            let ready = !draft.text.trim().is_empty() || !draft.files.is_empty();
+                            let ready = !draft.text.trim().is_empty() || !draft.files.is_empty() || !draft.images.is_empty();
                             let tint = if ready { palette.accent } else { palette.dim };
                             let label = if draft.editing.is_some() {
                                 "Save (Enter)"
@@ -1453,8 +1550,8 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 widgets::on_click(&attach, &mut actions, Action::AttachFiles);
                             }
                         });
-                        let has_content = !draft.text.trim().is_empty() || !draft.files.is_empty();
-                        if send && has_content && can_post && picked.is_none() {
+                        let has_content = !draft.text.trim().is_empty() || !draft.files.is_empty() || !draft.images.is_empty();
+                        if send && has_content && can_post && picked.is_none() && draft.pending_pastes == 0 && !paste_requested {
                             match &draft.editing {
                                 Some(message) => actions.push(Action::Edit {
                                     conversation: conversation.clone(),
@@ -1467,6 +1564,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                     reply_to: draft.reply_to.take(),
                                     mentions: std::mem::take(&mut draft.mentions),
                                     files: std::mem::take(&mut draft.files),
+                                    images: std::mem::take(&mut draft.images),
                                 }),
                             }
                             draft.editing = None;

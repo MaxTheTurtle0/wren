@@ -73,7 +73,7 @@ never presents itself as Microsoft's client.
 | Delete | `POST /users/{id}/chats/{id}/messages/{id}/softDelete` | Chat.ReadWrite | [R19] |
 | Reactions | `setReaction` / `unsetReaction` | ChatMessage.Send | v1.0, Unicode emoji [R20] |
 | Quote reply | `POST /chats/{id}/messages/replyWithQuote` | ChatMessage.Send | v1.0, up to 10 quotes; chats reply by reference, `replyToId` is for channels [R21][R26] |
-| Inline images | `hostedContents` | ChatMessage.Send / Chat.Read | 4 MB max [R17][R23] |
+| Inline images | `hostedContents` | ChatMessage.Send / Chat.Read | 4 MB max [R17][R23]. Wren supports clipboard PNGs with previews, capped just under 3 MiB combined to allow base64 overhead. |
 | Mark read/unread | `markChatReadForUser` / `markChatUnreadForUser` | Chat.ReadWrite | [R22] |
 | New chat | `POST /chats` | Chat.Create | Returns the existing 1:1 chat [R25] |
 | All messages / delta | `getAllMessages`, `getAllMessages/delta` | application only | Export APIs [R24][R32] |

@@ -262,14 +262,18 @@ fn image(
     let size = natural * scale;
     match app.media.get(src) {
         Some(Image::Ready(uri)) => {
-            let response = ui.add(
-                egui::Image::new(uri.clone())
-                    .fit_to_exact_size(size)
-                    .corner_radius(CornerRadius::same(6))
-                    .sense(Sense::click()),
-            );
-            if let Some(alt) = alt.filter(|a| !a.is_empty()) {
-                response.on_hover_text(alt);
+            let response = ui
+                .add(
+                    egui::Image::new(uri.clone())
+                        .fit_to_exact_size(size)
+                        .corner_radius(CornerRadius::same(6))
+                        .sense(Sense::click())
+                        .alt_text(alt.unwrap_or("Image")),
+                )
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .on_hover_text("Open image preview");
+            if response.clicked() {
+                actions.push(Action::PreviewImage(uri.clone()));
             }
         }
         state => {

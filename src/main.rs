@@ -46,7 +46,8 @@ struct Cli {
 
 fn main() -> eframe::Result<()> {
     let started = Instant::now();
-    let cli = Cli::parse();
+    let launch = fastframe_update::intercept(&wren::updates::CONFIG);
+    let cli = Cli::parse_from(&launch.arguments);
     let demo = cli.demo || cli.screenshot.is_some() || cli.page.is_some();
     let waker = Waker::default();
 
@@ -95,6 +96,16 @@ fn main() -> eframe::Result<()> {
     let size = parse_size(cli.size.as_deref());
     let geometry = settings.window;
     let mut app = App::new(dirs.clone(), settings, waker.clone(), demo);
+    app.service = wren::backend::Backend::spawn(dirs.clone(), waker.clone());
+    if demo {
+        // Native demo windows may paste images too. Headless tests retain
+        // their detached backend; this worker is never signed in.
+        app.accounts[0].backend = wren::backend::Backend::spawn(dirs.clone(), waker.clone());
+    }
+    app.update_receipt = launch.receipt;
+    if let Some(error) = launch.error {
+        app.toast(wren::model::ToastKind::Error, error);
+    }
     app.requests = requests;
     app.perf.started = Some(started);
     log::debug!(
@@ -173,6 +184,7 @@ fn main() -> eframe::Result<()> {
                     Ok(Box::new(Window {
                         app,
                         recovery_checked: false,
+                        paste_input: wren::clipboard::PasteInput::default(),
                         scrolling: fastframe_scroll::Scrolling::default(),
                         screenshot,
                         measure,
@@ -250,6 +262,34 @@ fn apply_page(app: &mut App, page: &str) {
                     },
                 );
             }
+            "images" | "image-preview" => {
+                let icon =
+                    image::load_from_memory(include_bytes!("../packaging/linux/wren-256.png"))
+                        .expect("bundled demo image")
+                        .to_rgba8();
+                let mut wide = image::RgbaImage::new(3072, 256);
+                for x in 0..12 {
+                    image::imageops::replace(&mut wide, &icon, x * 256, 0);
+                }
+                let tall = image::imageops::rotate90(&wide);
+                let images: Vec<_> = [&wide, &icon, &tall]
+                    .into_iter()
+                    .map(|pixels| {
+                        wren::clipboard::encode_rgba(
+                            pixels.width() as usize,
+                            pixels.height() as usize,
+                            pixels.as_raw(),
+                        )
+                        .expect("demo clipboard image")
+                    })
+                    .collect();
+                if part == "image-preview" {
+                    app.actions.push(Action::PreviewImage(images[0].uri()));
+                }
+                if let Some(chat) = app.open.clone() {
+                    app.drafts.entry(chat).or_default().images = images;
+                }
+            }
             "status" => app.actions.push(Action::OpenStatusMessage),
             // A meeting joined from the calendar: docked beside the call, or
             // with the call bar along the bottom, or its QR code.
@@ -296,6 +336,7 @@ struct Shot {
 struct Window {
     app: fastframe_shell::Held<App>,
     recovery_checked: bool,
+    paste_input: wren::clipboard::PasteInput,
     scrolling: fastframe_scroll::Scrolling,
     screenshot: Option<Shot>,
     measure: bool,
@@ -338,6 +379,9 @@ impl Window {
 }
 
 impl eframe::App for Window {
+    fn raw_input_hook(&mut self, _ctx: &egui::Context, input: &mut egui::RawInput) {
+        self.paste_input.prepare(input);
+    }
     fn persist_egui_memory(&self) -> bool {
         false
     }
@@ -374,7 +418,15 @@ impl eframe::App for Window {
         {
             let elapsed = started.elapsed();
             app.perf.first_frame = Some(elapsed);
+            if let Some(receipt) = app.update_receipt.take() {
+                app.service
+                    .send(wren::backend::Command::AcknowledgeUpdate(receipt));
+            }
             log::info!("first frame after {} ms", elapsed.as_millis());
+            log::debug!(
+                "window geometry: {:?}",
+                ctx.input(|i| i.viewport().outer_rect)
+            );
             if self.measure {
                 println!("first frame after {} ms", elapsed.as_millis());
                 app.quit_requested = true;

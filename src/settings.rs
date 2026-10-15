@@ -48,6 +48,9 @@ pub struct Settings {
     /// A wren-relay for push updates (experimental), `https://…`.
     pub relay_url: Option<String>,
     pub calls: CallSettings,
+    /// Check GitHub once a day and download verified app updates.
+    pub automatic_updates: bool,
+    pub last_update_check: i64,
 }
 
 /// How calls and meetings open (docs/call-window.md).
@@ -108,6 +111,8 @@ impl Default for Settings {
             window: None,
             relay_url: None,
             calls: CallSettings::default(),
+            automatic_updates: true,
+            last_update_check: 0,
         }
     }
 }

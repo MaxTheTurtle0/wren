@@ -115,7 +115,6 @@ jobs:
         run: |
           mkdir -p dist/wren
           cp target/release/wren packaging/linux/wren.desktop packaging/linux/wren-256.png packaging/linux/install.sh packaging/icons/wren.svg LICENSE THIRD-PARTY-NOTICES.md dist/wren/
-          sed -i 's#"$here/../icons/wren.svg"#"$here/wren.svg"#; s#"$here/../../target/release/wren"#"$here/wren"#' dist/wren/install.sh
           tar -C dist -czf dist/wren-${{ matrix.name }}.tar.gz wren
       - name: Package Windows zip
         if: runner.os == 'Windows'

@@ -8,6 +8,10 @@ one feature needs are requested the first time someone uses that feature
 `ChannelMessage.Read.All`, the one that needs admin consent, is requested when
 someone opens a channel.
 
+Pasting images into a new message uses `hostedContents` in the ordinary
+send request, covered by `ChatMessage.Send` or `ChannelMessage.Send`.
+It does not request `Files.ReadWrite` or create a OneDrive sharing link.
+
 | Permission | Requested | Endpoints | Admin consent |
 |---|---|---|---|
 | `openid`, `profile`, `offline_access` | At sign-in | Token endpoint (identity, refresh token) | No |

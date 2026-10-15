@@ -39,7 +39,9 @@ cargo run --release -- --screenshot shot.png --page channel,dark --size 1280x800
 ```
 
 Pages: `chats`, `group`, `channel`, `calendar`, `calls`, `switcher`,
-`settings`, `shortcuts`, `signin`, `setup`, `perf`. Add `light` or `dark`.
+`settings`, `shortcuts`, `signin`, `setup`, `perf`, `images`, `image-preview`.
+The last two show wide and tall pasted images and the preview dialog.
+Add `light` or `dark`.
 On macOS, run the bundle (`packaging/macos/bundle.sh`) through
 `open -W -n Wren.app --args …`, because a bare binary launched over SSH
 starts slowly.

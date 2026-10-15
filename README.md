@@ -43,6 +43,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Chats: list, unread, history, send, quote replies, reactions, edit, delete, mark read | ✅ Implemented (Graph) |
 | New chats, @mentions in the composer, sending files (OneDrive upload and sharing) | ✅ Implemented |
 | Rich text, mentions, emoji, links, code, inline images | ✅ Implemented (native rendering of Teams HTML) |
+| Images in chats and drafts | ✅ Cropped draft thumbnails; click either for the same full preview with fit and 100% views |
 | Teams and channels, threaded posts and replies | ✅ Implemented; reading channel posts needs admin consent |
 | Local full-text search plus Microsoft Search, ⌘K switcher | ✅ Implemented |
 | Calendar, meeting reminders, Join | ✅ Implemented |
@@ -50,6 +51,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Presence, photos | ✅ Implemented |
 | Light, dark and system themes, 8 palettes, keyboard shortcuts, tray, notifications | ✅ Implemented |
 | Offline demo mode | ✅ `wren --demo` |
+| App updates | ✅ Daily checks and verified downloads from GitHub releases; restart when ready ([details](docs/updates.md)) |
 | Real-time updates | ✅ On open, focus and refresh. 🧪 Push through a self-hostable `wren-relay` (experimental), since Microsoft forbids polling ([why](docs/realtime.md)) |
 | Multiple accounts, setting your availability and status message | ✅ Implemented |
 | Audio and video inside Wren's own window, incoming calls | ❌ No free official way: Microsoft's licence covers call media only in its own clients ([why](docs/calling.md)) |
@@ -101,7 +103,9 @@ APIs serve work and school accounts only.
 | Windows | `cargo build --release` (icon and version embedded by `build.rs`) |
 
 CI builds all three on every push to `main` and keeps them as workflow
-artifacts. Nothing is published as a release yet.
+artifacts. Version tags create a signed draft release with packages that
+support automatic updates. Nothing is published as a release yet. See
+[app updates and release steps](docs/updates.md).
 
 ## Keyboard
 

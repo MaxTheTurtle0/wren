@@ -164,6 +164,70 @@ pub(super) async fn run(
 impl Worker {
     async fn handle(&mut self, command: Command) {
         match command {
+            Command::DiscardUpdate(prepared) => {
+                tokio::task::spawn_blocking(move || prepared.discard());
+            }
+            Command::AcknowledgeUpdate(receipt) => {
+                tokio::task::spawn_blocking(move || {
+                    if receipt.acknowledge().is_err() {
+                        log::warn!("could not acknowledge the app update");
+                    }
+                });
+            }
+            Command::CheckUpdate { download } => {
+                let out = self.out.clone();
+                tokio::task::spawn_blocking(move || {
+                    let result = crate::updates::updater().and_then(|updater| {
+                        match updater.check()? {
+                            None => out.send(Event::Update(crate::updates::Event::Status(
+                                crate::updates::Status::Current,
+                            ))),
+                            Some(release) => {
+                                let reason = updater.installation().err().map(|r| r.to_string());
+                                if download && reason.is_none() {
+                                    download_update(&out, &updater, &release)?;
+                                } else {
+                                    out.send(Event::Update(crate::updates::Event::Status(
+                                        crate::updates::Status::Available { release, reason },
+                                    )));
+                                }
+                            }
+                        }
+                        Ok(())
+                    });
+                    if result.is_err() {
+                        out.send(Event::Update(crate::updates::Event::Status(crate::updates::Status::Failed("Could not check for updates. No public release may be available yet; try again later."))));
+                    }
+                });
+            }
+            Command::DownloadUpdate(release) => {
+                let out = self.out.clone();
+                tokio::task::spawn_blocking(move || {
+                    if crate::updates::updater()
+                        .and_then(|updater| download_update(&out, &updater, &release))
+                        .is_err()
+                    {
+                        out.send(Event::Update(crate::updates::Event::Status(crate::updates::Status::Failed("Could not download or verify the update. Your installed app has not changed."))));
+                    }
+                });
+            }
+            Command::InstallUpdate(prepared) => {
+                let out = self.out.clone();
+                tokio::task::spawn_blocking(move || {
+                    if crate::updates::updater()
+                        .and_then(|updater| updater.handoff(*prepared, Vec::new()))
+                        .is_ok()
+                    {
+                        out.send(Event::Update(crate::updates::Event::Quit));
+                    } else {
+                        out.send(Event::Update(crate::updates::Event::Status(
+                            crate::updates::Status::Failed(
+                                "Could not start the update. Your installed app has not changed.",
+                            ),
+                        )));
+                    }
+                });
+            }
             Command::Start {
                 client_id,
                 tenant,
@@ -180,8 +244,29 @@ impl Worker {
             }
             Command::SignOut => self.sign_out().await,
             Command::Fetch { resource, trigger } => self.fetch(resource, trigger),
-            Command::LoadOlder(conversation) => self.load_older(conversation),
+            Command::LoadOlder {
+                conversation,
+                before,
+            } => self.load_older(conversation, before),
             Command::LoadReplies { conversation, root } => self.load_replies(conversation, root),
+            Command::Paste {
+                conversation,
+                range,
+                text,
+            } => {
+                let out = self.out.clone();
+                tokio::spawn(async move {
+                    let image = tokio::task::spawn_blocking(crate::clipboard::read_image)
+                        .await
+                        .unwrap_or(Err("The clipboard could not be read."));
+                    out.send(Event::Pasted {
+                        conversation,
+                        range,
+                        text,
+                        image,
+                    });
+                });
+            }
             Command::Send {
                 conversation,
                 local_id,
@@ -189,6 +274,7 @@ impl Worker {
                 reply_to,
                 mentions,
                 files,
+                images,
                 recipients,
             } => self.send(
                 conversation,
@@ -197,6 +283,7 @@ impl Worker {
                     html,
                     mentions,
                     files: Vec::new(),
+                    images,
                 },
                 reply_to,
                 files,
@@ -571,8 +658,15 @@ impl Worker {
         });
     }
 
-    fn load_older(&mut self, conversation: ConversationId) {
+    fn load_older(&mut self, conversation: ConversationId, before: Option<i64>) {
         let Some(account) = &self.account else { return };
+        if !self.freshness.claim(
+            Resource::Messages(conversation.clone()),
+            Trigger::History,
+            Instant::now(),
+        ) {
+            return;
+        }
         let graph = Arc::clone(&account.graph);
         let store = Arc::clone(&account.store);
         let out = self.out.clone();
@@ -583,11 +677,38 @@ impl Worker {
             let result = async {
                 let page = match &conversation {
                     ConversationId::Chat(chat) => {
-                        let oldest = {
+                        let cached = {
                             let store = store.lock().unwrap_or_else(|p| p.into_inner());
-                            oldest_cached(&store, &conversation)
+                            store
+                                .messages_before(
+                                    &conversation,
+                                    before.unwrap_or(i64::MAX),
+                                    CACHED_MESSAGES,
+                                )
+                                .unwrap_or_default()
                         };
-                        graph.chat_messages(chat, oldest).await?
+                        if !cached.is_empty() {
+                            remember_link(&links, &conversation, None);
+                            out.send(Event::Messages {
+                                conversation: conversation.clone(),
+                                messages: cached,
+                                merge: Merge::Older,
+                                more: Some(true),
+                                cached: true,
+                            });
+                            return Ok(None);
+                        }
+                        let link = links
+                            .lock()
+                            .unwrap_or_else(|p| p.into_inner())
+                            .get(&conversation)
+                            .cloned();
+                        let page = match link {
+                            Some(link) => graph.chat_message_page(chat, &link).await?,
+                            None => graph.chat_messages(chat, before).await?,
+                        };
+                        remember_link(&links, &conversation, page.older.clone());
+                        page
                     }
                     ConversationId::Channel { team, channel } => {
                         let link = links
@@ -1168,8 +1289,31 @@ async fn save(store: &Arc<Mutex<Store>>, conversation: &ConversationId, messages
     .await;
 }
 
-fn oldest_cached(store: &Store, conversation: &ConversationId) -> Option<i64> {
-    store.oldest(conversation)
+fn download_update(
+    out: &Outbox,
+    updater: &fastframe_update::Updater,
+    release: &fastframe_update::Release,
+) -> anyhow::Result<()> {
+    out.send(Event::Update(crate::updates::Event::Status(
+        crate::updates::Status::Downloading {
+            received: 0,
+            total: 0,
+        },
+    )));
+    let mut last_percent = 0;
+    let prepared = updater.download(release, |received, total| {
+        let percent = received.saturating_mul(100).checked_div(total).unwrap_or(0);
+        if percent > last_percent || received == total {
+            last_percent = percent;
+            out.send(Event::Update(crate::updates::Event::Status(
+                crate::updates::Status::Downloading { received, total },
+            )));
+        }
+    })?;
+    out.send(Event::Update(crate::updates::Event::Status(
+        crate::updates::Status::Ready(Box::new(prepared)),
+    )));
+    Ok(())
 }
 
 fn remember_link(
@@ -1227,11 +1371,14 @@ async fn fetch_resource(
             };
             let had_cache = !cached.is_empty();
             if had_cache {
+                remember_link(links, conversation, None);
                 out.send(Event::Messages {
                     conversation: conversation.clone(),
                     messages: cached,
                     merge: Merge::Latest,
-                    more: None,
+                    // A date-ranged refresh below cannot establish whether
+                    // history before the cache exists. Keep paging available.
+                    more: Some(true),
                     cached: true,
                 });
             }
@@ -1254,7 +1401,9 @@ async fn fetch_resource(
                         }
                     }
                     let page = graph.chat_messages(chat, None).await?;
-                    let more = page.older.is_some();
+                    remember_link(links, conversation, page.older.clone());
+                    let more =
+                        page.older.is_some() || page.messages.len() >= crate::graph::api::PAGE;
                     save(store, conversation, &page.messages).await;
                     out.send(Event::Messages {
                         conversation: conversation.clone(),

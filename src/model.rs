@@ -422,6 +422,10 @@ impl Section {
 /// after the frame, so no view mutates state it is drawing from.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
+    CheckUpdate,
+    DownloadUpdate,
+    InstallUpdate,
+    SetAutomaticUpdates(bool),
     Navigate(Section),
     OpenConversation(ConversationId),
     /// Opens a conversation scrolled to a message (search, notifications).
@@ -442,6 +446,7 @@ pub enum Action {
         mentions: Vec<MentionRef>,
         /// Files to upload to OneDrive and share in the message.
         files: Vec<std::path::PathBuf>,
+        images: Vec<crate::clipboard::InlineImage>,
     },
     Edit {
         conversation: ConversationId,
@@ -475,6 +480,13 @@ pub enum Action {
     },
     /// Opens the file picker for the open conversation.
     AttachFiles,
+    Paste {
+        conversation: ConversationId,
+        range: (usize, usize),
+        text: String,
+    },
+    /// Opens an image already registered in the interface's local cache.
+    PreviewImage(String),
     /// Adds files (picked or dropped) to the open conversation's draft.
     AddFiles(Vec<std::path::PathBuf>),
     /// Removes a file from the draft, by position.

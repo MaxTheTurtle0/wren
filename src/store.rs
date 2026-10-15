@@ -256,6 +256,23 @@ impl Store {
         Ok(rows.filter_map(|json| from_json(&json.ok()?)).collect())
     }
 
+    /// Cached history immediately before the oldest visible message.
+    pub fn messages_before(
+        &self,
+        conversation: &ConversationId,
+        before: i64,
+        limit: usize,
+    ) -> rusqlite::Result<Vec<Message>> {
+        let mut query = self.db.prepare(
+            "SELECT json FROM (SELECT json, created FROM messages WHERE conversation = ?1 AND created < ?2
+             ORDER BY created DESC LIMIT ?3) ORDER BY created ASC",
+        )?;
+        let rows = query.query_map(params![conversation.key(), before, limit as i64], |row| {
+            row.get::<_, String>(0)
+        })?;
+        Ok(rows.filter_map(|json| from_json(&json.ok()?)).collect())
+    }
+
     /// The newest change Wren has seen in a conversation, for date-ranged
     /// refreshes.
     pub fn last_modified(&self, conversation: &ConversationId) -> Option<i64> {
@@ -448,6 +465,13 @@ mod tests {
             .collect();
         store.save_messages(&conversation, &messages).unwrap();
         let newest = store.messages(&conversation, 3).unwrap();
+        let earlier = store
+            .messages_before(&conversation, newest[0].created, 3)
+            .unwrap();
+        assert_eq!(
+            earlier.iter().map(|m| m.id.as_str()).collect::<Vec<_>>(),
+            ["4", "5", "6"]
+        );
         assert_eq!(
             newest.iter().map(|m| m.id.as_str()).collect::<Vec<_>>(),
             ["7", "8", "9"]

@@ -69,6 +69,12 @@ fastframe-macos = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
 fastframe-instance = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
 # Platform-like wheel step and Linux touchpad glide.
 fastframe-scroll = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+# The shared updater already used by the other fastframe apps: verified
+# downloads, platform installation checks, restart handoff and rollback.
+fastframe-update = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1", features = ["reqwest"] }
+# egui already uses arboard, but exposes only text paste. Read clipboard
+# images on the backend and send them as Graph hosted content.
+arboard = { version = "3.6", features = ["wayland-data-control"] }
 
 # Network and background work. The runtime lives on its own thread
 # (src/backend.rs); the interface never awaits.

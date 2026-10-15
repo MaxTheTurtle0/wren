@@ -20,8 +20,94 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
         Some(Overlay::StatusMessage) => status_message(app, ctx),
         Some(Overlay::Consent(scope)) => consent(app, ctx, scope),
         Some(Overlay::JoinOnPhone(url)) => join_on_phone(app, ctx, &url),
+        Some(Overlay::ImagePreview(uri)) => image_preview(app, ctx, &uri),
         None => {}
     }
+}
+
+fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
+    let palette = app.palette;
+    let viewport = ctx.content_rect();
+    let width = (viewport.width() - 32.0).clamp(240.0, 960.0);
+    let height = (viewport.height() - 152.0).max(120.0);
+    let zoom_id = egui::Id::new("image-preview-actual-size").with(uri);
+    // Both draft and message images are already in egui's local byte cache.
+    // Use decoded dimensions, not the message HTML's thumbnail dimensions.
+    let loaded = egui::Image::new(uri).load_for_size(ctx, vec2(width - 32.0, height));
+    let mut actual_size = ctx.data(|d| d.get_temp::<bool>(zoom_id)).unwrap_or(false);
+    let mut actions = Vec::new();
+    let close = modal(palette, ctx, "image-preview", width, 24.0, |ui| {
+        ui.set_height(height + 96.0);
+        Frame::new().inner_margin(Margin::same(16)).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(
+                    egui::RichText::new("Image preview")
+                        .font(theme::semibold(15.0))
+                        .color(palette.text),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let close =
+                        widgets::icon_button(ui, &palette, Icon::Close, "Close preview (Esc)");
+                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
+                });
+            });
+            ui.horizontal(|ui| {
+                ui.selectable_value(&mut actual_size, false, "Fit");
+                ui.selectable_value(&mut actual_size, true, "100%");
+                if let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded {
+                    ui.label(
+                        egui::RichText::new(format!(
+                            "{} × {}",
+                            texture.size.x as u32, texture.size.y as u32
+                        ))
+                        .font(theme::regular(12.0))
+                        .color(palette.dim),
+                    );
+                }
+            });
+            ui.add_space(8.0);
+            egui::ScrollArea::both()
+                .id_salt(("image-preview-scroll", uri, actual_size))
+                .max_height(height)
+                .auto_shrink([false, false])
+                .show_viewport(ui, |ui, viewport| {
+                    let available = viewport.size();
+                    let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded else {
+                        let (canvas, _) = ui.allocate_exact_size(available, Sense::hover());
+                        ui.painter().text(
+                            canvas.center(),
+                            egui::Align2::CENTER_CENTER,
+                            if loaded.is_err() {
+                                "Image unavailable"
+                            } else {
+                                "Loading image…"
+                            },
+                            theme::regular(14.0),
+                            palette.dim,
+                        );
+                        return;
+                    };
+                    let natural = texture.size;
+                    let scale = if actual_size {
+                        1.0
+                    } else {
+                        (available.x / natural.x)
+                            .min(available.y / natural.y)
+                            .min(1.0)
+                    };
+                    let size = natural * scale;
+                    let (canvas, _) = ui.allocate_exact_size(size.max(available), Sense::hover());
+                    ui.painter().rect_filled(canvas, 6, palette.window);
+                    egui::Image::from_texture(*texture)
+                        .paint_at(ui, egui::Rect::from_center_size(canvas.center(), size));
+                });
+        });
+    });
+    ctx.data_mut(|d| d.insert_temp(zoom_id, actual_size));
+    if close {
+        actions.push(Action::CloseOverlay);
+    }
+    app.actions.extend(actions);
 }
 
 fn modal(
@@ -566,6 +652,42 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     ui.add_space(8.0);
                 }
 
+                widgets::section_label(ui, &palette, "App updates");
+                let mut automatic = app.settings.automatic_updates;
+                if ui.checkbox(&mut automatic, "Automatically check for and download app updates").changed() {
+                    actions.push(Action::SetAutomaticUpdates(automatic));
+                }
+                ui.label(egui::RichText::new("Checks GitHub once a day. Updates are verified before installation; you choose when to restart.").font(theme::regular(12.0)).color(palette.dim));
+                match &app.update {
+                    crate::updates::Status::Idle => { ui.label("No update check yet."); }
+                    crate::updates::Status::Checking => { ui.label("Checking for updates…"); }
+                    crate::updates::Status::Current => { ui.label("You have the latest public release."); }
+                    crate::updates::Status::Available { release, reason } => {
+                        ui.label(format!("Wren {} is available.", release.version));
+                        if let Some(reason) = reason {
+                            ui.label(reason);
+                        } else if ui.button("Download update").clicked() { actions.push(Action::DownloadUpdate); }
+                    }
+                    crate::updates::Status::Downloading { received, total } => {
+                        let fraction = if *total == 0 { 0.0 } else { *received as f32 / *total as f32 };
+                        ui.add(egui::ProgressBar::new(fraction).text("Downloading and verifying update…"));
+                    }
+                    crate::updates::Status::Ready(_) => {
+                        ui.label("Update verified and ready.");
+                        if ui.button("Restart to update").clicked() { actions.push(Action::InstallUpdate); }
+                    }
+                    crate::updates::Status::Installing => { ui.label("Preparing to restart…"); }
+                    crate::updates::Status::Failed(message) => { ui.label(egui::RichText::new(*message).color(palette.danger)); }
+                }
+                ui.horizontal(|ui| {
+                    if ui.add_enabled(!app.update.busy() && !matches!(app.update, crate::updates::Status::Ready(_)), egui::Button::new("Check for updates")).clicked() {
+                        actions.push(Action::CheckUpdate);
+                    }
+                    if ui.link("Release notes and downloads").clicked() {
+                        actions.push(Action::OpenUrl("https://github.com/MaxTheTurtle0/wren/releases".into()));
+                    }
+                });
+                ui.add_space(8.0);
                 widgets::section_label(ui, &palette, "About");
                 ui.label(
                     egui::RichText::new(format!(

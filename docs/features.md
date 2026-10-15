@@ -16,16 +16,17 @@ Status as of Wren 0.1 (unreleased).
 | Feature | Status | Notes |
 |---|---|---|
 | Chat list (1:1, group, meeting chats), unread state | Works | `GET /me/chats` with members and newest message |
-| Message history with paging | Works | 50 per page; older pages by timestamp cursor; cached |
-| Send messages (rich text from light markdown) | Works | Optimistic, with retry on failure |
+| Message history with paging | Works | 50 per page; follows Graph paging links, with a timestamp cursor after reopening; cached older pages load first and preserve the visible row |
+| Send messages (rich text from light markdown) | Works | Optimistic, with retry on failure. Enter sends; Shift+Enter adds a line, including while editing or showing mention suggestions |
 | Quote replies in chats | Works | `replyWithQuote` |
 | Reactions (any emoji) | Works | `setReaction` / `unsetReaction`; legacy names mapped to emoji |
 | Edit and delete your messages | Works | Chats: Chat.ReadWrite. Channels: needs ChannelMessage.ReadWrite (admin), hidden otherwise |
 | Mark read | Works | `markChatReadForUser` when a chat is opened |
 | Rich text: bold, italic, underline, strike, code, quotes, lists, links, mentions, emoji | Works | Native rendering of Teams HTML |
-| Inline images (hosted content) | Works | Lazy, Graph-hosted only; other hosts are never fetched (privacy) |
+| Inline images (hosted content) | Works | Lazy, Graph-hosted only; other hosts are never fetched (privacy). Click an image to open the same fit/100% viewer as draft images, using the original decoded dimensions |
 | File attachments: view | Works | Shown as file chips that open in the browser |
-| File attachments: send | Works | Attach button or drag and drop, up to 1 GiB per file. Uploaded to your OneDrive folder `Microsoft Teams Chat Files` (resumable upload above 4 MiB), shared read-only with the chat's members (an organisation-wide view link in channels), and sent as a `reference` attachment. Files.ReadWrite, requested on first use. Pasting images: not yet |
+| File attachments: send | Works | Attach button or drag and drop, up to 1 GiB per file. Uploaded to your OneDrive folder `Microsoft Teams Chat Files` (resumable upload above 4 MiB), shared read-only with the chat's members (an organisation-wide view link in channels), and sent as a `reference` attachment. Files.ReadWrite, requested on first use |
+| Paste images into the composer | Works | Fixed-size thumbnails crop without stretching. Click to preview the complete image, fit it to the window, or view at 100% with scrolling. Inline PNG hosted-content sends, just under 3 MiB combined per message; no Files.ReadWrite needed |
 | @mentions in the composer | Works | Type `@`: suggestions from the chat's members, or a directory search in channels. Sent as `<at>` tags with a `mentions` array, so people are notified as in Teams |
 | Adaptive Cards | Not yet | Shown as a placeholder with a hint to open in Teams |
 | Local message search | Works | SQLite FTS5 over everything cached, instant |
@@ -75,6 +76,10 @@ Status as of Wren 0.1 (unreleased).
 | Demo mode | Works | `wren --demo`, or "Explore the demo" on the welcome screen |
 | Performance overlay | Works | ⌘⇧P |
 | Personal Microsoft accounts / Teams (free) | Not possible | Graph's Teams APIs support work and school accounts only |
+
+## App updates
+
+Official portable downloads and macOS bundles check GitHub daily and download signed updates in the background. Restart is explicit, with rollback if the new app fails to start. Package-manager and unmarked source builds use their existing update method. The first public release still needs to be published. See [updates.md](updates.md).
 
 ## Verification
 

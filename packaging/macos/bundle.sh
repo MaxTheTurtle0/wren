@@ -19,12 +19,22 @@ root="$(cd "$here/../.." && pwd)"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$binary" "$app/Contents/MacOS/wren"
+mkdir -p "$app/Contents/Resources/assets/fonts" "$app/Contents/Resources/assets/icons"
+cp "$root/LICENSE" "$root/THIRD-PARTY-NOTICES.md" "$app/Contents/Resources/"
+cp "$root/assets/fonts/Inter-LICENSE.txt" "$app/Contents/Resources/assets/fonts/"
+cp "$root/assets/icons/LICENSE.txt" "$app/Contents/Resources/assets/icons/"
 chmod 755 "$app/Contents/MacOS/wren"
 sed "s/__VERSION__/$numeric_version/g" "$here/Info.plist" > "$app/Contents/Info.plist"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
-(cd "$root" && cargo run --quiet --release --example render-icon -- "$work/icon-1024.png" 1024)
+if [ -n "${WREN_ICON_PNG:-}" ]; then
+    # The same SVG rendered on a build host, without compiling examples
+    # and their dev dependencies again on a constrained signing host.
+    cp "$WREN_ICON_PNG" "$work/icon-1024.png"
+else
+    (cd "$root" && cargo run --quiet --locked --release --example render-icon -- "$work/icon-1024.png" 1024)
+fi
 iconset="$work/wren.iconset"
 mkdir -p "$iconset"
 for size in 16 32 128 256 512; do

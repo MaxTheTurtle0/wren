@@ -15,8 +15,7 @@ Roughly in order. Each step lands as its own focused change with tests.
    platform chrome (title bar, fonts, tray).
 3. **Push relay, live.** Run `wren-relay` against a real tenant, deploy
    guide with a container image, channel-post subscriptions.
-4. **Paste images** into the composer as hosted content, and upload
-   progress for large files.
+4. **Upload progress** for large file attachments.
 
 ## Then
 

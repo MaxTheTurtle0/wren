@@ -45,6 +45,8 @@ pub enum Trigger {
     Focused,
     /// The person asked to refresh.
     Refresh,
+    /// The person reached an unloaded page of history.
+    History,
     /// The person sent, edited, deleted or reacted to something here.
     AfterAction,
     /// The once-a-day unattended refresh.
@@ -83,6 +85,8 @@ impl Freshness {
         let last = self.fetched.get(&resource).copied();
         let age = last.map(|at| now.saturating_duration_since(at));
         let fetch = match trigger {
+            // Each page is a different range. The UI guards in-flight loads.
+            Trigger::History => true,
             // A person's explicit refresh always goes, but a double press
             // within two seconds is one refresh.
             Trigger::Refresh => age.is_none_or(|age| age >= Duration::from_secs(2)),

@@ -2,10 +2,13 @@
 
 - **No telemetry, no Wren servers.** Wren talks only to
   `login.microsoftonline.com` (sign-in) and `graph.microsoft.com` (your
-  data). Two exceptions, both on your request: a file larger than 4 MiB is
+  data). Additional connections: a file larger than 4 MiB is
   uploaded to the one-time upload URL Graph returns (your organisation's
   OneDrive host), without the Graph token; and an optional `wren-relay` that
-  you run yourself ([realtime.md](realtime.md)). Wren opens Microsoft Teams
+  you run yourself ([realtime.md](realtime.md)); and GitHub for app update
+  checks and downloads. Automatic app updates are checked at most daily and
+  can be disabled in Settings. No Microsoft credentials or account data are
+  sent to GitHub ([updates.md](updates.md)). Wren opens Microsoft Teams
   links in your browser when you ask it to.
 - **Calls** run in Teams on the web, in your own Edge or Chrome (or the
   browser you choose). Wren starts the browser with the meeting or call link
@@ -34,6 +37,10 @@
   with the people in that chat. In a channel, Wren creates a view link for
   your organisation, since a channel's members aren't known in advance.
   Remove the file or its sharing in OneDrive to revoke access.
+- **Pasted images** stay in memory as PNGs until you send the message. They
+  use Graph hosted content, so the image follows the conversation's access
+  rules and needs no OneDrive sharing link or Files.ReadWrite permission.
+  Clipboard contents are read only when you paste into a focused composer.
 - **Presence.** While "Show me as available while I use Wren" is on (the
   default), Wren tells Microsoft you are active when you use it, at most
   every 4 minutes and only after input. Microsoft shows you as inactive

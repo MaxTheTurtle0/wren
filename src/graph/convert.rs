@@ -169,7 +169,7 @@ pub fn message(message: g::ChatMessage, conversation: Option<&ConversationId>) -
         .as_deref()
         .is_some_and(|kind| kind != "message");
     let deleted = message.deleted_date_time.is_some();
-    let body = if system {
+    let mut body = if system {
         html::RichText::plain(&system_summary(message.event_detail.as_ref()))
     } else if deleted {
         html::RichText::default()
@@ -204,6 +204,45 @@ pub fn message(message: g::ChatMessage, conversation: Option<&ConversationId>) -
             channel: identity.channel_id.clone()?,
         })
     });
+    if let Some(conversation) = &conversation {
+        for block in &mut body.blocks {
+            if let html::Block::Image { src, .. } = block
+                && let Some(content) = src
+                    .strip_prefix("../hostedContents/")
+                    .and_then(|s| s.strip_suffix("/$value"))
+            {
+                let path = match conversation {
+                    ConversationId::Chat(chat) => format!(
+                        "chats/{}/messages/{}",
+                        super::segment(chat),
+                        super::segment(&message.id)
+                    ),
+                    ConversationId::Channel { team, channel } => {
+                        let base = format!(
+                            "teams/{}/channels/{}/messages",
+                            super::segment(team),
+                            super::segment(channel)
+                        );
+                        match &message.reply_to_id {
+                            Some(root) => format!(
+                                "{}/{}/replies/{}",
+                                base,
+                                super::segment(root),
+                                super::segment(&message.id)
+                            ),
+                            None => format!("{}/{}", base, super::segment(&message.id)),
+                        }
+                    }
+                };
+                *src = format!(
+                    "{}/{}/hostedContents/{}/$value",
+                    super::GRAPH_BASE,
+                    path,
+                    super::segment(content)
+                );
+            }
+        }
+    }
     let created = message
         .created_date_time
         .as_deref()
@@ -372,6 +411,21 @@ pub fn meeting(event: g::Event) -> Option<Meeting> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn relative_hosted_images_use_the_message_path_and_external_images_stay_external() {
+        let raw: g::ChatMessage = serde_json::from_value(serde_json::json!({
+            "id":"message", "body":{"contentType":"html", "content":"<img src=\"../hostedContents/1/$value\"><img src=\"https://outside.example/image.png\">"}
+        })).unwrap();
+        let message = message(raw, Some(&ConversationId::Chat("chat".into())));
+        assert_eq!(
+            message.body.images().collect::<Vec<_>>(),
+            [
+                "https://graph.microsoft.com/v1.0/chats/chat/messages/message/hostedContents/1/$value",
+                "https://outside.example/image.png",
+            ]
+        );
+    }
 
     #[test]
     fn chat_with_preview_members_and_viewpoint() {

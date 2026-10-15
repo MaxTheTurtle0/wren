@@ -23,6 +23,22 @@ use crate::theme::{self, Icon};
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let ctx = ui.ctx().clone();
     keys::handle(app, &ctx);
+    if matches!(app.update, crate::updates::Status::Ready(_)) {
+        egui::Panel::bottom("update-ready")
+            .frame(
+                Frame::new()
+                    .fill(app.palette.surface)
+                    .inner_margin(Margin::symmetric(16, 8)),
+            )
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("An app update is ready.");
+                    if ui.button("Restart to update").clicked() {
+                        app.actions.push(Action::InstallUpdate);
+                    }
+                });
+            });
+    }
     if app.shows_workspace() && app.docked.is_some() {
         docked(app, ui);
     } else if app.shows_workspace() {
