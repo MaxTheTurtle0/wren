@@ -1,63 +1,89 @@
 # Performance
 
-Measured, not assumed. Re-measure after changes that touch startup, fonts,
-rendering or the history, and update this page.
+Measured on 15 October 2026, after the fixes based on `origin/main` at `ff6ade2`.
+See the [baseline investigation](performance-investigation-2026-10-15.md) and
+[fixes, comparisons and reproduction details](performance-improvements-2026-10-15.md).
 
-## macOS 27.0.1, Apple Silicon (Mac mini), Wren 0.1.0 release build, demo data
+## Native release builds on macOS
 
-| Metric | Result | How |
-|---|---|---|
-| Launch to first frame | **143–157 ms** warm (6 runs); **301 ms** for the first launch after a rebuild (cold disk cache) | `open -W -n Wren.app --args --demo --measure-startup` (prints the time from `main` to the first painted frame) |
-| Idle CPU, window open and visible | **0.0%** | `top -l 3 -s 10 -pid <pid> -stats cpu`, after 8 s idle |
-| Physical memory footprint | **135–141 MB** | `footprint <pid>` |
-| …of which system fallback fonts (CJK, Arabic, …) | ~29 MB | Same run with fallbacks off (`--screenshot` mode) measures 112 MB |
-| …of which window surfaces (IOSurface) | ~20 MB | `vmmap --summary` |
-| Threads | 6 | `top -stats threads` |
-| Binary size | 15 MB (stripped, thin LTO) | `target/release/wren` |
-| App bundle | 15 MB | `du -sh Wren.app` |
+Both machines have 16 GiB RAM and macOS 27.0.1. The M4 Mac mini uses a 1× display;
+the M3 MacBook Air uses a 2× Retina display. Memory is physical footprint in MiB.
 
-A 6-second first frame shows up when the bare binary is launched over SSH.
-That is macOS's LaunchServices timing out for a process outside the GUI
-session, not Wren; launching the bundle with `open` is the representative
-measurement.
+| Workload | Mac mini | MacBook Air |
+|---|---:|---:|
+| Ordinary app, offline demo, settled | 57–59 MiB | Not measured after these fixes |
+| Performance fixture, idle | 57 MiB | 122 MiB |
+| Fixture after 20 full HD image previews, viewer closed | 86–88 MiB | 161 MiB |
+| Fixture after 100 full HD image previews | 92 MiB | Not measured |
+| Fixture after five 4K image previews | 159 MiB | Not measured |
+| Settled idle CPU | 0.0% | 0.0% |
 
-## Headless (Linux CI or any machine)
+The ordinary executable includes the tray/window shell; the fixture does not.
+The original signed-in Air process was measured at 529.7 MiB during the baseline
+investigation. That process was preserved, so these demo numbers do not measure
+a before/after restart of the same account.
 
-`tests/ui_smoke.rs::large_conversations_stay_cheap` lays out a conversation
-of **5,000 messages** and requires a frame to take under 250 ms even in an
-unoptimized debug build. Virtualization means only rows near the viewport
-are laid out.
+On the Air, holding a message-loading indicator changed GPU active time from
+19.3% to 0.0% in matched eight-second trace windows. This is Instruments GPU
+active time for the fixture PID, not Activity Monitor's `% GPU`. On the Mini,
+a 5,000-message scroll workload fell from 80.85% to 22.55% of one CPU core.
+Settled windows return to sleep. Loading indicators are static, and native
+frames have a ceiling at the monitor refresh rate if OpenGL vsync does not block.
 
-## Why it is cheap
+## Memory policy
 
-- No browser engine. egui draws with OpenGL (glow).
-- Frames are drawn only on input or backend events. There is no animation
-  timer and no network polling.
-- Every view opens from the SQLite cache; network answers update in place.
-- Lists are virtualized, and media loads lazily, only when on screen.
+| Storage | Policy |
+|---|---|
+| Compressed display-image sources | 16 MiB shared RAM budget |
+| Thumbnail textures | 16 MiB RAM/GPU texture budget; current visible working set can exceed it |
+| Original preview texture | Released on the first pass without the viewer |
+| Decoded image pixels | One worker; released after texture upload; 128 MiB decoder allocation limit |
+| Graph-hosted encoded downloads | 128 MiB SQLite payload budget per account, least recently used |
+| Inactive histories | At most 12 conversations total and 2,000 inactive messages including replies |
+| Draft and pending/failed-send images | Authoritative PNGs retained independently of the display cache |
+| Script fonts | Loaded by a worker when visible text needs them; then retained |
 
-## Known costs and next steps
+The active conversation is preserved. Conversations with unsent messages or
+replies can exceed the history limits. Evicted histories reopen from SQLite
+without forcing a Graph fetch. SQLite metadata, reusable pages and WAL data
+are outside the encoded-download budget.
 
-1. **Fallback fonts (~29 MB).** fastframe-fonts loads one face per script
-   that the interface font lacks, at startup. Loading them only when text in
-   that script first appears would save most of this for people who read
-   only Latin scripts. That is an upstream (fastframe) improvement.
-2. **Font atlas.** egui keeps a CPU-side copy of its glyph atlas. The type
-   scale is kept to ten sizes to limit it.
-3. **Comparison with Microsoft's client.** Not measured yet: Microsoft Teams
-   was not running on the test machine. To compare, run both side by side and
-   use `footprint` / Activity Monitor's "Memory" column for every process of
-   each app (Teams uses several helper processes, which all count).
+These limits do not cap the whole process. Retina window surfaces, the font
+atlas, decoder temporaries, protected drafts and driver/allocator allocations
+also consume memory. The five-4K-image run peaked at 317 MiB despite settling
+at 159 MiB with only 2.27 MiB in the texture loaders. Once script fonts were
+needed, the Mini's Unicode fixture used 135 MiB rather than the Latin demo's
+57 MiB. CJK and Arabic glyph availability was verified on both Macs.
 
-## Measuring yourself
+## History layout
+
+Release-mode headless frames over 100,000 messages take about 0.10 ms median
+and 0.11 ms p95 on the M4, compared with 5.79 ms median before the fixes.
+Only nearby rows are laid out. A cached prefix-sum index finds those rows and
+updates their measured heights without walking the full history every frame.
+New histories and width/font changes still require an initial index rebuild.
+These timings exclude tessellation, GPU rendering, networking and frame pacing.
+Tests run the same views without a display or account.
+
+## Measuring
 
 ```sh
-cargo build --release
-packaging/macos/bundle.sh target/release/wren target/Wren.app 0.1.0   # macOS
-open -W -n target/Wren.app --args --demo --measure-startup              # time to first frame
-open -n target/Wren.app --args --demo; sleep 8
-footprint $(pgrep -f Wren.app/Contents/MacOS/wren)                      # memory
-top -l 3 -s 10 -pid $(pgrep -f Wren.app/Contents/MacOS/wren) -stats cpu # idle CPU
+cargo build --locked --release --bin wren --example perf_probe
+packaging/macos/bundle.sh target/release/wren target/Wren.app 0.1.0
+open -W -n --stdout /tmp/wren-startup.txt target/Wren.app --args --demo --measure-startup
+open -n target/Wren.app --args --demo
+# After settling, inspect this bundle's PID with footprint, vmmap and top.
+
+cargo run --locked --release --example perf_probe -- \
+  --case history --messages 100000 --frames 300 --output history.jsonl
 ```
 
-In the app, ⌘⇧P shows frame CPU time, frame count and time to first frame.
+The reproducible Inter configuration is the default for headless comparisons.
+Use `--system-fonts` for normal platform fonts. Native probe runs should use a
+separate signed bundle launched with `open`, as described in the report.
+Launching a bare executable over SSH can add several seconds of LaunchServices
+startup delay. In the app, ⌘⇧P shows frame CPU time, frame count and time to the
+first UI frame.
+
+Microsoft Teams was not measured side by side. Comparing clients requires
+summing every helper process and matching window size, scale, account and view.

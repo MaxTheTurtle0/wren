@@ -1,0 +1,563 @@
+{
+  "date": "2026-10-15",
+  "source_commit": "ff6ade2",
+  "installed_air_binary_sha256": "61445fd0faf88e416e483c39cb6445017b9d0adf7fac4013424e600297d8a1ca",
+  "os": "macOS 27.0.1 26A434",
+  "air": {
+    "chip": "Apple M3",
+    "ram_gib": 16,
+    "scale": 2,
+    "live_process": {
+      "initial_footprint_mib": 529.7,
+      "peak_footprint_mib": 642.2,
+      "later_footprint_mib": 460,
+      "initial_categories_mib": {
+        "malloc_large": 235,
+        "gpu_allocations": 115,
+        "window_surfaces": 104,
+        "malloc_small": 52
+      },
+      "idle_top_cpu_percent_range": [
+        0,
+        0.2
+      ],
+      "compressed_mib": 349
+    },
+    "idle": {
+      "all_texture_bytes": 2225952,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Idle",
+      "decoded_bytes": 56800,
+      "encoded_bytes": 16969,
+      "frames": 196,
+      "image_texture_bytes": 81280,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 5.954834,
+      "median_ui_ms": 0.238208,
+      "messages": 7,
+      "native": true,
+      "p95_ui_ms": 0.590125,
+      "paint_callbacks": 196,
+      "pixels_per_point": 2.0,
+      "reduce_texture_memory": false,
+      "seconds": 55.00109775,
+      "stage": "end",
+      "system_fonts": true,
+      "texture_count": 18,
+      "cpu": {
+        "samples_after_initial_two": 49,
+        "median_percent": 0.0,
+        "maximum_percent": 8.7,
+        "last_memory_top": "210M"
+      },
+      "footprint_mib_at_sample": 270.0,
+      "gpu": {
+        "active_intervals": 0,
+        "stable_window_seconds": [
+          1,
+          9
+        ],
+        "stable_active_ms": 0.0,
+        "active_ms_by_second": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "stable_active_percent": 0.0
+      }
+    },
+    "spinner": {
+      "all_texture_bytes": 2225952,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Spinner",
+      "decoded_bytes": 56800,
+      "encoded_bytes": 16969,
+      "frames": 3042,
+      "image_texture_bytes": 81280,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 10.405292,
+      "median_ui_ms": 0.128583,
+      "messages": 7,
+      "native": true,
+      "p95_ui_ms": 0.652792,
+      "paint_callbacks": 3042,
+      "pixels_per_point": 2.0,
+      "reduce_texture_memory": false,
+      "seconds": 55.001784583,
+      "stage": "end",
+      "system_fonts": true,
+      "texture_count": 18,
+      "cpu": {
+        "samples_after_initial_two": 49,
+        "median_percent": 8.6,
+        "maximum_percent": 25.6,
+        "last_memory_top": "211M-"
+      },
+      "footprint_mib_at_sample": 210.0,
+      "gpu": {
+        "active_intervals": 4943,
+        "stable_window_seconds": [
+          1,
+          9
+        ],
+        "stable_active_ms": 1545.8556,
+        "active_ms_by_second": [
+          85.472335,
+          187.63588,
+          197.961335,
+          200.66963,
+          188.2963,
+          191.762298,
+          195.840205,
+          181.693835,
+          201.996117,
+          193.465501,
+          167.404535,
+          0.0
+        ],
+        "stable_active_percent": 19.323195000000002
+      }
+    }
+  },
+  "mini": {
+    "chip": "Apple M4",
+    "ram_gib": 16,
+    "scale": 1,
+    "original_app_demo_footprint_mib": 139,
+    "idle": {
+      "all_texture_bytes": 2164992,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Idle",
+      "decoded_bytes": 14200,
+      "encoded_bytes": 16969,
+      "frames": 9,
+      "image_texture_bytes": 20320,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 3.7295000000000003,
+      "median_ui_ms": 0.49091599999999996,
+      "messages": 7,
+      "native": true,
+      "p95_ui_ms": 2.4138330000000003,
+      "paint_callbacks": 9,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 22.002927583,
+      "stage": "end",
+      "system_fonts": true,
+      "texture_count": 18,
+      "cpu": {
+        "samples_after_initial_two": 18,
+        "median_percent": 0.0,
+        "maximum_percent": 0.5,
+        "last_memory_top": "138M"
+      },
+      "footprint_mib_at_sample": 138.0
+    },
+    "spinner": {
+      "all_texture_bytes": 2164992,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Spinner",
+      "decoded_bytes": 14200,
+      "encoded_bytes": 16969,
+      "frames": 71035,
+      "image_texture_bytes": 20320,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 3.039458,
+      "median_ui_ms": 0.058459,
+      "messages": 7,
+      "native": true,
+      "p95_ui_ms": 0.07145800000000001,
+      "paint_callbacks": 71035,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 22.001258291,
+      "stage": "end",
+      "system_fonts": true,
+      "texture_count": 18,
+      "cpu": {
+        "samples_after_initial_two": 18,
+        "median_percent": 93.75,
+        "maximum_percent": 94.7,
+        "last_memory_top": "208M"
+      },
+      "footprint_mib_at_sample": 208.0
+    },
+    "scroll5000": {
+      "all_texture_bytes": 2214560,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Scroll",
+      "decoded_bytes": 16248,
+      "encoded_bytes": 16969,
+      "frames": 25361,
+      "image_texture_bytes": 22368,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 3.201583,
+      "median_ui_ms": 0.45016700000000004,
+      "messages": 5000,
+      "native": true,
+      "p95_ui_ms": 0.498458,
+      "paint_callbacks": 25361,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 22.001568583,
+      "stage": "end",
+      "system_fonts": true,
+      "texture_count": 23,
+      "cpu": {
+        "samples_after_initial_two": 18,
+        "median_percent": 80.85,
+        "maximum_percent": 85.6,
+        "last_memory_top": "206M-"
+      },
+      "footprint_mib_at_sample": 206.0
+    },
+    "images20": {
+      "all_texture_bytes": 168052200,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Images",
+      "decoded_bytes": 165904000,
+      "encoded_bytes": 1014669,
+      "frames": 433,
+      "image_texture_bytes": 165907528,
+      "images_viewed": 20,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 3.065125,
+      "median_ui_ms": 0.063709,
+      "messages": null,
+      "native": true,
+      "p95_ui_ms": 0.110958,
+      "paint_callbacks": 432,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 22.003916333,
+      "stage": "end",
+      "system_fonts": true,
+      "texture_count": 38,
+      "cpu": {
+        "samples_after_initial_two": 18,
+        "median_percent": 0.0,
+        "maximum_percent": 0.6,
+        "last_memory_top": "476M"
+      },
+      "footprint_mib_at_sample": 476.0
+    },
+    "images20-reduce": {
+      "all_texture_bytes": 168052200,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Images",
+      "decoded_bytes": 0,
+      "encoded_bytes": 16969,
+      "frames": 428,
+      "image_texture_bytes": 165907528,
+      "images_viewed": 20,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 3.100584,
+      "median_ui_ms": 0.063583,
+      "messages": null,
+      "native": true,
+      "p95_ui_ms": 0.10304100000000001,
+      "paint_callbacks": 427,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": true,
+      "seconds": 22.0090685,
+      "stage": "end",
+      "system_fonts": true,
+      "texture_count": 38,
+      "cpu": {
+        "samples_after_initial_two": 18,
+        "median_percent": 0.0,
+        "maximum_percent": 0.5,
+        "last_memory_top": "325M"
+      },
+      "footprint_mib_at_sample": 325.0
+    },
+    "ci_font_idle": {
+      "all_texture_bytes": 2164992,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Idle",
+      "decoded_bytes": 14200,
+      "encoded_bytes": 16969,
+      "frames": 8,
+      "image_texture_bytes": 20320,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 3.2304999999999997,
+      "median_ui_ms": 0.502375,
+      "messages": 7,
+      "native": true,
+      "p95_ui_ms": 2.069417,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 22.004284834,
+      "stage": "end",
+      "system_fonts": false,
+      "texture_count": 18,
+      "cpu": {
+        "samples_after_initial_two": 18,
+        "median_percent": 0.0,
+        "maximum_percent": 0.5,
+        "last_memory_top": "57M"
+      },
+      "footprint_mib_at_sample": 57.0
+    },
+    "static_hover": {
+      "all_texture_bytes": 2232448,
+      "atlas": [
+        16384,
+        32
+      ],
+      "case": "Hover",
+      "decoded_bytes": 18296,
+      "encoded_bytes": 16969,
+      "frames": 8,
+      "image_texture_bytes": 24416,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 0,
+      "max_ui_ms": 3.190375,
+      "median_ui_ms": 0.363666,
+      "messages": 7,
+      "native": true,
+      "p95_ui_ms": 2.512333,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 22.003633542,
+      "stage": "warm",
+      "system_fonts": true,
+      "texture_count": 26,
+      "cpu": {
+        "samples_after_initial_two": 18,
+        "median_percent": 0.0,
+        "maximum_percent": 0.4,
+        "last_memory_top": "139M"
+      },
+      "footprint_mib_at_sample": 139.0
+    }
+  },
+  "history_release_headless": [
+    {
+      "all_texture_bytes": 544608,
+      "atlas": [
+        2048,
+        64
+      ],
+      "case": "History",
+      "decoded_bytes": 14200,
+      "encoded_bytes": 16969,
+      "frames": 300,
+      "image_texture_bytes": 20320,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 13,
+      "max_ui_ms": 8.494209000000001,
+      "median_ui_ms": 0.138041,
+      "messages": 500,
+      "native": false,
+      "p95_ui_ms": 0.146375,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 0.062141458,
+      "stage": "end",
+      "system_fonts": false,
+      "texture_count": 15
+    },
+    {
+      "all_texture_bytes": 544608,
+      "atlas": [
+        2048,
+        64
+      ],
+      "case": "History",
+      "decoded_bytes": 14200,
+      "encoded_bytes": 16969,
+      "frames": 300,
+      "image_texture_bytes": 20320,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 13,
+      "max_ui_ms": 2.690834,
+      "median_ui_ms": 0.3995,
+      "messages": 5000,
+      "native": false,
+      "p95_ui_ms": 0.41187500000000005,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 0.131783042,
+      "stage": "end",
+      "system_fonts": false,
+      "texture_count": 15
+    },
+    {
+      "all_texture_bytes": 544608,
+      "atlas": [
+        2048,
+        64
+      ],
+      "case": "History",
+      "decoded_bytes": 14200,
+      "encoded_bytes": 16969,
+      "frames": 300,
+      "image_texture_bytes": 20320,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 13,
+      "max_ui_ms": 5.398625,
+      "median_ui_ms": 2.990958,
+      "messages": 50000,
+      "native": false,
+      "p95_ui_ms": 3.14675,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 0.915555708,
+      "stage": "end",
+      "system_fonts": false,
+      "texture_count": 15
+    },
+    {
+      "all_texture_bytes": 544608,
+      "atlas": [
+        2048,
+        64
+      ],
+      "case": "History",
+      "decoded_bytes": 14200,
+      "encoded_bytes": 16969,
+      "frames": 300,
+      "image_texture_bytes": 20320,
+      "images_viewed": 0,
+      "immediate_repaint_frames": 13,
+      "max_ui_ms": 9.713125,
+      "median_ui_ms": 5.788416,
+      "messages": 100000,
+      "native": false,
+      "p95_ui_ms": 6.205584,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 1.76398875,
+      "stage": "end",
+      "system_fonts": false,
+      "texture_count": 15
+    }
+  ],
+  "headless_image_retention": {
+    "1080p20": {
+      "all_texture_bytes": 166498344,
+      "atlas": [
+        2048,
+        64
+      ],
+      "case": "Images",
+      "decoded_bytes": 165904000,
+      "encoded_bytes": 1014669,
+      "frames": 401,
+      "image_texture_bytes": 165907528,
+      "images_viewed": 20,
+      "immediate_repaint_frames": 39,
+      "max_ui_ms": 41.38621,
+      "median_ui_ms": 0.073103,
+      "messages": null,
+      "native": false,
+      "p95_ui_ms": 0.9792810000000001,
+      "paint_callbacks": 0,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 0.547021051,
+      "stage": "end",
+      "system_fonts": false,
+      "texture_count": 38
+    },
+    "1080p20_reduce": {
+      "all_texture_bytes": 166498344,
+      "atlas": [
+        2048,
+        64
+      ],
+      "case": "Images",
+      "decoded_bytes": 0,
+      "encoded_bytes": 16969,
+      "frames": 401,
+      "image_texture_bytes": 165907528,
+      "images_viewed": 20,
+      "immediate_repaint_frames": 44,
+      "max_ui_ms": 41.041844,
+      "median_ui_ms": 0.097518,
+      "messages": null,
+      "native": false,
+      "p95_ui_ms": 0.927998,
+      "paint_callbacks": 0,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": true,
+      "seconds": 0.650190556,
+      "stage": "end",
+      "system_fonts": false,
+      "texture_count": 38
+    },
+    "4k5": {
+      "all_texture_bytes": 167003624,
+      "atlas": [
+        2048,
+        128
+      ],
+      "case": "Images",
+      "decoded_bytes": 165904000,
+      "encoded_bytes": 963589,
+      "frames": 251,
+      "image_texture_bytes": 165907528,
+      "images_viewed": 5,
+      "immediate_repaint_frames": 25,
+      "max_ui_ms": 2.7497920000000002,
+      "median_ui_ms": 0.015667,
+      "messages": null,
+      "native": false,
+      "p95_ui_ms": 0.073375,
+      "pixels_per_point": 1.0,
+      "reduce_texture_memory": false,
+      "seconds": 0.204664458,
+      "stage": "end",
+      "system_fonts": false,
+      "texture_count": 23
+    }
+  },
+  "notes": [
+    "CPU percentages count one core as 100%.",
+    "Footprint MB values from macOS tools are recorded as MiB.",
+    "Retina CPU samples include a Metal System Trace capture and observer overhead.",
+    "GPU percentage is union of active Vertex/Fragment/Compute intervals over trace time 1-9 seconds, not Activity Monitor percent GPU.",
+    "Each image URI is unique; compressed pixel fixtures repeat.",
+    "Final native image trials wait for texture readiness and a paint before advancing; preliminary trials are excluded."
+  ]
+}

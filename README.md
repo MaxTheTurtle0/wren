@@ -22,19 +22,19 @@ Rust and egui. No browser engine. Works with Microsoft Teams through Microsoft's
 Microsoft's Teams client is a large web application. Wren is a purpose-built
 native messaging client in the spirit of
 [Spotifast](https://github.com/crmne/spotifast) and
-[ZapFast](https://github.com/crmne/zapfast): one 15 MB binary, a window that
-draws only when something changes, and every view served from a local cache
-first.
+[ZapFast](https://github.com/crmne/zapfast): one small binary, a window that
+draws only when something changes, bounded image caches, and every view served
+from a local cache first.
 
 Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 ([details and method](docs/performance.md)):
 
 | | Wren 0.1 |
 |---|---|
-| Launch to first frame | 143–157 ms (301 ms cold) |
+| Launch to first frame | 101–120 ms across six demo launches |
 | Idle CPU, window open | 0.0% |
-| Memory (physical footprint) | 135–141 MB |
-| Binary / app bundle | 15 MB |
+| Memory (physical footprint) | 57–59 MiB settled offline demo |
+| Binary / app bundle | About 16 MiB |
 
 ## Features
 
