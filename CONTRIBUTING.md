@@ -44,6 +44,19 @@ On macOS, run the bundle (`packaging/macos/bundle.sh`) through
 `open -W -n Wren.app --args …`, because a bare binary launched over SSH
 starts slowly.
 
+Brand artwork lives in `packaging/icons/`: `wren.svg` is the bird-only app
+icon, `tray-template.svg` is the transparent monochrome bird, and
+`wren-wordmark.svg` contains the bird and name. The white wordmark variant
+supports dark backgrounds and is tinted by the welcome screen's theme.
+After changing the bird artwork, regenerate the checked-in platform icons:
+
+```sh
+cargo run --locked --example render-icon -- packaging/linux/wren-256.png 256
+cargo run --locked --example render-icon -- packaging/windows/wren.ico
+```
+
+The macOS bundler generates its icon from the same SVG.
+
 ## Pull requests
 
 - One topic per pull request, with tests for changed behaviour.

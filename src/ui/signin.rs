@@ -23,9 +23,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 ui.vertical_centered(|ui| {
                     ui.add_space((ui.available_height() * 0.10).max(48.0));
-                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(84.0, 84.0)));
+                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(160.0, 121.0)).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
-                    ui.label(egui::RichText::new("Wren").font(theme::bold(30.0)).color(palette.text));
                     ui.label(
                         egui::RichText::new("A fast, native client for Microsoft Teams chats, channels and meetings.")
                             .font(theme::regular(14.0))

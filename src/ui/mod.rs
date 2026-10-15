@@ -357,7 +357,7 @@ pub fn install(ctx: &egui::Context, reproducible: bool) {
     fastframe_icons::install::<theme::Icon>(ctx);
     ctx.include_bytes(
         signin::LOGO,
-        include_bytes!("../../packaging/icons/wren.svg").as_slice(),
+        include_bytes!("../../packaging/icons/wren-wordmark-light.svg").as_slice(),
     );
     theme::install_fonts(ctx, reproducible);
     fastframe_emoji::EmojiSetup::default()

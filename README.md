@@ -1,4 +1,9 @@
-<p align="center"><img src="packaging/icons/wren.svg" width="96" alt=""></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="packaging/icons/wren-wordmark-light.svg">
+    <img src="packaging/icons/wren-wordmark.svg" width="160" alt="Wren">
+  </picture>
+</p>
 
 <h1 align="center">Wren</h1>
 
