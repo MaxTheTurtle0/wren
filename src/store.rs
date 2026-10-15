@@ -17,6 +17,7 @@ use rusqlite::{Connection, OptionalExtension, params};
 use crate::model::{Channel, Chat, ConversationId, Meeting, Message, SearchHit, Team};
 
 const SCHEMA_VERSION: i32 = 1;
+const MEDIA_BUDGET: usize = 128 * 1024 * 1024;
 
 pub struct Store {
     db: Connection,
@@ -52,7 +53,7 @@ impl Store {
             db.execute_batch(
                 "DROP TABLE IF EXISTS chats; DROP TABLE IF EXISTS teams; DROP TABLE IF EXISTS channels;
                  DROP TABLE IF EXISTS messages; DROP TABLE IF EXISTS messages_fts; DROP TABLE IF EXISTS meetings;
-                 DROP TABLE IF EXISTS photos; DROP TABLE IF EXISTS meta;",
+                 DROP TABLE IF EXISTS photos; DROP TABLE IF EXISTS media; DROP TABLE IF EXISTS meta;",
             )?;
             db.pragma_update(None, "user_version", 0)?;
         }
@@ -101,7 +102,66 @@ impl Store {
                 COMMIT;",
             )?;
         }
+        // This optional cache is additive: older v1 clients can still read
+        // the database without rebuilding the person's message history.
+        self.db.execute_batch(
+            "CREATE TABLE IF NOT EXISTS media (
+                url TEXT PRIMARY KEY, bytes BLOB NOT NULL, last_used INTEGER NOT NULL
+             );
+             CREATE INDEX IF NOT EXISTS media_by_use ON media(last_used);",
+        )?;
         Ok(())
+    }
+
+    /// Encoded Graph-hosted content, so RAM eviction does not force a download.
+    pub fn media(&self, url: &str) -> rusqlite::Result<Option<Vec<u8>>> {
+        let bytes = self
+            .db
+            .query_row("SELECT bytes FROM media WHERE url = ?1", [url], |r| {
+                r.get(0)
+            })
+            .optional()?;
+        if bytes.is_some() {
+            self.db.execute("UPDATE media SET last_used = (SELECT COALESCE(MAX(last_used), 0) + 1 FROM media) WHERE url = ?1", [url])?;
+        }
+        Ok(bytes)
+    }
+
+    pub fn save_media(&mut self, url: &str, bytes: &[u8]) -> rusqlite::Result<()> {
+        self.save_media_with_budget(url, bytes, MEDIA_BUDGET)
+    }
+
+    fn save_media_with_budget(
+        &mut self,
+        url: &str,
+        bytes: &[u8],
+        budget: usize,
+    ) -> rusqlite::Result<()> {
+        if bytes.len() > budget {
+            return Ok(());
+        }
+        let tx = self.db.transaction()?;
+        tx.execute(
+            "INSERT INTO media (url, bytes, last_used)
+            VALUES (?1, ?2, (SELECT COALESCE(MAX(last_used), 0) + 1 FROM media))
+            ON CONFLICT(url) DO UPDATE SET bytes = excluded.bytes, last_used = excluded.last_used",
+            params![url, bytes],
+        )?;
+        let mut total: i64 = tx.query_row(
+            "SELECT COALESCE(SUM(length(bytes)), 0) FROM media",
+            [],
+            |r| r.get(0),
+        )?;
+        while total > budget as i64 {
+            let (oldest, size): (String, i64) = tx.query_row(
+                "SELECT url, length(bytes) FROM media ORDER BY last_used LIMIT 1",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )?;
+            tx.execute("DELETE FROM media WHERE url = ?1", [oldest])?;
+            total -= size;
+        }
+        tx.commit()
     }
 
     pub fn meta(&self, key: &str) -> Option<String> {
@@ -560,5 +620,26 @@ mod tests {
         assert_eq!(store.photo("u", 60_000), Some(None));
         store.save_photo("v", Some(b"jpeg")).unwrap();
         assert_eq!(store.photo("v", 60_000), Some(Some(b"jpeg".to_vec())));
+    }
+
+    #[test]
+    fn media_cache_evicts_least_recently_used_bytes_and_survives_reopening() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("wren.db");
+        {
+            let mut store = Store::open(&path).unwrap();
+            store.save_media_with_budget("a", b"aaaa", 8).unwrap();
+            store.save_media_with_budget("b", b"bbbb", 8).unwrap();
+            assert_eq!(store.media("a").unwrap(), Some(b"aaaa".to_vec()));
+            store.save_media_with_budget("c", b"cccc", 8).unwrap();
+            assert_eq!(store.media("b").unwrap(), None);
+            store
+                .save_media_with_budget("too large", b"123456789", 8)
+                .unwrap();
+            assert_eq!(store.media("too large").unwrap(), None);
+        }
+        let store = Store::open(&path).unwrap();
+        assert_eq!(store.media("a").unwrap(), Some(b"aaaa".to_vec()));
+        assert_eq!(store.media("c").unwrap(), Some(b"cccc".to_vec()));
     }
 }

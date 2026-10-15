@@ -182,6 +182,7 @@ fn main() -> eframe::Result<()> {
                     }
                     app.window_hidden = false;
                     Ok(Box::new(Window {
+                        pacing: wren::pacing::FramePacer::new(cc),
                         app,
                         recovery_checked: false,
                         paste_input: wren::clipboard::PasteInput::default(),
@@ -334,6 +335,7 @@ struct Shot {
 /// The eframe side of one window. The [`App`] goes back to the shell when
 /// the window closes.
 struct Window {
+    pacing: wren::pacing::FramePacer,
     app: fastframe_shell::Held<App>,
     recovery_checked: bool,
     paste_input: wren::clipboard::PasteInput,
@@ -387,6 +389,7 @@ impl eframe::App for Window {
     }
 
     fn logic(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        self.pacing.begin_frame(frame);
         if !std::mem::replace(&mut self.recovery_checked, true) {
             fastframe_shell::window::recover_offscreen(ctx, frame);
         }

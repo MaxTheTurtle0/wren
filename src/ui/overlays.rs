@@ -33,7 +33,8 @@ fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
     let zoom_id = egui::Id::new("image-preview-actual-size").with(uri);
     // Both draft and message images are already in egui's local byte cache.
     // Use decoded dimensions, not the message HTML's thumbnail dimensions.
-    let loaded = egui::Image::new(uri).load_for_size(ctx, vec2(width - 32.0, height));
+    let loaded = egui::Image::new(crate::images::original(uri))
+        .load_for_size(ctx, vec2(width - 32.0, height));
     let mut actual_size = ctx.data(|d| d.get_temp::<bool>(zoom_id)).unwrap_or(false);
     let mut actions = Vec::new();
     let close = modal(palette, ctx, "image-preview", width, 24.0, |ui| {

@@ -2,6 +2,7 @@
 //! window: layout must not panic, actions must apply, and each view must
 //! draw something.
 
+use egui::load::BytesLoader as _;
 use wren::app::{App, Overlay};
 use wren::backend::{AuthStatus, Waker};
 use wren::model::{Action, ConversationId, Section};
@@ -15,6 +16,7 @@ struct Harness {
     time: f64,
     size: egui::Vec2,
     shapes: Vec<egui::epaint::ClippedShape>,
+    repaint_after: std::time::Duration,
     _dir: tempfile::TempDir,
 }
 
@@ -35,6 +37,7 @@ impl Harness {
             time: 0.0,
             size: egui::vec2(1280.0, 820.0),
             shapes: Vec::new(),
+            repaint_after: std::time::Duration::MAX,
             _dir: dir,
         }
     }
@@ -59,6 +62,7 @@ impl Harness {
         // No renderer here: drop the texture uploads on purpose.
         output.textures_delta.clear();
         let count = output.shapes.len();
+        self.repaint_after = output.viewport_output[&egui::ViewportId::ROOT].repaint_delay;
         self.shapes = output.shapes;
         count
     }
@@ -217,15 +221,22 @@ fn image_shapes<'a>(
 }
 
 fn cached_image_shapes<'a>(h: &'a Harness, uri: &str) -> Vec<&'a egui::epaint::RectShape> {
-    let id = egui::Image::new(uri)
-        .load_for_size(&h.ctx, h.size)
-        .unwrap()
-        .texture_id()
-        .unwrap();
+    // Inspect what was painted without requesting another thumbnail size.
+    // The viewer now has a separate original-resolution texture.
+    let textures: std::collections::HashSet<_> = h
+        .ctx
+        .tex_manager()
+        .read()
+        .allocated()
+        .filter(|(_, meta)| meta.name == uri)
+        .map(|(id, _)| *id)
+        .collect();
     painted_shapes(h)
         .into_iter()
         .filter_map(|shape| match shape {
-            egui::epaint::Shape::Rect(rect) if rect.fill_texture_id() == id => Some(rect),
+            egui::epaint::Shape::Rect(rect) if textures.contains(&rect.fill_texture_id()) => {
+                Some(rect)
+            }
             _ => None,
         })
         .collect()
@@ -273,6 +284,7 @@ fn clicking_received_images_opens_the_shared_viewer_at_their_original_size() {
                 let thumbnail = cached_image_shapes(&h, &uri)[0].rect;
                 assert_eq!(thumbnail.size(), egui::vec2(120.0, 80.0));
                 h.click(thumbnail.center());
+                h.wait_for_images();
                 assert_eq!(h.app.overlay, Some(Overlay::ImagePreview(uri.clone())));
                 let zoom = painted_shapes(&h)
                     .into_iter()
@@ -349,25 +361,28 @@ fn image_clips(h: &Harness, image: &wren::clipboard::InlineImage) -> Vec<(egui::
     fn collect(
         shape: &egui::epaint::Shape,
         clip: egui::Rect,
-        texture: egui::TextureId,
+        textures: &std::collections::HashSet<egui::TextureId>,
         output: &mut Vec<(egui::Rect, egui::Rect)>,
     ) {
         match shape {
             egui::epaint::Shape::Vec(shapes) => {
                 for shape in shapes {
-                    collect(shape, clip, texture, output);
+                    collect(shape, clip, textures, output);
                 }
             }
-            egui::epaint::Shape::Rect(rect) if rect.fill_texture_id() == texture => {
+            egui::epaint::Shape::Rect(rect) if textures.contains(&rect.fill_texture_id()) => {
                 output.push((rect.rect, clip))
             }
             _ => {}
         }
     }
-    let texture = image_shapes(h, image)[0].fill_texture_id();
+    let textures = image_shapes(h, image)
+        .into_iter()
+        .map(|s| s.fill_texture_id())
+        .collect();
     let mut output = Vec::new();
     for clipped in &h.shapes {
-        collect(&clipped.shape, clipped.clip_rect, texture, &mut output);
+        collect(&clipped.shape, clipped.clip_rect, &textures, &mut output);
     }
     output
 }
@@ -408,6 +423,7 @@ fn composer_images_have_usable_thumbnails_and_open_full_previews() {
                 assert!(uv.min.x >= 0.0 && uv.min.y >= 0.0 && uv.max.x <= 1.0 && uv.max.y <= 1.0);
 
                 h.click(rect.center());
+                h.wait_for_images();
                 assert!(
                     matches!(&h.app.overlay, Some(Overlay::ImagePreview(shown)) if shown == &image.uri())
                 );
@@ -1134,4 +1150,74 @@ fn call_settings_draw_and_apply() {
     });
     assert!(h.app.call.is_some());
     assert!(h.frames(2) > 50);
+}
+
+#[test]
+fn a_loading_conversation_settles_without_animation_repaints() {
+    for theme in [ThemeChoice::Dark, ThemeChoice::Light] {
+        let mut h = Harness::new();
+        h.app.settings.theme = theme;
+        h.app.loading.insert(wren::sync::Resource::Chats);
+        let open = h.app.open.clone().unwrap();
+        h.app.loading.insert(wren::sync::Resource::Messages(open));
+        h.frames(40);
+        assert!(
+            h.repaint_after > std::time::Duration::from_millis(100),
+            "waiting for Graph must not animate the whole window: {:?}",
+            h.repaint_after
+        );
+        assert!(
+            !h.ctx
+                .repaint_causes()
+                .iter()
+                .any(|cause| format!("{cause:?}").contains("spinner.rs"))
+        );
+    }
+}
+
+#[test]
+fn an_evicted_draft_image_reopens_at_original_resolution_without_losing_the_draft() {
+    let mut h = Harness::new();
+    h.frames(3);
+    let chat = h.app.open.clone().unwrap();
+    let image =
+        wren::clipboard::encode_rgba(1200, 800, &[15, 50, 90, 255].repeat(1200 * 800)).unwrap();
+    h.app.handle(
+        wren::backend::Event::Pasted {
+            conversation: chat.clone(),
+            range: (0, 0),
+            text: String::new(),
+            image: Ok(Some(image.clone())),
+        },
+        &h.ctx,
+    );
+    h.wait_for_images();
+    // Pasted images must not also enter egui's unbounded included-byte map.
+    assert!(
+        h.ctx.loaders().include.load(&h.ctx, &image.uri()).is_err(),
+        "draft bypassed the bounded source cache"
+    );
+    h.ctx.forget_image(&image.uri());
+    assert!(!wren::images::contains(&h.ctx, &image.uri()));
+    h.act(Action::PreviewImage(image.uri()));
+    h.wait_for_images();
+    assert!(wren::images::contains(&h.ctx, &image.uri()));
+    assert_eq!(h.app.drafts[&chat].images, vec![image.clone()]);
+    assert!(
+        h.ctx
+            .tex_manager()
+            .read()
+            .allocated()
+            .any(|(_, meta)| meta.name == image.uri() && meta.size == [1200, 800])
+    );
+    h.act(Action::CloseOverlay);
+    h.frames(3);
+    assert!(
+        !h.ctx
+            .tex_manager()
+            .read()
+            .allocated()
+            .any(|(_, meta)| meta.name == image.uri() && meta.size == [1200, 800])
+    );
+    assert_eq!(h.app.drafts[&chat].images.len(), 1);
 }

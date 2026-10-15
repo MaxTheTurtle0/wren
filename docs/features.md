@@ -23,7 +23,7 @@ Status as of Wren 0.1 (unreleased).
 | Edit and delete your messages | Works | Chats: Chat.ReadWrite. Channels: needs ChannelMessage.ReadWrite (admin), hidden otherwise |
 | Mark read | Works | `markChatReadForUser` when a chat is opened |
 | Rich text: bold, italic, underline, strike, code, quotes, lists, links, mentions, emoji | Works | Native rendering of Teams HTML |
-| Inline images (hosted content) | Works | Lazy, Graph-hosted only; other hosts are never fetched (privacy). Click an image to open the same fit/100% viewer as draft images, using the original decoded dimensions |
+| Inline images (hosted content) | Works | Lazy, Graph-hosted only; other hosts are never fetched (privacy). Downloads have a bounded local cache. Thumbnails use reduced-resolution textures; originals are released after closing the viewer. Click an image to open the same fit/100% viewer as draft images, using the original decoded dimensions |
 | File attachments: view | Works | Shown as file chips that open in the browser |
 | File attachments: send | Works | Attach button or drag and drop, up to 1 GiB per file. Uploaded to your OneDrive folder `Microsoft Teams Chat Files` (resumable upload above 4 MiB), shared read-only with the chat's members (an organisation-wide view link in channels), and sent as a `reference` attachment. Files.ReadWrite, requested on first use |
 | Paste images into the composer | Works | Fixed-size thumbnails crop without stretching. Click to preview the complete image, fit it to the window, or view at 100% with scrolling. Inline PNG hosted-content sends, just under 3 MiB combined per message; no Files.ReadWrite needed |

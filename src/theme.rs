@@ -11,6 +11,8 @@ use fastframe_fonts::Weight;
 
 use crate::settings::ThemeChoice;
 
+mod lazy_fonts;
+
 fastframe_icons::icons! {
     /// Every icon the interface draws: Lucide (ISC), 24 px outlines in white
     /// so egui's tint colours them.
@@ -278,6 +280,17 @@ fn rendering() -> &'static fastframe_text::TextRendering {
 /// Fonts: the platform's interface face (San Francisco, Segoe UI, the
 /// desktop's), installed fonts for other scripts, and colour emoji.
 pub fn install_fonts(ctx: &egui::Context, reproducible: bool) {
+    ctx.set_fonts(font_definitions(reproducible, false));
+    if !reproducible {
+        ctx.add_plugin(lazy_fonts::LazyFonts::default());
+    }
+}
+
+pub fn font_revision(ctx: &egui::Context) -> u64 {
+    ctx.data(|d| d.get_temp(egui::Id::new("wren-font-revision")).unwrap_or(0))
+}
+
+fn font_definitions(reproducible: bool, fallbacks: bool) -> egui::FontDefinitions {
     let mut fonts = fastframe_fonts::FontSetup::default()
         .primary(if reproducible {
             fastframe_fonts::Primary::Inter
@@ -285,10 +298,10 @@ pub fn install_fonts(ctx: &egui::Context, reproducible: bool) {
             fastframe_fonts::Primary::System
         })
         .weights(&[Weight::Medium, Weight::SemiBold, Weight::Bold])
-        .system_fallbacks(!reproducible)
+        .system_fallbacks(fallbacks)
         .definitions();
     rendering().apply_to(&mut fonts);
-    ctx.set_fonts(fonts);
+    fonts
 }
 
 /// Applies a palette to egui's visuals and Wren's text styles.

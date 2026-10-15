@@ -24,11 +24,14 @@
   origin: paging links and image URLs on other hosts are refused.
 - **Least privilege.** Delegated permissions only, requested incrementally;
   see [permissions.md](permissions.md).
-- **Local data.** The cache of your chats, channels and meetings is a SQLite
-  file in a folder only your user can read (0700/0600 on macOS and Linux).
+- **Local data.** The cache of your chats, channels, meetings, photos and
+  downloaded Graph-hosted images is a SQLite file in a folder only your user
+  can read (0700/0600 on macOS and Linux).
   It is not encrypted yet; full-disk encryption (FileVault, BitLocker, LUKS)
   protects it at rest. Encrypting it with a key held in the credential store
-  is on the roadmap. Signing out deletes it.
+  is on the roadmap. Signing out deletes it. Encoded message images use a
+  128 MiB least-recently-used cache per account. The SQLite file can also
+  contain unused pages and journal data.
 - **Logs** never contain message text, tokens, authorization codes or URLs
   with query strings. Panics are logged without their payload
   (fastframe-log).

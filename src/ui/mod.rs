@@ -181,7 +181,7 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                             }
                             let busy = !app.loading.is_empty();
                             if busy {
-                                ui.add(egui::Spinner::new().size(14.0).color(palette.dim));
+                                widgets::loading(ui, palette.dim, 14.0);
                             }
                         });
                     });
@@ -370,6 +370,7 @@ fn perf(app: &App, ctx: &egui::Context) {
 /// Per-window setup: image loaders, icons, fonts, colour emoji.
 pub fn install(ctx: &egui::Context, reproducible: bool) {
     egui_extras::install_image_loaders(ctx);
+    crate::images::install(ctx);
     fastframe_icons::install::<theme::Icon>(ctx);
     ctx.include_bytes(
         signin::LOGO,

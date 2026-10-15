@@ -6,6 +6,16 @@ use crate::app::{App, Image};
 use crate::model::Action;
 use crate::theme::{self, Icon, Palette};
 
+/// Loading is event driven. A static indicator lets a slow request leave the
+/// entire window asleep until its backend sends the next event.
+pub fn loading(ui: &mut Ui, color: Color32, size: f32) -> Response {
+    let (rect, response) = ui.allocate_exact_size(Vec2::splat(size), Sense::hover());
+    if ui.is_rect_visible(rect) {
+        Icon::Loader.image(color, size).paint_at(ui, rect);
+    }
+    response.on_hover_text("Loading…")
+}
+
 /// A round avatar: the person's photo when Wren has it, their initials
 /// otherwise, and a presence dot when `presence` is known.
 pub fn avatar(
@@ -25,9 +35,9 @@ pub fn avatar(
         Some(Image::Ready(uri)) => Some(uri.clone()),
         _ => None,
     });
-    match photo {
+    match &photo {
         Some(uri) => {
-            egui::Image::new(uri)
+            egui::Image::new(uri.clone())
                 .corner_radius(CornerRadius::same((size / 2.0) as u8))
                 .paint_at(ui, rect);
         }
@@ -48,9 +58,17 @@ pub fn avatar(
         }
     }
     // Ask for the photo once the avatar is on screen.
+    let missing_photo = match photo {
+        Some(ref uri) => crate::images::needs_source(
+            ui.ctx(),
+            uri,
+            egui::load::SizeHint::Width((size * ui.ctx().pixels_per_point()).ceil() as u32),
+        ),
+        None => user.is_some_and(|user| !app.photos.contains_key(user)),
+    };
     if let Some(user) = user
         && !app.demo
-        && !app.photos.contains_key(user)
+        && missing_photo
     {
         ui.ctx().data_mut(|data| {
             data.get_temp_mut_or_default::<Vec<String>>(egui::Id::new("wren-photo-wants"))
@@ -245,7 +263,12 @@ pub fn request_photos(app: &mut App, ctx: &egui::Context) {
         )
     });
     for user in wants {
-        if !app.photos.contains_key(&user) {
+        let missing = match app.photos.get(&user) {
+            Some(Image::Ready(uri)) => !crate::images::contains(ctx, uri),
+            None => true,
+            _ => false,
+        };
+        if missing {
             app.photos.insert(user.clone(), Image::Loading);
             app.backend.send(crate::backend::Command::Photo(user));
         }

@@ -275,6 +275,19 @@ fn image(
             if response.clicked() {
                 actions.push(Action::PreviewImage(uri.clone()));
             }
+            if ui.is_rect_visible(response.rect)
+                && crate::images::needs_source(
+                    ui.ctx(),
+                    uri,
+                    egui::load::SizeHint::Size {
+                        width: (size.x * ui.ctx().pixels_per_point()).ceil() as u32,
+                        height: (size.y * ui.ctx().pixels_per_point()).ceil() as u32,
+                        maintain_aspect_ratio: true,
+                    },
+                )
+            {
+                actions.push(Action::LoadMedia(src.to_owned()));
+            }
         }
         state => {
             let (rect, response) = ui.allocate_exact_size(size, Sense::hover());

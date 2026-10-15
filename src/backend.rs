@@ -98,6 +98,8 @@ pub enum Command {
         conversation: ConversationId,
         before: Option<i64>,
     },
+    /// Reopen a model evicted from RAM without bypassing Graph freshness.
+    CachedMessages(ConversationId),
     Paste {
         conversation: ConversationId,
         range: (usize, usize),

@@ -94,12 +94,27 @@ Signing out deletes that account's refresh token and folder.
   for an idle client, most importantly egui's busy-loop fix.
 - **Virtualized lists.** The chat list uses fixed-height rows
   (`ScrollArea::show_rows`). The message history keeps a height per message,
-  lays out only rows within two viewports of the screen, and estimates the
-  rest.
+  uses a prefix-sum index to find rows within two viewports of the screen,
+  and estimates the rest. Unchanged frames avoid scanning the full history.
+  RAM retains at most 12 conversations and 2,000 inactive messages and replies,
+  except conversations with unsent messages or replies. The active history
+  stays intact; evicted histories reopen from SQLite. Drafts stay separate.
 - **One galley per paragraph.** Message text is laid out once per frame as
   selectable labels. Links are found from the galley's character positions,
   with no per-word widgets.
 - **Lazy media.** Avatars and inline images are fetched only when drawn on
-  screen, a few at a time. Photos are cached for a week.
+  screen, a few at a time. Photos are cached for a week. Encoded Graph images
+  have a 128 MiB disk cache per account, so RAM eviction does not force a
+  download. One worker decodes local image bytes. Encoded sources and inactive
+  thumbnail textures each have a 16 MiB RAM budget; visible thumbnails can
+  exceed that budget. Full-resolution textures live only while previewed.
+  CPU pixels are released after upload. Draft and pending-send PNGs remain
+  available independently of the image cache.
+- **Event-driven rendering.** Loading indicators are static. Native frames
+  have a ceiling at the display refresh rate even when OpenGL vsync does not
+  block. The ceiling never schedules a repaint.
+- **Script fonts on demand.** The normal platform font loads at startup.
+  Visible text missing a glyph triggers a worker to load the existing script
+  fallbacks, then wakes the window and invalidates history height estimates.
 
 App-wide update work uses a separate backend handle, so downloads survive account switching and sign-out. `updates.rs` configures fastframe-update and its pinned publisher key. All checks, downloads, helper handoffs and startup receipts run off the UI thread. `clipboard.rs` reads and PNG-encodes images on a blocking backend task only after a composer paste action; the image bytes stay in the draft and pending-send record until Graph accepts the message.

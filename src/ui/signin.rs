@@ -79,7 +79,7 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
         AuthStatus::NotConfigured => registration(app, ui, true),
         AuthStatus::Restoring | AuthStatus::Finishing => {
             ui.vertical_centered(|ui| {
-                ui.add(egui::Spinner::new().size(22.0).color(palette.accent));
+                widgets::loading(ui, palette.accent, 22.0);
                 ui.label(egui::RichText::new("Signing in…").color(palette.secondary));
             });
         }

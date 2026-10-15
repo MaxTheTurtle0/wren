@@ -293,6 +293,22 @@ async fn sign_in_sync_send_restore_and_sign_out() {
         _ => None,
     });
     assert_eq!(cached_messages.len(), 3, "two fetched and one sent");
+    // RAM eviction can reopen a conversation without claiming a Graph fetch.
+    let requests_before = server.received_requests().await.unwrap().len();
+    backend.send(Command::CachedMessages(conversation.clone()));
+    let reopened = wait_for(&backend, 5, |e| match e {
+        Event::Messages {
+            messages,
+            cached: true,
+            ..
+        } => Some(messages),
+        _ => None,
+    });
+    assert_eq!(reopened.len(), 3);
+    assert_eq!(
+        server.received_requests().await.unwrap().len(),
+        requests_before
+    );
     let before = cached_messages.iter().map(|m| m.created).min().unwrap();
     Mock::given(method("GET"))
         .and(path(format!("/v1.0/chats/{CHAT}/messages")))
@@ -341,6 +357,24 @@ async fn sign_in_sync_send_restore_and_sign_out() {
             "the rotated refresh token was not stored"
         );
         std::thread::sleep(Duration::from_millis(20));
+    }
+
+    // Reopening an evicted image uses the account's encoded cache, with no
+    // second Graph download. This remains available after RAM eviction.
+    Mock::given(method("GET"))
+        .and(path("/v1.0/hosted-image"))
+        .respond_with(ResponseTemplate::new(200).set_body_bytes(b"image fixture".to_vec()))
+        .expect(1)
+        .mount(&server)
+        .await;
+    let media_url = format!("{}/v1.0/hosted-image", server.uri());
+    for _ in 0..2 {
+        backend.send(Command::Media(media_url.clone()));
+        let bytes = wait_for(&backend, 5, |e| match e {
+            Event::Media { url, bytes } if url == media_url => Some(bytes),
+            _ => None,
+        });
+        assert_eq!(bytes, Some(b"image fixture".to_vec()));
     }
 
     // Sign out: the token and the cache are gone.

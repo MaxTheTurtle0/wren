@@ -244,6 +244,7 @@ impl Worker {
             }
             Command::SignOut => self.sign_out().await,
             Command::Fetch { resource, trigger } => self.fetch(resource, trigger),
+            Command::CachedMessages(conversation) => self.cached_messages(conversation),
             Command::LoadOlder {
                 conversation,
                 before,
@@ -1166,6 +1167,33 @@ impl Worker {
         });
     }
 
+    fn cached_messages(&self, conversation: ConversationId) {
+        let Some(account) = &self.account else { return };
+        let store = Arc::clone(&account.store);
+        let out = self.out.clone();
+        tokio::spawn(async move {
+            let key = conversation.clone();
+            let messages = tokio::task::spawn_blocking(move || {
+                store
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .messages(&key, CACHED_MESSAGES)
+                    .unwrap_or_default()
+            })
+            .await
+            .unwrap_or_default();
+            if !messages.is_empty() {
+                out.send(Event::Messages {
+                    conversation,
+                    messages,
+                    merge: Merge::Latest,
+                    more: Some(true),
+                    cached: true,
+                });
+            }
+        });
+    }
+
     fn media(&mut self, url: String) {
         let Some(account) = &self.account else { return };
         if !account.graph.is_graph_url(&url) {
@@ -1175,9 +1203,30 @@ impl Worker {
             return;
         }
         let graph = Arc::clone(&account.graph);
+        let store = Arc::clone(&account.store);
         let out = self.out.clone();
         let downloads = Arc::clone(&self.downloads);
         tokio::spawn(async move {
+            let cache = Arc::clone(&store);
+            let key = url.clone();
+            let cached = tokio::task::spawn_blocking(move || {
+                cache
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .media(&key)
+                    .ok()
+                    .flatten()
+            })
+            .await
+            .ok()
+            .flatten();
+            if let Some(bytes) = cached {
+                out.send(Event::Media {
+                    url,
+                    bytes: Some(bytes),
+                });
+                return;
+            }
             let Ok(_permit) = downloads.acquire().await else {
                 return;
             };
@@ -1185,6 +1234,18 @@ impl Worker {
                 .get_bytes(&url, crate::graph::api::MEDIA_LIMIT)
                 .await
                 .ok();
+            if let Some(bytes) = &bytes {
+                let cache = Arc::clone(&store);
+                let key = url.clone();
+                let encoded = bytes.clone();
+                let _ = tokio::task::spawn_blocking(move || {
+                    let _ = cache
+                        .lock()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .save_media(&key, &encoded);
+                })
+                .await;
+            }
             out.send(Event::Media { url, bytes });
         });
     }

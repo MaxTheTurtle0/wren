@@ -11,7 +11,7 @@
 //! account that is not on screen are applied with `hidden` set: they update
 //! that account, notify, and never touch what the window shows.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::ops::{Deref, DerefMut};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
@@ -29,11 +29,14 @@ use crate::sync::{Resource, Trigger};
 use crate::theme::Palette;
 
 mod calls;
+mod history;
 pub use calls::Docked;
+pub use history::HistoryLayout;
 
 /// Messages and view state of one conversation.
 #[derive(Debug, Default)]
 pub struct Conversation {
+    pub layout: HistoryLayout,
     /// Oldest first.
     pub messages: Vec<Message>,
     /// Older messages exist beyond the loaded ones.
@@ -60,17 +63,25 @@ impl Conversation {
     }
 
     fn find_mut(&mut self, id: &str) -> Option<&mut Message> {
+        self.layout.invalidate();
+        self.heights.remove(id);
         if let Some(index) = self.messages.iter().position(|m| m.id == id) {
             return self.messages.get_mut(index);
         }
-        self.messages
+        let root = self
+            .messages
             .iter_mut()
-            .flat_map(|m| m.replies.iter_mut())
-            .find(|m| m.id == id)
+            .find(|m| m.replies.iter().any(|r| r.id == id))?;
+        self.heights.remove(&root.id);
+        root.replies.iter_mut().find(|m| m.id == id)
     }
 
     /// Merges messages by id, keeping messages still being sent.
     pub fn merge(&mut self, incoming: Vec<Message>, merge: Merge) {
+        self.layout.invalidate();
+        for message in &incoming {
+            self.heights.remove(&message.id);
+        }
         match merge {
             Merge::Latest if self.messages.iter().all(|m| m.delivery == Delivery::Sent) => {
                 // Keep older loaded messages when the new page connects to
@@ -268,6 +279,7 @@ pub struct Account {
     pending_sends: HashMap<String, PendingSend>,
     next_local: u64,
     reminded: HashSet<String>,
+    recent_conversations: VecDeque<ConversationId>,
 }
 
 impl Account {
@@ -299,6 +311,7 @@ impl Account {
             pending_sends: HashMap::new(),
             next_local: 0,
             reminded: HashSet::new(),
+            recent_conversations: VecDeque::new(),
         }
     }
 
@@ -420,6 +433,7 @@ impl Account {
         self.teams.clear();
         self.channels.clear();
         self.conversations.clear();
+        self.recent_conversations.clear();
         self.presence.clear();
         self.my_presence = None;
         self.meetings.clear();
@@ -815,6 +829,15 @@ impl App {
     /// Tracks focus and input; coming back to the window refreshes what it
     /// shows, and using it keeps the presence session Available.
     pub fn observe_window(&mut self, ctx: &egui::Context) {
+        // Draft and failed-send sources are authoritative even after the
+        // window's bounded display cache has evicted their compressed bytes.
+        if let Some(draft) = self.open.as_ref().and_then(|id| self.drafts.get(id)) {
+            for image in &draft.images {
+                if !crate::images::contains(ctx, &image.uri()) {
+                    crate::images::include(ctx, image.uri(), image.png.clone());
+                }
+            }
+        }
         let focused = ctx.input(|i| i.viewport().focused.unwrap_or(true));
         if focused && !self.window_focused {
             self.fetch_view(Trigger::Focused);
@@ -955,7 +978,7 @@ impl App {
                         {
                             self.toast(ToastKind::Error, "The pasted images are too large for one message. Send them separately.");
                         } else {
-                            ctx.include_bytes(image.uri(), image.png.clone());
+                            crate::images::include(ctx, image.uri(), image.png.clone());
                             draft.images.push(image);
                         }
                     }
@@ -1022,6 +1045,8 @@ impl App {
                 replies,
             } => {
                 let entry = self.conversations.entry(conversation).or_default();
+                entry.layout.invalidate();
+                entry.heights.remove(&root);
                 if let Some(root) = entry.messages.iter_mut().find(|m| m.id == root) {
                     root.replies = replies;
                 }
@@ -1271,10 +1296,18 @@ impl App {
         more: Option<bool>,
         cached: bool,
     ) {
+        if !self.recent_conversations.contains(&conversation) {
+            self.recent_conversations.push_front(conversation.clone());
+        }
         let me = self.me().to_owned();
         let open = !self.hidden && self.open.as_ref() == Some(&conversation);
         let focused = self.window_focused;
         let entry = self.conversations.entry(conversation.clone()).or_default();
+        // The disk-only reopen can finish after Graph. Do not replace a
+        // newer network answer with a snapshot read before that answer.
+        if cached && merge == Merge::Latest && entry.fresh {
+            return;
+        }
         let newest_before = entry
             .messages
             .iter()
@@ -1335,6 +1368,7 @@ impl App {
             self.chats
                 .sort_by_key(|chat| std::cmp::Reverse(chat.activity()));
         }
+        self.trim_conversations();
     }
 
     fn on_sent(&mut self, conversation: ConversationId, local_id: String, message: Message) {
@@ -1345,6 +1379,8 @@ impl App {
         {
             if let Some(root) = entry.messages.iter_mut().find(|m| &m.id == reply_to) {
                 root.replies.retain(|r| r.id != local_id);
+                entry.heights.remove(reply_to);
+                entry.layout.invalidate();
                 root.replies.push(message);
             }
             return;
@@ -1599,9 +1635,11 @@ impl App {
             Action::ToggleThread(root) => {
                 if let Some(open) = self.open.clone() {
                     let entry = self.conversations.entry(open).or_default();
+                    entry.heights.remove(&root);
                     if !entry.expanded.remove(&root) {
                         entry.expanded.insert(root);
                     }
+                    entry.layout.invalidate();
                 }
             }
             Action::RetrySend {
@@ -1663,7 +1701,12 @@ impl App {
                 }
             }
             Action::LoadMedia(url) => {
-                if !self.media.contains_key(&url) {
+                let missing = match self.media.get(&url) {
+                    Some(Image::Ready(uri)) => !crate::images::contains(ctx, uri),
+                    None => true,
+                    _ => false,
+                };
+                if missing {
                     let demo = self.demo;
                     self.media.insert(url.clone(), Image::Loading);
                     if demo {
@@ -1863,8 +1906,34 @@ impl App {
                 self.switcher = Switcher::default();
                 self.overlay = Some(Overlay::Switcher);
             }
-            Action::CloseOverlay => self.overlay = None,
-            Action::PreviewImage(uri) => self.overlay = Some(Overlay::ImagePreview(uri)),
+            Action::CloseOverlay => {
+                self.overlay = None;
+                // Give loaders a pass without the original so they can release it.
+                ctx.request_repaint();
+            }
+            Action::PreviewImage(uri) => {
+                if !crate::images::contains(ctx, &uri) {
+                    let local = self
+                        .accounts
+                        .iter()
+                        .flat_map(|a| {
+                            a.drafts
+                                .values()
+                                .flat_map(|d| &d.images)
+                                .chain(a.pending_sends.values().flat_map(|s| &s.images))
+                        })
+                        .find(|image| image.uri() == uri)
+                        .cloned();
+                    if let Some(image) = local {
+                        crate::images::include(ctx, uri.clone(), image.png);
+                    } else if let Some(url) = self.media.iter().find_map(|(url, state)| {
+                        matches!(state, Image::Ready(stored) if *stored == uri).then(|| url.clone())
+                    }) {
+                        self.apply(Action::LoadMedia(url), ctx);
+                    }
+                }
+                self.overlay = Some(Overlay::ImagePreview(uri));
+            }
             Action::SearchMessages(query) => {
                 self.switcher.searched = query.clone();
                 self.switcher.hits.clear();
@@ -1934,6 +2003,9 @@ impl App {
     }
 
     fn open_conversation(&mut self, conversation: ConversationId) {
+        let needs_cache = !self.conversations.contains_key(&conversation);
+        self.recent_conversations.retain(|id| id != &conversation);
+        self.recent_conversations.push_back(conversation.clone());
         self.section = match conversation {
             ConversationId::Chat(_) => Section::Chats,
             ConversationId::Channel { .. } => Section::Teams,
@@ -1942,6 +2014,11 @@ impl App {
             self.expanded_teams.insert(team.clone());
         }
         self.open = Some(conversation.clone());
+        self.trim_conversations();
+        if needs_cache && !self.demo {
+            self.backend
+                .send(Command::CachedMessages(conversation.clone()));
+        }
         self.focus_composer = true;
         self.scroll_to_end = 4;
         self.fetch(Resource::Messages(conversation.clone()), Trigger::Opened);
@@ -1962,6 +2039,46 @@ impl App {
             if !members.is_empty() && !self.demo {
                 self.backend.send(Command::Presence(members));
             }
+        }
+    }
+
+    /// SQLite keeps the full history. RAM keeps the current conversation,
+    /// pending/failed sends, and a small set of recently opened conversations.
+    fn trim_conversations(&mut self) {
+        if self.demo {
+            return;
+        }
+        loop {
+            let inactive_messages: usize = self
+                .conversations
+                .iter()
+                .filter(|(id, _)| self.open.as_ref() != Some(*id))
+                .map(|(_, view)| {
+                    view.messages
+                        .iter()
+                        .map(|message| 1 + message.replies.len())
+                        .sum::<usize>()
+                })
+                .sum();
+            if self.conversations.len() <= 12 && inactive_messages <= 2_000 {
+                break;
+            }
+            let oldest = self
+                .recent_conversations
+                .iter()
+                .find(|id| {
+                    self.open.as_ref() != Some(*id)
+                        && self.conversations.get(*id).is_some_and(|view| {
+                            view.messages.iter().all(|m| {
+                                m.delivery == Delivery::Sent
+                                    && m.replies.iter().all(|r| r.delivery == Delivery::Sent)
+                            })
+                        })
+                })
+                .cloned();
+            let Some(oldest) = oldest else { break };
+            self.conversations.remove(&oldest);
+            self.recent_conversations.retain(|id| id != &oldest);
         }
     }
 
@@ -2149,6 +2266,10 @@ impl App {
         };
         let entry = self.conversations.entry(conversation.clone()).or_default();
         if channel_reply {
+            entry.layout.invalidate();
+            if let Some(root) = &reply_to {
+                entry.heights.remove(root);
+            }
             if let Some(root) = entry
                 .messages
                 .iter_mut()
@@ -2410,7 +2531,7 @@ fn register_image(ctx: &egui::Context, key: &str, bytes: Vec<u8>) -> Option<Stri
         _ => return None,
     };
     let uri = format!("bytes://wren/{key}.{extension}");
-    ctx.include_bytes(uri.clone(), bytes);
+    crate::images::include(ctx, uri.clone(), bytes);
     Some(uri)
 }
 
@@ -2424,6 +2545,97 @@ fn fnv(text: &str) -> u64 {
 mod tests {
     use super::*;
     use crate::html::RichText;
+
+    #[test]
+    fn inactive_conversations_are_bounded_but_unsent_messages_and_drafts_survive() {
+        let (mut app, mut commands) = app();
+        let ctx = egui::Context::default();
+        let unsent = ConversationId::Chat("unsent".into());
+        let mut pending = message("pending", 1);
+        pending.delivery = Delivery::Failed;
+        app.conversations
+            .entry(unsent.clone())
+            .or_default()
+            .messages
+            .push(pending);
+        app.recent_conversations.push_back(unsent.clone());
+        let thread = ConversationId::Channel {
+            team: "team".into(),
+            channel: "channel".into(),
+        };
+        let mut root = message("root", 1);
+        let mut reply = message("reply", 2);
+        reply.delivery = Delivery::Sending;
+        root.replies.push(reply);
+        app.conversations
+            .entry(thread.clone())
+            .or_default()
+            .messages
+            .push(root);
+        app.recent_conversations.push_back(thread.clone());
+        let draft_id = ConversationId::Chat("draft".into());
+        app.drafts.entry(draft_id.clone()).or_default().text = "Keep this".into();
+        for i in 0..30 {
+            let id = ConversationId::Chat(format!("chat-{i}"));
+            app.open_conversation(id.clone());
+            app.on_messages(
+                id.clone(),
+                vec![message("one", i)],
+                Merge::Latest,
+                Some(true),
+                true,
+            );
+        }
+        assert!(app.conversations.len() <= 12);
+        assert!(app.conversations.contains_key(&unsent));
+        assert!(app.conversations.contains_key(&thread));
+        assert_eq!(app.drafts[&draft_id].text, "Keep this");
+        let old = ConversationId::Chat("chat-0".into());
+        assert!(!app.conversations.contains_key(&old));
+        while commands.try_recv().is_ok() {}
+        app.apply(Action::OpenConversation(old.clone()), &ctx);
+        assert!(matches!(commands.try_recv().unwrap(), Command::CachedMessages(id) if id == old));
+    }
+
+    #[test]
+    fn inactive_history_budget_counts_channel_replies() {
+        let (mut app, _) = app();
+        let heavy = ConversationId::Channel {
+            team: "team".into(),
+            channel: "channel".into(),
+        };
+        let mut root = message("root", 1);
+        root.replies = (0..2_001).map(|i| message(&i.to_string(), i)).collect();
+        app.conversations
+            .entry(heavy.clone())
+            .or_default()
+            .messages
+            .push(root);
+        app.recent_conversations.push_front(heavy.clone());
+        let active = ConversationId::Chat("active".into());
+        app.open = Some(active.clone());
+        app.conversations.entry(active.clone()).or_default();
+        app.trim_conversations();
+        assert!(!app.conversations.contains_key(&heavy));
+        assert!(app.conversations.contains_key(&active));
+    }
+
+    #[test]
+    fn a_late_disk_reopen_does_not_replace_fresh_messages() {
+        let (mut app, _) = app();
+        let chat = ConversationId::Chat("chat".into());
+        let old = message("one", 1);
+        let mut fresh = old.clone();
+        fresh.body = RichText::plain("Edited on Microsoft Graph");
+        app.on_messages(chat.clone(), vec![fresh], Merge::Latest, Some(false), false);
+        app.on_messages(chat.clone(), vec![old], Merge::Latest, Some(true), true);
+        let view = app.conversation(&chat).unwrap();
+        assert_eq!(
+            view.messages[0].body.to_plain(),
+            "Edited on Microsoft Graph"
+        );
+        assert!(!view.more);
+    }
 
     fn message(id: &str, created: i64) -> Message {
         Message {
