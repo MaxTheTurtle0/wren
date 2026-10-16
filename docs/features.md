@@ -27,7 +27,7 @@ Status as of Wren 0.1 (unreleased).
 | File attachments: view | Works | Shown as file chips that open in the browser |
 | File attachments: send | Works | Attach button or drag and drop, up to 1 GiB per file. Uploaded to your OneDrive folder `Microsoft Teams Chat Files` (resumable upload above 4 MiB), shared read-only with the chat's members (an organisation-wide view link in channels), and sent as a `reference` attachment. Files.ReadWrite, requested on first use |
 | Paste images into the composer | Works | Fixed-size thumbnails crop without stretching. Click to preview the complete image, fit it to the window, or view at 100% with scrolling. Inline PNG hosted-content sends, just under 3 MiB combined per message; no Files.ReadWrite needed |
-| @mentions in the composer | Works | Type `@`: suggestions from the chat's members, or a directory search in channels. Sent as `<at>` tags with a `mentions` array, so people are notified as in Teams |
+| @mentions in the composer | Works | Type `@`: suggestions from the chat's members, or a directory search in channels. Tab or Enter picks a suggestion and keeps focus in the composer; Space then inserts a space. Sent as `<at>` tags with a `mentions` array, so people are notified as in Teams |
 | Adaptive Cards | Not yet | Shown as a placeholder with a hint to open in Teams |
 | Local message search | Works | SQLite FTS5 over everything cached, instant |
 | Microsoft Search (server-side) | Works | Merged into ⌘K results for queries of 3+ characters |

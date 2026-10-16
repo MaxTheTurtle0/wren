@@ -822,6 +822,101 @@ fn multiple_pasted_images_wrap_without_clipping() {
 }
 
 #[test]
+fn mention_completion_keeps_space_and_typing_in_the_composer() {
+    for width in [720.0, 1280.0] {
+        for theme in [ThemeChoice::Dark, ThemeChoice::Light] {
+            for completion in [egui::Key::Tab, egui::Key::Enter] {
+                for (query, name) in [("@", "Ada Lovelace"), ("@Gra", "Grace Hopper")] {
+                    let mut h = Harness::new();
+                    h.size.x = width;
+                    h.app.settings.theme = theme.clone();
+                    h.act(Action::OpenConversation(ConversationId::Chat(
+                        "19:demo-launch@thread.v2".into(),
+                    )));
+                    let chat = h.app.open.clone().unwrap();
+                    h.app.focus_composer = true;
+                    h.frames(3);
+                    let editor = h.ctx.memory(|m| m.focused()).unwrap();
+                    h.frame_with(vec![egui::Event::Text(query.into())]);
+                    h.frames(2);
+                    let count = h.app.conversations[&chat].messages.len();
+                    let key = |key, pressed| egui::Event::Key {
+                        key,
+                        physical_key: None,
+                        pressed,
+                        repeat: false,
+                        modifiers: egui::Modifiers::NONE,
+                    };
+                    h.frame_with(vec![key(completion, true)]);
+                    assert_eq!(h.app.drafts[&chat].text, format!("@{name} "));
+                    assert_eq!(h.app.drafts[&chat].mentions[0].name, name);
+                    h.frame_with(vec![key(completion, false)]);
+                    h.frame_with(vec![
+                        key(egui::Key::Space, true),
+                        egui::Event::Text(" ".into()),
+                    ]);
+                    assert_eq!(
+                        h.app.conversations[&chat].messages.len(),
+                        count,
+                        "Space after {completion:?} completion must not send, width {width}"
+                    );
+                    assert_eq!(h.app.drafts[&chat].text, format!("@{name}  "));
+                    assert!(h.ctx.memory(|m| m.has_focus(editor)));
+                    h.frame_with(vec![
+                        key(egui::Key::Space, false),
+                        egui::Event::Text("still typing".into()),
+                    ]);
+                    assert_eq!(h.app.drafts[&chat].text, format!("@{name}  still typing"));
+                    h.frame_with(vec![key(egui::Key::Enter, true)]);
+                    assert_eq!(h.app.conversations[&chat].messages.len(), count + 1);
+                    assert!(
+                        h.app.conversations[&chat]
+                            .messages
+                            .last()
+                            .unwrap()
+                            .body
+                            .to_plain()
+                            .contains("still typing")
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn tab_without_mention_suggestions_still_reaches_send() {
+    let mut h = Harness::new();
+    h.app.focus_composer = true;
+    h.frames(3);
+    let chat = h.app.open.clone().unwrap();
+    let editor = h.ctx.memory(|m| m.focused()).unwrap();
+    let count = h.app.conversations[&chat].messages.len();
+    h.frame_with(vec![egui::Event::Text("Ready to send".into())]);
+    let key = |key, pressed| egui::Event::Key {
+        key,
+        physical_key: None,
+        pressed,
+        repeat: false,
+        modifiers: egui::Modifiers::NONE,
+    };
+    h.frame_with(vec![key(egui::Key::Tab, true)]);
+    h.frame_with(vec![key(egui::Key::Tab, false)]);
+    assert!(!h.ctx.memory(|m| m.has_focus(editor)));
+    h.frame_with(vec![key(egui::Key::Space, true)]);
+    assert_eq!(h.app.conversations[&chat].messages.len(), count + 1);
+    assert_eq!(
+        h.app.conversations[&chat]
+            .messages
+            .last()
+            .unwrap()
+            .body
+            .to_plain(),
+        "Ready to send"
+    );
+}
+
+#[test]
 fn shift_enter_adds_a_line_and_plain_enter_sends_or_saves() {
     for mode in ["chat", "channel", "edit", "mention"] {
         let mut h = Harness::new();

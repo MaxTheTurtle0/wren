@@ -1488,6 +1488,9 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         }
                         // Put the picked name in place of `@query`.
                         if let (Some(person), Some((at, _, cursor))) = (&picked, &mention) {
+                            // Consuming Tab doesn't cancel egui's pending focus
+                            // move. Keep keyboard input in the composer.
+                            ui.memory_mut(|memory| memory.move_focus(egui::FocusDirection::None));
                             let chars: Vec<char> = draft.text.chars().collect();
                             let before: String = chars[..*at].iter().collect();
                             let after: String = chars[(*cursor).min(chars.len())..].iter().collect();

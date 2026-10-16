@@ -117,6 +117,9 @@ development and can ask for approval again after each replacement. See
 `⌘,` settings · `⌘/` all shortcuts. (`⌘` is Ctrl on
 Windows and Linux.)
 
+`Tab` or `Enter` picks a mention suggestion and keeps focus in the composer.
+Space after completing a mention adds a space so you can keep typing.
+
 Long drafts grow to a limited height, then scroll inside the composer. The
 conversation and the Send and Attach buttons stay visible when pasting large text.
 
