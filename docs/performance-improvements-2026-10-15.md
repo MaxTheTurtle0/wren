@@ -183,3 +183,20 @@ window, active original image, loaded script fonts, and protected unsent content
 all have legitimate costs. The fixes remove the measured unbounded display-image
 retention and continuous loading animation; they do not promise a fixed total
 process-memory ceiling.
+
+## MacBook Air installation, 16 October 2026
+
+Installed the fixed release in `/Applications/Wren.app` and restarted the normal
+app, preserving bundle identifier `app.wren.Wren`, settings and account data.
+The installed executable matched the tested release after removing signatures
+from temporary comparison copies. The installed bundle passed strict signature
+verification. Its signed executable SHA-256 is
+`853c57e1babb61cab5bb7face132bd13974ccc466843a9770ad014732ca653b3`.
+
+The restarted real session measured 130 MiB physical footprint. Four one-second
+CPU samples were all 0.0%. This is a fresh-session observation, not a matched
+long-session comparison against the original 529.7 MiB process.
+
+The previous app bundle is backed up at
+`~/Library/Caches/wren/performance-update-backups/20261016T050559Z/Wren.app`.
+The implementation and original measurement commits were pushed to `main`.
