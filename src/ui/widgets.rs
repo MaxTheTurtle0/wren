@@ -6,6 +6,16 @@ use crate::app::{App, Image};
 use crate::model::Action;
 use crate::theme::{self, Icon, Palette};
 
+/// A padded single-line field with identical placeholder and input metrics.
+pub fn text_field<'a>(text: &'a mut String, hint: &str, font: egui::FontId) -> egui::TextEdit<'a> {
+    egui::TextEdit::singleline(text)
+        // TextEdit's hint atoms otherwise use the body font independently.
+        .hint_text(egui::RichText::new(hint).font(font.clone()))
+        .font(font)
+        .margin(egui::Margin::symmetric(8, 6))
+        .desired_width(f32::INFINITY)
+}
+
 /// Loading is event driven. A static indicator lets a slow request leave the
 /// entire window asleep until its backend sends the next event.
 pub fn loading(ui: &mut Ui, color: Color32, size: f32) -> Response {

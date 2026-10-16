@@ -88,6 +88,9 @@ Signing out deletes that account's refresh token and folder.
 
 ## Rendering and performance
 
+- **Shared text fields.** `ui::widgets::text_field` applies input padding and
+  the same font to placeholder and entered text, so empty and filled search
+  fields keep the same height. Settings and sign-in reuse it for their fields.
 - **glow** (OpenGL) renderer, the same as Spotifast and ZapFast. It keeps the
   binary small (15 MB release on macOS arm64).
 - The egui and winit forks shared by the crmne apps carry fixes that matter

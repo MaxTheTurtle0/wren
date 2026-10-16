@@ -26,11 +26,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     egui::Frame::new()
         .inner_margin(Margin::symmetric(12, 0))
         .show(ui, |ui| {
-            let field = egui::TextEdit::singleline(&mut app.chat_filter)
-                .hint_text("Filter chats")
-                .desired_width(f32::INFINITY)
-                .margin(Margin::symmetric(8, 6))
-                .font(theme::regular(13.0));
+            let field =
+                widgets::text_field(&mut app.chat_filter, "Filter chats", theme::regular(13.0));
             let response = ui.add(field);
             if response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                 app.chat_filter.clear();

@@ -207,13 +207,11 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
             .font(theme::medium(12.0))
             .color(palette.secondary),
     );
-    ui.add(
-        egui::TextEdit::singleline(&mut app.form_client_id)
-            .hint_text("00000000-0000-0000-0000-000000000000")
-            .desired_width(f32::INFINITY)
-            .font(theme::mono(13.0))
-            .margin(Margin::symmetric(8, 6)),
-    );
+    ui.add(widgets::text_field(
+        &mut app.form_client_id,
+        "00000000-0000-0000-0000-000000000000",
+        theme::mono(13.0),
+    ));
     ui.label(
         egui::RichText::new("Tenant")
             .font(theme::medium(12.0))
@@ -226,12 +224,11 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
         .font(theme::regular(11.0))
         .color(palette.dim),
     );
-    ui.add(
-        egui::TextEdit::singleline(&mut app.form_tenant)
-            .hint_text("Your tenant ID or domain, e.g. contoso.onmicrosoft.com")
-            .desired_width(f32::INFINITY)
-            .margin(Margin::symmetric(8, 6)),
-    );
+    ui.add(widgets::text_field(
+        &mut app.form_tenant,
+        "Your tenant ID or domain, e.g. contoso.onmicrosoft.com",
+        theme::regular(13.0),
+    ));
     ui.add_space(4.0);
     ui.horizontal(|ui| {
         let valid = crate::settings::is_guid(app.form_client_id.trim());

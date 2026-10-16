@@ -254,11 +254,12 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
                 ui.horizontal(|ui| {
                     theme::icon(ui, Icon::Search, 18.0, palette.dim);
                     let response = ui.add(
-                        egui::TextEdit::singleline(&mut query)
-                            .hint_text("Jump to a chat, channel or person, or search messages")
-                            .frame(egui::Frame::NONE)
-                            .desired_width(f32::INFINITY)
-                            .font(theme::regular(15.0)),
+                        widgets::text_field(
+                            &mut query,
+                            "Jump to a chat, channel or person, or search messages",
+                            theme::regular(15.0),
+                        )
+                        .frame(egui::Frame::NONE),
                     );
                     response.request_focus();
                 });
@@ -605,8 +606,11 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     );
                     ui.horizontal(|ui| {
                         ui.add(
-                            egui::TextEdit::singleline(&mut app.form_relay)
-                                .hint_text("https://relay.example.com")
+                            widgets::text_field(
+                                &mut app.form_relay,
+                                "https://relay.example.com",
+                                theme::regular(13.0),
+                            )
                                 .desired_width(ui.available_width() - 70.0),
                         );
                         let changed = app.form_relay.trim() != app.settings.relay_url.as_deref().unwrap_or_default();
@@ -627,9 +631,9 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     ui.add_space(8.0);
                     widgets::section_label(ui, &palette, "App registration");
                     ui.label(egui::RichText::new("Application (client) ID").color(palette.secondary));
-                    ui.add(egui::TextEdit::singleline(&mut app.form_client_id).font(theme::mono(12.0)).desired_width(f32::INFINITY));
+                    ui.add(widgets::text_field(&mut app.form_client_id, "", theme::mono(13.0)));
                     ui.label(egui::RichText::new("Tenant").color(palette.secondary));
-                    ui.add(egui::TextEdit::singleline(&mut app.form_tenant).desired_width(f32::INFINITY));
+                    ui.add(widgets::text_field(&mut app.form_tenant, "", theme::regular(13.0)));
                     let changed = app.form_client_id.trim() != app.settings.client_id || app.form_tenant.trim() != app.settings.tenant;
                     if ui.add_enabled(changed, egui::Button::new("Save and restart sign-in")).clicked() {
                         actions.push(Action::SaveAppRegistration {

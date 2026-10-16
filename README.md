@@ -120,6 +120,9 @@ Windows and Linux.)
 Long drafts grow to a limited height, then scroll inside the composer. The
 conversation and the Send and Attach buttons stay visible when pasting large text.
 
+Search fields keep their height when typing or clearing. Settings and sign-in
+fields use the same padded input style.
+
 ## Architecture
 
 The views read state and emit actions, a single reducer applies them, and a

@@ -132,6 +132,146 @@ fn painted_shapes(h: &Harness) -> Vec<&egui::epaint::Shape> {
 }
 
 #[test]
+fn search_fields_keep_their_layout_when_typing_and_clearing() {
+    fn text_layout(h: &Harness, value: &str) -> (egui::Pos2, f32) {
+        painted_shapes(h)
+            .iter()
+            .find_map(|shape| match shape {
+                egui::epaint::Shape::Text(text) if text.galley.job.text == value => {
+                    Some((text.pos, text.galley.size().y))
+                }
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("{value:?} is painted"))
+    }
+
+    for width in [720.0, 1280.0] {
+        for theme in [ThemeChoice::Dark, ThemeChoice::Light] {
+            for switcher in [false, true] {
+                let mut h = Harness::new();
+                h.size.x = width;
+                h.app.settings.theme = theme.clone();
+                let me = h.app.me().to_owned();
+                h.app.chats.retain(|chat| {
+                    chat.peer(&me)
+                        .is_some_and(|peer| peer.display_name == "Ada Lovelace")
+                });
+                if switcher {
+                    h.act(Action::OpenSwitcher);
+                }
+                h.frames(4);
+                let hint = if switcher {
+                    "Jump to a chat, channel or person, or search messages"
+                } else {
+                    "Filter chats"
+                };
+                let empty = text_layout(&h, hint);
+                let row = text_layout(&h, "Ada Lovelace");
+                h.click(empty.0 + egui::vec2(5.0, 5.0));
+                h.frame_with(vec![egui::Event::Text("Ada".into())]);
+                h.frames(2);
+                assert_eq!(
+                    text_layout(&h, "Ada"),
+                    empty,
+                    "search text must not move, width {width}, switcher {switcher}"
+                );
+                assert_eq!(
+                    text_layout(&h, "Ada Lovelace"),
+                    row,
+                    "the first result must not move when typing"
+                );
+                h.frame_with(vec![egui::Event::Key {
+                    key: egui::Key::A,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::COMMAND,
+                }]);
+                h.frame_with(vec![egui::Event::Key {
+                    key: egui::Key::Backspace,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::NONE,
+                }]);
+                h.frames(2);
+                assert_eq!(text_layout(&h, hint), empty);
+                assert_eq!(text_layout(&h, "Ada Lovelace"), row);
+            }
+        }
+    }
+}
+
+#[test]
+fn settings_fields_have_padding_in_both_themes_and_widths() {
+    for width in [720.0, 1280.0] {
+        for theme in [ThemeChoice::Dark, ThemeChoice::Light] {
+            let mut h = Harness::new();
+            h.size.x = width;
+            h.app.settings.theme = theme;
+            // Show account-only settings while keeping the offline demo backend.
+            h.app.demo = false;
+            h.app.form_client_id = "00000000-0000-0000-0000-000000000001".into();
+            h.app.form_tenant = "organizations".into();
+            h.act(Action::OpenSettings);
+            h.frame_with(vec![
+                egui::Event::PointerMoved(egui::pos2(width / 2.0, 400.0)),
+                egui::Event::MouseWheel {
+                    phase: egui::TouchPhase::Move,
+                    unit: egui::MouseWheelUnit::Point,
+                    delta: egui::vec2(0.0, -2000.0),
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ]);
+            h.frames(30);
+            let shapes = painted_shapes(&h);
+            let background = if h.app.palette.dark {
+                h.app.palette.window
+            } else {
+                h.app.palette.panel
+            };
+            for value in [
+                "https://relay.example.com",
+                &h.app.form_client_id,
+                &h.app.form_tenant,
+            ] {
+                let text = shapes
+                    .iter()
+                    .find_map(|shape| match shape {
+                        egui::epaint::Shape::Text(text) if text.galley.job.text == value => {
+                            Some(text)
+                        }
+                        _ => None,
+                    })
+                    .unwrap_or_else(|| panic!("settings field {value:?} is painted"));
+                let text_rect = egui::Rect::from_min_size(text.pos, text.galley.size());
+                let frame = shapes
+                    .iter()
+                    .filter_map(|shape| match shape {
+                        egui::epaint::Shape::Rect(rect)
+                            if rect.fill == background
+                                && rect.rect.contains(text_rect.center()) =>
+                        {
+                            Some(rect.rect)
+                        }
+                        _ => None,
+                    })
+                    .min_by(|a, b| a.area().total_cmp(&b.area()))
+                    .expect("settings field has a background");
+                assert!(
+                    text_rect.left() - frame.left() >= 6.0,
+                    "left padding: {frame:?}, {text_rect:?}"
+                );
+                assert!(
+                    frame.height() - text_rect.height() >= 10.0,
+                    "vertical padding: {frame:?}, {text_rect:?}"
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn composer_placeholder_is_vertically_centered_in_both_themes_and_widths() {
     for width in [720.0, 1280.0] {
         for theme in [ThemeChoice::Dark, ThemeChoice::Light] {
