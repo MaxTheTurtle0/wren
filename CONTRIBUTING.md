@@ -42,6 +42,7 @@ Pages: `chats`, `group`, `channel`, `calendar`, `calls`, `switcher`,
 `settings`, `shortcuts`, `signin`, `setup`, `perf`, `images`, `image-preview`.
 The last two show wide and tall pasted images and the preview dialog.
 Add `light` or `dark`.
+Use `--page long-draft,dark` to check a large multiline paste in the composer.
 On macOS, run the bundle (`packaging/macos/bundle.sh`) through
 `open -W -n Wren.app --args …`, because a bare binary launched over SSH
 starts slowly.

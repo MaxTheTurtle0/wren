@@ -176,6 +176,138 @@ fn composer_placeholder_is_vertically_centered_in_both_themes_and_widths() {
 }
 
 #[test]
+fn large_pasted_text_stays_scrollable_and_sendable_inside_the_composer() {
+    fn editor(h: &Harness) -> (&egui::epaint::TextShape, egui::Rect) {
+        h.shapes
+            .iter()
+            .find_map(|shape| match &shape.shape {
+                egui::epaint::Shape::Text(text)
+                    if text.galley.job.text.starts_with("SELECT column_0 ") =>
+                {
+                    Some((text, shape.clip_rect))
+                }
+                _ => None,
+            })
+            .expect("pasted text is painted")
+    }
+
+    fn assert_caret_visible(h: &Harness, chars: usize) {
+        let (text, clip) = editor(h);
+        let caret = text
+            .galley
+            .pos_from_cursor(egui::text::CCursor::new(chars))
+            .translate(text.pos.to_vec2());
+        assert!(
+            clip.expand(1.0).contains_rect(caret),
+            "caret {caret:?} stays inside {clip:?}"
+        );
+    }
+
+    for width in [720.0, 1280.0] {
+        for height in [520.0, 820.0] {
+            for theme in [ThemeChoice::Dark, ThemeChoice::Light] {
+                for separator in ["\n", " "] {
+                    let mut h = Harness::new();
+                    h.size = egui::vec2(width, height);
+                    h.app.settings.theme = theme.clone();
+                    h.app.focus_composer = separator == " ";
+                    h.frames(4);
+                    let chat = h.app.open.clone().unwrap();
+                    let pasted = (0..120)
+                        .map(|i| format!("SELECT column_{i} FROM example WHERE value IS NOT NULL;"))
+                        .collect::<Vec<_>>()
+                        .join(separator);
+                    h.app.handle(
+                        wren::backend::Event::Pasted {
+                            conversation: chat.clone(),
+                            range: (0, 0),
+                            text: pasted.clone(),
+                            image: Ok(None),
+                        },
+                        &h.ctx,
+                    );
+                    h.frames(5);
+                    assert_eq!(h.app.drafts[&chat].text, pasted);
+                    let (text, clip) = editor(&h);
+                    assert_eq!(text.galley.job.text, pasted);
+                    assert!(
+                        clip.height() <= 201.0,
+                        "editor clip must be bounded: {clip:?}"
+                    );
+                    assert!(
+                        clip.top() > height / 2.0,
+                        "history keeps space above the composer: {clip:?}"
+                    );
+                    assert!(
+                        clip.bottom() < height,
+                        "the composer stays inside the window"
+                    );
+                    assert_caret_visible(&h, pasted.chars().count());
+
+                    let before_scroll = text.pos.y;
+                    h.frame_with(vec![
+                        egui::Event::PointerMoved(clip.center()),
+                        egui::Event::MouseWheel {
+                            phase: egui::TouchPhase::Move,
+                            unit: egui::MouseWheelUnit::Point,
+                            delta: egui::vec2(0.0, 100.0),
+                            modifiers: egui::Modifiers::NONE,
+                        },
+                    ]);
+                    h.frames(25);
+                    assert!(
+                        editor(&h).0.pos.y > before_scroll + 10.0,
+                        "the pasted text scrolls"
+                    );
+
+                    h.app.focus_composer = true;
+                    h.frames(3);
+                    h.frame_with(vec![egui::Event::Text(" End of draft.".into())]);
+                    h.frames(4);
+                    let expected = format!("{pasted} End of draft.");
+                    assert_eq!(h.app.drafts[&chat].text, expected);
+                    assert_caret_visible(&h, expected.chars().count());
+
+                    let (_, clip) = editor(&h);
+                    let surface = painted_shapes(&h)
+                        .into_iter()
+                        .filter_map(|shape| match shape {
+                            egui::epaint::Shape::Rect(rect)
+                                if rect.fill == h.app.palette.surface
+                                    && rect.rect.contains(clip.center()) =>
+                            {
+                                Some(rect.rect)
+                            }
+                            _ => None,
+                        })
+                        .min_by(|a, b| a.area().total_cmp(&b.area()))
+                        .expect("composer surface is painted");
+                    assert!(
+                        clip.right() < surface.right() - 60.0,
+                        "buttons have their own space"
+                    );
+                    let count = h.app.conversations[&chat].messages.len();
+                    h.click(egui::pos2(surface.right() - 24.0, surface.center().y));
+                    let messages = &h.app.conversations[&chat].messages;
+                    assert_eq!(
+                        messages.len(),
+                        count + 1,
+                        "Send stays visible and clickable"
+                    );
+                    assert_eq!(messages.last().unwrap().body.to_plain(), expected);
+                    assert!(
+                        h.app
+                            .drafts
+                            .get(&chat)
+                            .is_none_or(|draft| draft.text.is_empty())
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn pasted_image_preview_and_image_only_send_draw() {
     let mut h = Harness::new();
     h.frames(3);

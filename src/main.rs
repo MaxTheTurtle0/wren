@@ -263,6 +263,18 @@ fn apply_page(app: &mut App, page: &str) {
                     },
                 );
             }
+            "long-draft" => {
+                if let Some(chat) = app.open.clone() {
+                    let text = (0..120)
+                        .map(|i| format!("SELECT column_{i} FROM example WHERE value IS NOT NULL;"))
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                    let draft = app.drafts.entry(chat).or_default();
+                    draft.paste_cursor = Some(text.chars().count());
+                    draft.text = text;
+                    app.focus_composer = true;
+                }
+            }
             "images" | "image-preview" => {
                 let icon =
                     image::load_from_memory(include_bytes!("../packaging/linux/wren-256.png"))

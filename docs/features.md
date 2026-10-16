@@ -17,7 +17,7 @@ Status as of Wren 0.1 (unreleased).
 |---|---|---|
 | Chat list (1:1, group, meeting chats), unread state | Works | `GET /me/chats` with members and newest message |
 | Message history with paging | Works | 50 per page; follows Graph paging links, with a timestamp cursor after reopening; cached older pages load first and preserve the visible row |
-| Send messages (rich text from light markdown) | Works | Optimistic, with retry on failure. Enter sends; Shift+Enter adds a line, including while editing or showing mention suggestions |
+| Send messages (rich text from light markdown) | Works | Optimistic, with retry on failure. Enter sends; Shift+Enter adds a line, including while editing or showing mention suggestions. Long drafts scroll inside a bounded editor, keeping history and composer controls visible |
 | Quote replies in chats | Works | `replyWithQuote` |
 | Reactions (any emoji) | Works | `setReaction` / `unsetReaction`; legacy names mapped to emoji |
 | Edit and delete your messages | Works | Chats: Chat.ReadWrite. Channels: needs ChannelMessage.ReadWrite (admin), hidden otherwise |

@@ -120,6 +120,9 @@ development and can ask for approval again after each replacement. See
 `⌘,` settings · `⌘/` all shortcuts. (`⌘` is Ctrl on
 Windows and Linux.)
 
+Long drafts grow to a limited height, then scroll inside the composer. The
+conversation and the Send and Attach buttons stay visible when pasting large text.
+
 ## Architecture
 
 The views read state and emit actions, a single reducer applies them, and a

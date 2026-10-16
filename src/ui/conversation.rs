@@ -1248,7 +1248,8 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let context_line = draft_context(app, conversation, &draft);
     let can_post = !channel || app.has_scope("ChannelMessage.Send");
     let id = ui.make_persistent_id(("composer", conversation.key()));
-    if let Some(cursor) = draft.paste_cursor.take() {
+    let pasted_cursor = draft.paste_cursor.take();
+    if let Some(cursor) = pasted_cursor {
         let mut state = egui::TextEdit::load_state(ui.ctx(), id).unwrap_or_default();
         state
             .cursor
@@ -1288,6 +1289,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let mut picked: Option<crate::model::Member> =
         clicked.and_then(|index| candidates.get(index).cloned());
     let mut composer_top = None;
+    let max_editor_height = (ui.available_height() / 3.0).clamp(40.0, 200.0);
     egui::Panel::bottom("composer")
         .show_separator_line(false)
         .frame(Frame::new().fill(palette.window).inner_margin(Margin {
@@ -1516,7 +1518,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         } else {
                             format!("Message {title}  ·  @ to mention")
                         };
-                        let width = ui.available_width() - 70.0;
+                        let width = (ui.available_width() - 70.0).max(0.0);
                         let edit = egui::TextEdit::multiline(&mut draft.text)
                             .id(id)
                             .hint_text(hint)
@@ -1527,7 +1529,36 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                             .frame(Frame::new().inner_margin(Margin::symmetric(0, 6)))
                             .font(theme::regular(14.0))
                             .vertical_align(Align::Center);
-                        let response = ui.add_enabled(can_post, edit);
+                        // Reserve the controls' width and let only the editor
+                        // scroll. TextEdit's desired_rows is a minimum, so a
+                        // large paste otherwise grows over the message history.
+                        let response = ui.allocate_ui_with_layout(
+                            vec2(width, max_editor_height),
+                            Layout::top_down(Align::Min),
+                            |ui| {
+                                egui::ScrollArea::vertical()
+                                    .id_salt(id.with("scroll"))
+                                    .max_height(max_editor_height)
+                                    .min_scrolled_height(0.0)
+                                    .auto_shrink([false, true])
+                                    .animated(false)
+                                    .show(ui, |ui| {
+                                        ui.add_enabled_ui(can_post, |ui| {
+                                            let output = edit.show(ui);
+                                            // Paste and mention completion move the
+                                            // cursor before TextEdit handles input.
+                                            if (pasted_cursor.is_some() || picked.is_some())
+                                                && let Some(range) = output.state.cursor.char_range()
+                                            {
+                                                let caret = output.galley.pos_from_cursor(range.primary)
+                                                    .translate(output.galley_pos.to_vec2());
+                                                ui.scroll_to_rect(caret, None);
+                                            }
+                                            output.response
+                                        }).inner
+                                    }).inner
+                            },
+                        ).inner;
                         if std::mem::take(&mut app.focus_composer) {
                             response.request_focus();
                         }
