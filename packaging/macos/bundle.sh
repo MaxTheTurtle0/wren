@@ -5,8 +5,9 @@
 #
 # The icon is rendered from packaging/icons/wren.svg by the render-icon
 # example, then turned into an .icns with sips and iconutil. Set
-# CODESIGN_IDENTITY to sign with a Developer ID; otherwise the bundle gets
-# the ad-hoc signature Apple Silicon requires.
+# CODESIGN_IDENTITY to a persistent Developer ID or Apple Development
+# identity. Ad-hoc signing is only available explicitly, with
+# CODESIGN_IDENTITY=-, for offline demos and disposable CI artifacts.
 set -euo pipefail
 
 binary="$1"
@@ -15,6 +16,15 @@ version="$3"
 numeric_version="${version%%-*}"
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$here/../.." && pwd)"
+
+# Keychain ACLs track the app's designated requirement. An ad-hoc signature
+# uses this build's cdhash, so every rebuild loses access to saved tokens.
+# Check before touching the output bundle, including an existing installation.
+if [ -z "${CODESIGN_IDENTITY:-}" ]; then
+    echo 'Set CODESIGN_IDENTITY to a persistent code-signing identity (security find-identity -v -p codesigning).' >&2
+    echo 'For offline demos only, explicitly set CODESIGN_IDENTITY=-. Ad-hoc builds ask for Keychain access again after updates.' >&2
+    exit 1
+fi
 
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
@@ -44,10 +54,15 @@ for size in 16 32 128 256 512; do
 done
 iconutil -c icns "$iconset" -o "$app/Contents/Resources/wren.icns"
 
-if [ -n "${CODESIGN_IDENTITY:-}" ]; then
-    codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$app"
-else
+if [ "$CODESIGN_IDENTITY" = - ]; then
+    echo 'Warning: ad-hoc Wren build. Keychain approval will not survive a rebuild. Use a persistent CODESIGN_IDENTITY for signed-in use.' >&2
     codesign --force --sign - "$app"
+else
+    signing_args=(--force --timestamp --options runtime --sign "$CODESIGN_IDENTITY")
+    if [ -n "${CODESIGN_KEYCHAIN:-}" ]; then
+        signing_args+=(--keychain "$CODESIGN_KEYCHAIN")
+    fi
+    codesign "${signing_args[@]}" "$app"
 fi
 codesign --verify --strict "$app"
 echo "$app"

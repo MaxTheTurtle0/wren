@@ -102,6 +102,11 @@ Microsoft Graph. These rules are for coding agents and contributors. Follow
   there without saying why.
 - Update README and `docs/` when behaviour, permissions, files or network
   access change.
+- macOS builds installed for real accounts must reuse a persistent
+  `CODESIGN_IDENTITY`. Never replace a signed-in installation with an ad-hoc
+  CI artifact: its build-specific identity causes recurring Keychain prompts.
+  Ad-hoc signing (`CODESIGN_IDENTITY=-`) is for offline demos only. See
+  `docs/macos-keychain.md`.
 - Report platform coverage honestly: say whether something was run, or only
   compiled.
 - Never use em dashes in public replies or release notes.

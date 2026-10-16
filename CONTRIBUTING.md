@@ -46,6 +46,13 @@ On macOS, run the bundle (`packaging/macos/bundle.sh`) through
 `open -W -n Wren.app --args …`, because a bare binary launched over SSH
 starts slowly.
 
+Set `CODESIGN_IDENTITY` to the same Developer ID or Apple Development identity
+for every signed-in build. For offline demo screenshots only, set
+`CODESIGN_IDENTITY=-` explicitly. Ad-hoc signatures change identity on rebuild
+and cause recurring Keychain prompts. See [macOS signing](docs/macos-keychain.md).
+`packaging/macos/test-signing.sh` checks identity stability on macOS with
+synthetic certificates in a temporary keychain and no account credentials.
+
 Brand artwork lives in `packaging/icons/`: `wren.svg` is the bird-only app
 icon, `tray-template.svg` is the transparent monochrome bird, and
 `wren-wordmark.svg` contains the bird and name. The white wordmark variant

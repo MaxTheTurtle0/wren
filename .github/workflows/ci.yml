@@ -59,11 +59,16 @@ jobs:
       - name: macOS window smoke test
         if: runner.os == 'macOS'
         timeout-minutes: 5
+        env:
+          CODESIGN_IDENTITY: '-'
         run: |
           cargo build --locked --release
           packaging/macos/bundle.sh target/release/wren "$RUNNER_TEMP/Wren.app" 0.1.0
           open -W -n "$RUNNER_TEMP/Wren.app" --args --screenshot "$RUNNER_TEMP/wren-demo.png" --page chats --size 1280x800 --screenshot-delay 3000
           test -s "$RUNNER_TEMP/wren-demo.png"
+      - name: macOS signing identity regression
+        if: runner.os == 'macOS'
+        run: packaging/macos/test-signing.sh
       - name: macOS screenshot
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v7
@@ -100,6 +105,9 @@ jobs:
       - run: cargo build --locked --release
       - name: Package macOS app
         if: runner.os == 'macOS'
+        # Disposable development artifact, not an update release.
+        env:
+          CODESIGN_IDENTITY: '-'
         run: |
           mkdir -p dist
           packaging/macos/bundle.sh target/release/wren dist/Wren.app "$(cargo pkgid | sed 's/.*[#@]//')"

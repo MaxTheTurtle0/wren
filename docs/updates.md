@@ -41,6 +41,13 @@ updates to normal users; Wren reports the failed check in Settings.
    Ed25519 private key matching `packaging/update-public-key.hex`. Keep a
    separate secure backup. Never commit the private key. The secret is
    already configured for this repository.
+   For macOS, also configure `MACOS_SIGNING_CERTIFICATE` with the base64
+   PKCS#12 export of the persistent code-signing certificate and private key,
+   and `MACOS_SIGNING_PASSWORD` with its export password. Use a Developer ID
+   Application identity for distribution and keep it consistent across
+   releases. CI imports it into an isolated runner keychain and removes that
+   keychain after packaging. Missing credentials stop macOS release packaging;
+   it never falls back to an ad-hoc signature.
 3. Push the version tag. `.github/workflows/release.yml` runs format, lint
    and tests, then builds the Linux x86_64, Windows x86_64, and macOS arm64
    packages. It checks that the signing key matches the compiled public key,
@@ -52,8 +59,9 @@ updates to normal users; Wren reports the failed check in Settings.
 Stable builds follow GitHub's latest stable release. Builds whose Cargo
 version contains a prerelease suffix follow newer prereleases too.
 macOS notarization and Windows publisher certificates remain separate from
-the update-signing key; the initial bundles use their existing ad-hoc macOS
-signature unless a Developer ID is supplied to the bundler.
+the update-signing key. macOS release bundles require a persistent
+`CODESIGN_IDENTITY`; ad-hoc signatures cannot preserve Keychain approval
+across app updates. See [macOS signing](macos-keychain.md).
 
 The package names, portable markers, version probe and restart protocol are
 the shared fastframe-update contract. Keep `packaging/release.sh`, the

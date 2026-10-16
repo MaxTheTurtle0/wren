@@ -5,6 +5,10 @@ target="$1"
 version="$2"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
+if [ "$target" = aarch64-apple-darwin ] && { [ -z "${CODESIGN_IDENTITY:-}" ] || [ "$CODESIGN_IDENTITY" = - ]; }; then
+    echo 'macOS releases require a persistent CODESIGN_IDENTITY; ad-hoc signing breaks saved Keychain approval on update.' >&2
+    exit 1
+fi
 name="wren-v$version-$target"
 mkdir -p dist
 if [ "$target" = aarch64-apple-darwin ]; then

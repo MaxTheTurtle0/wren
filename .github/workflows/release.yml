@@ -48,6 +48,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libwayland-dev libgl1-mesa-dev
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --locked --release --target ${{ matrix.target }} --bin wren
+      - name: Import persistent macOS signing identity
+        if: runner.os == 'macOS'
+        env:
+          MACOS_SIGNING_CERTIFICATE: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+          MACOS_SIGNING_PASSWORD: ${{ secrets.MACOS_SIGNING_PASSWORD }}
+        run: packaging/macos/import-signing-identity.sh
       - name: Package Linux or macOS
         if: runner.os != 'Windows'
         shell: bash
@@ -68,6 +74,9 @@ jobs:
           Copy-Item assets/fonts/Inter-LICENSE.txt "dist/$name/assets/fonts/"
           Copy-Item assets/icons/LICENSE.txt "dist/$name/assets/icons/"
           Compress-Archive -Path "dist/$name" -DestinationPath "dist/$name.zip"
+      - name: Remove macOS signing keychain
+        if: always() && runner.os == 'macOS' && env.CODESIGN_KEYCHAIN != ''
+        run: security delete-keychain "$CODESIGN_KEYCHAIN"
       - uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.target }}

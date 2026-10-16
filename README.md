@@ -98,7 +98,7 @@ APIs serve work and school accounts only.
 
 | Platform | Command |
 |---|---|
-| macOS | `cargo build --release && packaging/macos/bundle.sh target/release/wren Wren.app 0.1.0` |
+| macOS | Set `CODESIGN_IDENTITY`, then `cargo build --release && packaging/macos/bundle.sh target/release/wren Wren.app 0.1.0` |
 | Linux | `cargo build --release && packaging/linux/install.sh` (installs to `~/.local`) |
 | Windows | `cargo build --release` (icon and version embedded by `build.rs`) |
 
@@ -106,6 +106,11 @@ CI builds all three on every push to `main` and keeps them as workflow
 artifacts. Version tags create a signed draft release with packages that
 support automatic updates. Nothing is published as a release yet. See
 [app updates and release steps](docs/updates.md).
+
+macOS bundles for signed-in use need a persistent code-signing identity so
+Keychain approval survives updates. CI artifacts use ad-hoc signing for
+development and can ask for approval again after each replacement. See
+[macOS signing and recurring Keychain prompts](docs/macos-keychain.md).
 
 ## Keyboard
 
