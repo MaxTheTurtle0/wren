@@ -4,9 +4,6 @@
     <img src="packaging/icons/wren-wordmark.svg" width="160" alt="Wren">
   </picture>
 </p>
-
-<h1 align="center">Wren</h1>
-
 <p align="center">A fast, native client for Microsoft Teams chats, channels and meetings.<br>
 Rust and egui. No browser engine. Works with Microsoft Teams through Microsoft's official APIs.</p>
 
