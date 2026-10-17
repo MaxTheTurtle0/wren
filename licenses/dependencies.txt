@@ -4724,7 +4724,7 @@ Used by:
   apple-native-keyring-store 1.0.2 <https://github.com/open-source-cooperative/apple-native-keyring-store.git>
     Author: Daniel Brotsky <dev@brotsky.com>
     Source: registry+https://github.com/rust-lang/crates.io-index
-  keyring-core 1.0.0 <https://github.com/open-source-cooperative/keyring-core.git>
+  keyring-core 1.0.1 <https://github.com/open-source-cooperative/keyring-core.git>
     Author: Daniel Brotsky <dev@brotsky.com>
     Source: registry+https://github.com/rust-lang/crates.io-index
   zbus-secret-service-keyring-store 1.0.1 <https://github.com/open-source-cooperative/zbus-secret-service-keyring-store.git>
