@@ -17,10 +17,9 @@ if [ "$target" = aarch64-apple-darwin ]; then
     ln -s /Applications dist/macos/Applications
     hdiutil create -volname Wren -srcfolder dist/macos -ov -format UDZO "dist/wren-v$version-macos-arm64.dmg"
 else
-    mkdir -p "dist/$name/assets/fonts" "dist/$name/assets/icons"
-    cp "target/$target/release/wren" packaging/wren-portable.txt LICENSE THIRD-PARTY-NOTICES.md "dist/$name/"
-    cp assets/fonts/Inter-LICENSE.txt "dist/$name/assets/fonts/"
-    cp assets/icons/LICENSE.txt "dist/$name/assets/icons/"
+    mkdir -p "dist/$name"
+    cp "target/$target/release/wren" packaging/wren-portable.txt "dist/$name/"
+    packaging/copy-notices.sh "dist/$name"
     cp packaging/linux/wren.desktop packaging/linux/wren-256.png packaging/linux/install.sh packaging/icons/wren.svg "dist/$name/"
     tar -C dist -czf "dist/$name.tar.gz" "$name"
 fi

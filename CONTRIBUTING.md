@@ -37,6 +37,18 @@ against RustSec advisories with `cargo audit`. Both checks run weekly as well
 as on pushes and pull requests. Dependabot proposes Cargo dependency updates
 weekly and GitHub Actions updates monthly.
 
+When changing dependencies, regenerate the committed license notices:
+
+```sh
+cargo install cargo-about --locked --version 0.9.2
+packaging/generate-notices.sh
+packaging/generate-notices.sh --check
+```
+
+The report covers the client and relay on all packaged targets. CI and
+release verification check it against `Cargo.lock`. Keep the supplemental
+font and icon licenses described in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
 The protected `main` branch requires format/lint/docs, tests on all three
 platforms, the macOS signing regression, secret scanning, and the dependency
 audit. History stays linear; force pushes and branch deletion are blocked.

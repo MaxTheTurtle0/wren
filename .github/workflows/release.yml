@@ -25,6 +25,7 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo test --locked --workspace --all-targets
+      - uses: ./.github/actions/check-notices
 
   package:
     needs: verify
@@ -61,6 +62,13 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
           RELEASE_TARGET: ${{ matrix.target }}
         run: bash packaging/release.sh "$RELEASE_TARGET" "${RELEASE_TAG#v}"
+      - name: Copy Windows notices
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TARGET: ${{ matrix.target }}
+        run: packaging/copy-notices.sh "dist/wren-$RELEASE_TAG-$RELEASE_TARGET"
       - name: Package Windows portable app
         if: runner.os == 'Windows'
         shell: pwsh
@@ -69,10 +77,7 @@ jobs:
           RELEASE_TARGET: ${{ matrix.target }}
         run: |
           $name = "wren-$env:RELEASE_TAG-$env:RELEASE_TARGET"
-          New-Item -ItemType Directory -Force "dist/$name/assets/fonts", "dist/$name/assets/icons" | Out-Null
-          Copy-Item "target/$env:RELEASE_TARGET/release/wren.exe", packaging/wren-portable.txt, LICENSE, THIRD-PARTY-NOTICES.md "dist/$name/"
-          Copy-Item assets/fonts/Inter-LICENSE.txt "dist/$name/assets/fonts/"
-          Copy-Item assets/icons/LICENSE.txt "dist/$name/assets/icons/"
+          Copy-Item "target/$env:RELEASE_TARGET/release/wren.exe", packaging/wren-portable.txt "dist/$name/"
           Compress-Archive -Path "dist/$name" -DestinationPath "dist/$name.zip"
       - name: Remove macOS signing keychain
         if: always() && runner.os == 'macOS' && env.CODESIGN_KEYCHAIN != ''

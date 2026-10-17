@@ -29,10 +29,7 @@ fi
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$binary" "$app/Contents/MacOS/wren"
-mkdir -p "$app/Contents/Resources/assets/fonts" "$app/Contents/Resources/assets/icons"
-cp "$root/LICENSE" "$root/THIRD-PARTY-NOTICES.md" "$app/Contents/Resources/"
-cp "$root/assets/fonts/Inter-LICENSE.txt" "$app/Contents/Resources/assets/fonts/"
-cp "$root/assets/icons/LICENSE.txt" "$app/Contents/Resources/assets/icons/"
+"$root/packaging/copy-notices.sh" "$app/Contents/Resources"
 chmod 755 "$app/Contents/MacOS/wren"
 sed "s/__VERSION__/$numeric_version/g" "$here/Info.plist" > "$app/Contents/Info.plist"
 

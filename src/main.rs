@@ -2,6 +2,8 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod notices;
+
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -15,6 +17,9 @@ use wren::settings::Settings;
 #[derive(Debug, Parser)]
 #[command(name = "wren", version, about)]
 struct Cli {
+    /// Print the bundled license texts and third-party notices, then quit.
+    #[arg(long)]
+    licenses: bool,
     /// Start with offline sample data instead of an account.
     #[arg(long)]
     demo: bool,
@@ -48,6 +53,10 @@ fn main() -> eframe::Result<()> {
     let started = Instant::now();
     let launch = fastframe_update::intercept(&wren::updates::CONFIG);
     let cli = Cli::parse_from(&launch.arguments);
+    if cli.licenses {
+        print!("{}", notices::TEXT);
+        return Ok(());
+    }
     let demo = cli.demo || cli.screenshot.is_some() || cli.page.is_some();
     let waker = Waker::default();
 

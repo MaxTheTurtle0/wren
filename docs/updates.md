@@ -29,6 +29,14 @@ archive, or move Wren.app into Applications. The Linux installer adds the
 portable marker beside its installed executable. Source builds and older
 CI artifacts do not opt into automatic binary replacement.
 
+Every archive and app bundle includes `LICENSE`, `THIRD-PARTY-NOTICES.md`,
+`licenses/`, and the font and icon notices under `assets/`. The relay archive
+ships the same notice set. The Linux installer preserves it under
+`$PREFIX/share/doc/wren`, or `~/.local/share/doc/wren` by default.
+Notices are also embedded in the executables. Run `wren --licenses` or
+`wren-relay --licenses` to read the current build's texts, including after a
+Linux or Windows self-update that replaces only the executable.
+
 There is no public release feed until a maintainer publishes the first
 GitHub release. A private repository or an empty release feed cannot serve
 updates to normal users; Wren reports the failed check in Settings.
@@ -48,8 +56,9 @@ updates to normal users; Wren reports the failed check in Settings.
    releases. CI imports it into an isolated runner keychain and removes that
    keychain after packaging. Missing credentials stop macOS release packaging;
    it never falls back to an ad-hoc signature.
-3. Push the version tag. `.github/workflows/release.yml` runs format, lint
-   and tests, then builds the Linux x86_64, Windows x86_64, and macOS arm64
+3. Push the version tag. `.github/workflows/release.yml` runs format, lint,
+   tests and the dependency/font notice check, then builds the Linux x86_64,
+   Windows x86_64, and macOS arm64
    packages. It checks that the signing key matches the compiled public key,
    signs `checksums.txt`, and creates a **draft** release.
 4. Inspect the packages and release notes, complete the live-account and

@@ -1,0 +1,480 @@
+# One notice set for the desktop client and relay on every packaged target.
+# Build dependencies are included; test-only dependencies are not shipped.
+accepted = [
+    "MIT", "Apache-2.0", "BSD-3-Clause", "BSD-2-Clause", "ISC", "Zlib",
+    "Unicode-3.0", "CC0-1.0", "Unlicense", "BSL-1.0", "MPL-2.0",
+    "OpenSSL", "OFL-1.1", "Ubuntu-font-1.0",
+]
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+]
+ignore-dev-dependencies = true
+workarounds = ["ring", "rustls"]
+
+# These crates omit their license files or need explicit file selection.
+# Hashes bind each clarification to the upstream text; do not replace them
+# with generic SPDX texts, which discard copyright notices.
+
+[accesskit.clarify]
+license = "MIT OR Apache-2.0"
+[[accesskit.clarify.git]]
+path = "LICENSE-MIT"
+license = "MIT"
+checksum = "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+
+[accesskit_atspi_common.clarify]
+license = "MIT OR Apache-2.0"
+[[accesskit_atspi_common.clarify.git]]
+path = "LICENSE-MIT"
+license = "MIT"
+checksum = "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+
+[accesskit_consumer.clarify]
+license = "MIT OR Apache-2.0"
+[[accesskit_consumer.clarify.git]]
+path = "LICENSE-MIT"
+license = "MIT"
+checksum = "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+
+[accesskit_macos.clarify]
+license = "MIT OR Apache-2.0"
+[[accesskit_macos.clarify.git]]
+path = "LICENSE-MIT"
+license = "MIT"
+checksum = "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+
+[accesskit_unix.clarify]
+license = "MIT OR Apache-2.0"
+[[accesskit_unix.clarify.git]]
+path = "LICENSE-MIT"
+license = "MIT"
+checksum = "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+
+[accesskit_windows.clarify]
+license = "MIT OR Apache-2.0"
+[[accesskit_windows.clarify.git]]
+path = "LICENSE-MIT"
+license = "MIT"
+checksum = "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+
+[accesskit_winit.clarify]
+license = "Apache-2.0"
+[[accesskit_winit.clarify.git]]
+path = "LICENSE-APACHE"
+license = "Apache-2.0"
+checksum = "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+
+[block2.clarify]
+# New objc2 releases link to the MIT grant instead of shipping its full text.
+# Preserve the project's full MIT notice from the earlier source revision.
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+license = "MIT"
+[[block2.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"
+
+[clipboard-win.clarify]
+license = "BSL-1.0"
+[[clipboard-win.clarify.git]]
+path = "LICENSE"
+license = "BSL-1.0"
+checksum = "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+
+[dpi.clarify]
+license = "Apache-2.0"
+[[dpi.clarify.files]]
+path = "LICENSE"
+license = "Apache-2.0"
+checksum = "6dc0e068dcf3a5bc8e054205b85b7720e1d49265bbc64bf515d2cf79197df69a"
+
+[ecolor.clarify]
+license = "MIT OR Apache-2.0"
+[[ecolor.clarify.files]]
+path = "../../LICENSE-MIT"
+license = "MIT"
+checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+
+[eframe.clarify]
+license = "MIT OR Apache-2.0"
+[[eframe.clarify.files]]
+path = "../../LICENSE-MIT"
+license = "MIT"
+checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+
+[egui.clarify]
+license = "MIT OR Apache-2.0"
+[[egui.clarify.files]]
+path = "../../LICENSE-MIT"
+license = "MIT"
+checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+
+[egui-winit.clarify]
+license = "MIT OR Apache-2.0"
+[[egui-winit.clarify.files]]
+path = "../../LICENSE-MIT"
+license = "MIT"
+checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+
+[egui_extras.clarify]
+license = "MIT OR Apache-2.0"
+[[egui_extras.clarify.files]]
+path = "../../LICENSE-MIT"
+license = "MIT"
+checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+
+[egui_glow.clarify]
+license = "MIT OR Apache-2.0"
+[[egui_glow.clarify.files]]
+path = "../../LICENSE-MIT"
+license = "MIT"
+checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+
+[emath.clarify]
+license = "MIT OR Apache-2.0"
+[[emath.clarify.files]]
+path = "../../LICENSE-MIT"
+license = "MIT"
+checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+
+[epaint.clarify]
+license = "MIT OR Apache-2.0"
+[[epaint.clarify.files]]
+path = "../../LICENSE-MIT"
+license = "MIT"
+checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+
+[fastframe-emoji.clarify]
+license = "MIT"
+[[fastframe-emoji.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-fonts.clarify]
+license = "MIT AND OFL-1.1"
+[[fastframe-fonts.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+[[fastframe-fonts.clarify.files]]
+path = "fonts/Inter-LICENSE.txt"
+license = "OFL-1.1"
+checksum = "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+
+[fastframe-icons.clarify]
+license = "MIT AND ISC"
+[[fastframe-icons.clarify.files]]
+path = "icons/lucide/LICENSE.txt"
+license = "ISC"
+checksum = "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+[[fastframe-icons.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-instance.clarify]
+license = "MIT"
+[[fastframe-instance.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-log.clarify]
+license = "MIT"
+[[fastframe-log.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-macos.clarify]
+license = "MIT"
+[[fastframe-macos.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-scroll.clarify]
+license = "MIT"
+[[fastframe-scroll.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-shell.clarify]
+license = "MIT"
+[[fastframe-shell.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-text.clarify]
+license = "MIT"
+[[fastframe-text.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-theme.clarify]
+license = "MIT"
+[[fastframe-theme.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-tray.clarify]
+license = "MIT"
+[[fastframe-tray.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-update.clarify]
+license = "MIT"
+[[fastframe-update.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[gl_generator.clarify]
+license = "Apache-2.0"
+[[gl_generator.clarify.git]]
+path = "LICENSE"
+license = "Apache-2.0"
+checksum = "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+
+[khronos_api.clarify]
+license = "Apache-2.0"
+[[khronos_api.clarify.git]]
+path = "LICENSE"
+license = "Apache-2.0"
+checksum = "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+
+[mac-notification-sys.clarify]
+license = "MIT OR Apache-2.0"
+[[mac-notification-sys.clarify.git]]
+path = "LICENSE-MIT"
+license = "MIT"
+checksum = "1299b4d9d15e9d67e4ac0e7d47ae9404887ca3cf0764aadeec7588d5a6e8e0cc"
+
+[objc-sys.clarify]
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+license = "MIT"
+[[objc-sys.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"
+
+[objc2.clarify]
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+license = "MIT"
+[[objc2.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"
+
+[objc2-app-kit.clarify]
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+license = "MIT"
+[[objc2-app-kit.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"
+
+[objc2-foundation.clarify]
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+license = "MIT"
+[[objc2-foundation.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"
+
+[profiling.clarify]
+license = "MIT OR Apache-2.0"
+[[profiling.clarify.git]]
+path = "LICENSE-MIT"
+license = "MIT"
+checksum = "c8167fdeeed46d3f244d3f85c5bf998ce889343691c32be2c61a8bc4b5c08333"
+
+[qrcodegen.clarify]
+license = "MIT"
+[[qrcodegen.clarify.files]]
+path = "src/lib.rs"
+license = "MIT"
+checksum = "b8764c4b987eeec9d0ceb4a958b531dc60fa79b3930125dd0d6552b1ecd08901"
+start = "/*"
+end = "*/"
+
+[ryu.clarify]
+license = "Apache-2.0 OR BSL-1.0"
+[[ryu.clarify.files]]
+path = "LICENSE-APACHE"
+license = "Apache-2.0"
+checksum = "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+
+[sync_wrapper.clarify]
+license = "Apache-2.0"
+[[sync_wrapper.clarify.files]]
+path = "LICENSE"
+license = "Apache-2.0"
+checksum = "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+
+[tauri-winrt-notification.clarify]
+license = "MIT OR Apache-2.0"
+[[tauri-winrt-notification.clarify.files]]
+path = "LICENSE_MIT"
+license = "MIT"
+checksum = "9dd42ea92cff2ede5cd477cbfcce051b2d0115c0ac7f368ee88cb545055dff1d"
+
+[windows.clarify]
+license = "MIT OR Apache-2.0"
+[[windows.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-collections.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-collections.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-core.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-core.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-future.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-future.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-implement.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-implement.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-interface.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-interface.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-link.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-link.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-numerics.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-numerics.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-result.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-result.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-strings.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-strings.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-sys.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-sys.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-targets.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-targets.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-threading.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-threading.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows-version.clarify]
+license = "MIT OR Apache-2.0"
+[[windows-version.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows_x86_64_gnu.clarify]
+license = "MIT OR Apache-2.0"
+[[windows_x86_64_gnu.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[windows_x86_64_msvc.clarify]
+license = "MIT OR Apache-2.0"
+[[windows_x86_64_msvc.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+[wren-relay.clarify]
+license = "MIT"
+[[wren-relay.clarify.files]]
+path = "../LICENSE"
+license = "MIT"
+checksum = "b0c24710b28e67c1d63da67c673f8166ab3fda0a70d8bb383976db27e6b38bc9"
+
+[dispatch2.clarify]
+license = "MIT OR Apache-2.0 OR Zlib"
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+[[dispatch2.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"
+
+[objc2-core-foundation.clarify]
+license = "MIT OR Apache-2.0 OR Zlib"
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+[[objc2-core-foundation.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"
+
+[objc2-core-graphics.clarify]
+license = "MIT OR Apache-2.0 OR Zlib"
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+[[objc2-core-graphics.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"
+
+[objc2-encode.clarify]
+license = "MIT"
+override-git-commit = "4fc083f1c6d6784577e38b0ee8dbd344481e2fd2"
+[[objc2-encode.clarify.git]]
+path = "LICENSE.txt"
+license = "MIT"
+checksum = "e353f37b12aefbb9f9b29490e837cfee05d9bda70804b3562839a3285c1df1e5"

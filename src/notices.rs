@@ -1,0 +1,25 @@
+//! Notices travel with a standalone executable, including after self-update.
+
+pub const TEXT: &str = concat!(
+    include_str!("../LICENSE"),
+    "\n\nTHIRD-PARTY-NOTICES.md\n\n",
+    include_str!("../THIRD-PARTY-NOTICES.md"),
+    "\n\nlicenses/dependencies.txt\n\n",
+    include_str!("../licenses/dependencies.txt"),
+    "\n\nassets/fonts/Inter-LICENSE.txt\n\n",
+    include_str!("../assets/fonts/Inter-LICENSE.txt"),
+    "\n\nassets/icons/LICENSE.txt\n\n",
+    include_str!("../assets/icons/LICENSE.txt"),
+    "\n\nlicenses/fonts/Hack-Regular.txt\n\n",
+    include_str!("../licenses/fonts/Hack-Regular.txt"),
+    "\n\nlicenses/fonts/NotoEmoji-OFL.txt\n\n",
+    include_str!("../licenses/fonts/NotoEmoji-OFL.txt"),
+    "\n\nlicenses/fonts/Ubuntu-UFL.txt\n\n",
+    include_str!("../licenses/fonts/Ubuntu-UFL.txt"),
+    "\n\nlicenses/fonts/emoji-icon-font-MIT.txt\n\n",
+    include_str!("../licenses/fonts/emoji-icon-font-MIT.txt"),
+    "\n\nlicenses/dpi-libm-MIT.txt\n\n",
+    include_str!("../licenses/dpi-libm-MIT.txt"),
+    "\n\nlicenses/objc2-license.md\n\n",
+    include_str!("../licenses/objc2-license.md"),
+);

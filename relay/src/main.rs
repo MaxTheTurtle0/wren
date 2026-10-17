@@ -6,6 +6,9 @@
 
 use std::net::SocketAddr;
 
+#[path = "../../src/notices.rs"]
+mod notices;
+
 #[tokio::main]
 async fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
@@ -16,6 +19,10 @@ async fn main() {
         .unwrap_or_else(|| SocketAddr::from(([127, 0, 0, 1], 8787)));
     while let Some(arg) = args.next() {
         match arg.as_str() {
+            "--licenses" => {
+                print!("{}", notices::TEXT);
+                return;
+            }
             "--listen" => match args.next().and_then(|value| value.parse().ok()) {
                 Some(address) => listen = address,
                 None => {
@@ -25,7 +32,7 @@ async fn main() {
             },
             "--help" | "-h" => {
                 println!(
-                    "wren-relay [--listen 127.0.0.1:8787]\nForwards Microsoft Graph change notifications to Wren. Put it behind HTTPS."
+                    "wren-relay [--listen 127.0.0.1:8787] [--licenses]\nForwards Microsoft Graph change notifications to Wren. Put it behind HTTPS."
                 );
                 return;
             }

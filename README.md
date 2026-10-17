@@ -191,6 +191,8 @@ Report vulnerabilities privately through [SECURITY.md](SECURITY.md).
 ## Licence
 
 MIT. See [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+All downloads include dependency, font and icon notices. `wren --licenses`
+and `wren-relay --licenses` print the complete notices embedded in the binary.
 Wren is an independent project, not affiliated with or endorsed by Microsoft.
 Microsoft Teams is a trademark of the Microsoft group of companies.
 

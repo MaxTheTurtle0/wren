@@ -31,6 +31,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxkbcommon-dev libwayland-dev libgl1-mesa-dev
       - uses: Swatinem/rust-cache@v2
+      - uses: ./.github/actions/check-notices
       - run: cargo fmt --all --check
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo doc --locked --workspace --no-deps
@@ -108,6 +109,12 @@ jobs:
           sudo apt-get install -y libxkbcommon-dev libwayland-dev libgl1-mesa-dev
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --locked --release
+      - name: Check notices in the standalone binary
+        shell: bash
+        run: |
+          target/release/wren --licenses > "$RUNNER_TEMP/wren-licenses.txt"
+          grep -q 'licenses/fonts/Hack-Regular.txt' "$RUNNER_TEMP/wren-licenses.txt"
+          grep -q 'Microsoft Corporation' "$RUNNER_TEMP/wren-licenses.txt"
       - name: Package macOS app
         if: runner.os == 'macOS'
         # Disposable development artifact, not an update release.
@@ -121,20 +128,29 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           cargo build --locked --release -p wren-relay
-          mkdir -p dist
-          tar -C target/release -czf dist/wren-relay-${{ matrix.name }}.tar.gz wren-relay
+          target/release/wren-relay --licenses > "$RUNNER_TEMP/relay-licenses.txt"
+          cmp "$RUNNER_TEMP/wren-licenses.txt" "$RUNNER_TEMP/relay-licenses.txt"
+          mkdir -p dist/relay
+          cp target/release/wren-relay dist/relay/
+          packaging/copy-notices.sh dist/relay
+          tar -C dist/relay -czf dist/wren-relay-${{ matrix.name }}.tar.gz .
       - name: Package Linux tarball
         if: runner.os == 'Linux'
         run: |
           mkdir -p dist/wren
-          cp target/release/wren packaging/linux/wren.desktop packaging/linux/wren-256.png packaging/linux/install.sh packaging/icons/wren.svg LICENSE THIRD-PARTY-NOTICES.md dist/wren/
+          cp target/release/wren packaging/linux/wren.desktop packaging/linux/wren-256.png packaging/linux/install.sh packaging/icons/wren.svg dist/wren/
+          packaging/copy-notices.sh dist/wren
           tar -C dist -czf dist/wren-${{ matrix.name }}.tar.gz wren
+      - name: Copy Windows notices
+        if: runner.os == 'Windows'
+        shell: bash
+        run: packaging/copy-notices.sh dist/wren
       - name: Package Windows zip
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist/wren | Out-Null
-          Copy-Item target/release/wren.exe, LICENSE, THIRD-PARTY-NOTICES.md dist/wren/
+          Copy-Item target/release/wren.exe dist/wren/
           Compress-Archive -Path dist/wren/* -DestinationPath dist/wren-${{ matrix.name }}.zip
       - uses: actions/upload-artifact@v7
         with:
