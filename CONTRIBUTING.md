@@ -32,6 +32,15 @@ RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps
 The tests need no network and no account. Graph is a local `wiremock` server,
 and the interface runs headless over the demo data.
 
+CI also scans the complete Git history with Gitleaks and checks `Cargo.lock`
+against RustSec advisories with `cargo audit`. Both checks run weekly as well
+as on pushes and pull requests. Dependabot proposes Cargo dependency updates
+weekly and GitHub Actions updates monthly.
+
+Keep local environment files, signing keys, account databases, and logs out
+of commits. Sanitised `.env.example` files are allowed. Report suspected
+vulnerabilities through [SECURITY.md](SECURITY.md).
+
 ## Screenshots
 
 ```sh

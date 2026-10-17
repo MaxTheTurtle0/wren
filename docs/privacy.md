@@ -62,5 +62,5 @@
 - **Links in calendar invitations** are only offered as "Join" when they
   point to a Teams host.
 
-Report security issues privately to the maintainer rather than in a public
-issue.
+Report security issues through [the private reporting process](../SECURITY.md),
+rather than in a public issue.
