@@ -7,7 +7,11 @@ here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$here/../.." && pwd)"
 work="$(mktemp -d)"
 keychain="$work/test.keychain-db"
+trusted=0
 cleanup() {
+    if [ "$trusted" = 1 ]; then
+        sudo security remove-trusted-cert -d "$work/cert.pem" >/dev/null 2>&1 || true
+    fi
     security delete-keychain "$keychain" >/dev/null 2>&1 || true
     rm -rf "$work"
 }
@@ -50,6 +54,15 @@ security unlock-keychain -p fixture "$keychain"
 security import "$work/identity.p12" -k "$keychain" -P fixture -T /usr/bin/codesign >/dev/null
 security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k fixture "$keychain" >/dev/null
 identity="$(openssl x509 -in "$work/cert.pem" -noout -fingerprint -sha1 | cut -d= -f2 | tr -d ':')"
+
+# Hosted macOS runners reject an otherwise usable self-signed identity as
+# CSSMERR_TP_NOT_TRUSTED. Trust only this fixture for code signing on the
+# disposable runner, and remove it before deleting its temporary keychain.
+# Never change trust settings on a contributor's Mac or a self-hosted runner.
+if [ "${RUNNER_ENVIRONMENT:-}" = github-hosted ]; then
+    trusted=1
+    sudo security add-trusted-cert -d -r trustRoot -p codeSign -k "$keychain" "$work/cert.pem"
+fi
 
 # Different Mach-O contents and versions must still satisfy each other's DR.
 for version in 1 2; do
