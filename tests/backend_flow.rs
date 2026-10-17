@@ -136,6 +136,14 @@ async fn mock_microsoft() -> MockServer {
         .expect(1)
         .mount(&server)
         .await;
+    // A restored conversation refreshes by modification date, independently
+    // of the newest-page request above. No messages changed in this fixture.
+    Mock::given(method("GET"))
+        .and(path(format!("/v1.0/chats/{CHAT}/messages")))
+        .and(query_param("$orderby", "lastModifiedDateTime desc"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({"value": []})))
+        .mount(&server)
+        .await;
     server
 }
 
