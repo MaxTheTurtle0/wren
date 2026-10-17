@@ -6321,7 +6321,7 @@ dependencies = [
  "anyhow",
  "apple-native-keyring-store",
  "arboard",
- "base64 0.22.1",
+ "base64 0.23.1",
  "clap",
  "directories",
  "eframe",

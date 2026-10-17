@@ -86,7 +86,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls-native-roots", "json", "gzip", "http2"] }
 # PKCE: a random verifier, its SHA-256 challenge, base64url without padding.
 sha2 = "0.11"
-base64 = "0.22"
+base64 = "0.23"
 getrandom = "0.4"
 urlencoding = "2"
 # Local cache of chats, messages, teams and channels, with FTS5 search.
