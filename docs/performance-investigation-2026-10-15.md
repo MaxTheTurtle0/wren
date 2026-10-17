@@ -6,19 +6,14 @@ viewer. Separately, a loading spinner continuously redraws the window and can
 produce sustained GPU activity. Neither finding requires a large message history.
 
 This report records the baseline before the subsequent
-[performance fixes](performance-improvements-2026-10-15.md). During the baseline
-investigation, no application behavior, dependency, installed app, account, or
-setting was changed. Results are also available as
-[machine-readable data](performance-data/2026-10-15.json).
+[performance fixes](performance-improvements-2026-10-15.md). The baseline
+session was left running throughout the investigation. Results are also
+available as [machine-readable data](performance-data/2026-10-15.json).
 
 ## Builds and machines
 
-- Fast-forwarded this checkout to `origin/main`, `ff6ade2`. The repository has
-  `main`, not `master`.
-- Inspected the actual MacBook Air process from the screenshots, PID 14003.
-  The installed signed binary's SHA-256 is
-  `61445fd0faf88e416e483c39cb6445017b9d0adf7fac4013424e600297d8a1ca`.
-  It remained unchanged and running throughout the investigation.
+- Baseline source: `ff6ade2`.
+- The MacBook Air baseline used the installed release with a signed-in account.
 - MacBook Air: Apple M3, 16 GiB, macOS 27.0.1, Retina scale 2. Its reported
   desktop size was 1470 x 956 points. The real Wren window was 1470 x 923 points.
 - Mac mini: Apple M4, 16 GiB, the same macOS build, 1920 x 1080 display at

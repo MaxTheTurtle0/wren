@@ -37,6 +37,11 @@ against RustSec advisories with `cargo audit`. Both checks run weekly as well
 as on pushes and pull requests. Dependabot proposes Cargo dependency updates
 weekly and GitHub Actions updates monthly.
 
+The protected `main` branch requires format/lint/docs, tests on all three
+platforms, secret scanning, and the dependency audit. History stays linear;
+force pushes and branch deletion are blocked. Repository admins retain their
+maintenance bypass.
+
 Keep local environment files, signing keys, account databases, and logs out
 of commits. Sanitised `.env.example` files are allowed. Report suspected
 vulnerabilities through [SECURITY.md](SECURITY.md).

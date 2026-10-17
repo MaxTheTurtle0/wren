@@ -10,9 +10,10 @@ Rust and egui. No browser engine. Works with Microsoft Teams through Microsoft's
 ![Wren in dark mode](docs/screenshots/chats-dark.png)
 
 > **Status: early preview (0.1).** The interface, sign-in, Graph integration
-> and cache are built and tested against mocks. It has not yet run against a
-> live tenant, so expect rough edges with real data. See
-> [what works](docs/features.md).
+> and cache are built and tested against mocks. Signed-in macOS sessions have
+> been used for performance and Keychain checks, but full live-account feature
+> acceptance is still pending. Expect rough edges with real data. See
+> [what works and what was verified](docs/features.md).
 
 ## Why
 
@@ -185,6 +186,7 @@ cargo test --locked --all-targets     # unit, mock-Graph and headless UI tests
 ```
 
 Read [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md) first.
+Report vulnerabilities privately through [SECURITY.md](SECURITY.md).
 
 ## Licence
 

@@ -166,14 +166,10 @@ Memory values are MiB, despite the macOS tools' MB/M labels.
   including channel replies, inactive-history limits, disk-only re-opening
   and late-cache races, repeated media downloads hitting the disk cache, loading repaint delays and
   the prefix-sum index. Existing geometry, scrolling and backend tests remain.
-- Windows was not compiled or run. The reachable Windows host has no Rust
-  toolchain. No platform-specific dependencies or fork revisions changed.
+- Windows was not compiled or run as part of this investigation.
 
-The final ordinary release was also launched on the Air from the separate
-`/tmp/wren-perf-486982bd/Wren-fixed.app` bundle. Its first UI frame took 455 ms
-on that first launch. The binary SHA-256 is
-`8c633d099a3a0a08ad4c6c6a9be94674590126e0bfedd42ba2399b5fbeb56afa`.
-This bundle was not installed over `/Applications/Wren.app`.
+The final ordinary release was also launched on the Air as a separate offline
+demo. Its first UI frame took 455 ms on that first launch.
 
 The original signed-in MacBook Air process was left running. The test bundles
 use offline demo state and separate identities. No before/after result here
@@ -186,17 +182,11 @@ process-memory ceiling.
 
 ## MacBook Air installation, 16 October 2026
 
-Installed the fixed release in `/Applications/Wren.app` and restarted the normal
-app, preserving bundle identifier `app.wren.Wren`, settings and account data.
+Installed the fixed release and restarted the normal signed-in app.
 The installed executable matched the tested release after removing signatures
 from temporary comparison copies. The installed bundle passed strict signature
-verification. Its signed executable SHA-256 is
-`853c57e1babb61cab5bb7face132bd13974ccc466843a9770ad014732ca653b3`.
+verification.
 
 The restarted real session measured 130 MiB physical footprint. Four one-second
 CPU samples were all 0.0%. This is a fresh-session observation, not a matched
 long-session comparison against the original 529.7 MiB process.
-
-The previous app bundle is backed up at
-`~/Library/Caches/wren/performance-update-backups/20261016T050559Z/Wren.app`.
-The implementation and original measurement commits were pushed to `main`.

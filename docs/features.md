@@ -3,8 +3,9 @@
 Status as of Wren 0.1 (unreleased).
 
 - **Works**: implemented against Microsoft Graph, unit-tested against a mock
-  Graph server and drawn in the headless UI tests. It has **not yet been
-  exercised against a live tenant** (see "Verification" below).
+  Graph server and drawn in the headless UI tests. This does not imply live
+  acceptance of every feature. Signed-in macOS sessions have been used for
+  performance and Keychain checks; the verified scope is listed below.
 - **Demo only**: drawn and interactive with sample data, with no Graph
   integration yet.
 - **Hand-off**: opens Microsoft Teams through documented deep links.
@@ -134,12 +135,28 @@ Tested and run:
 - The macOS app run and screenshotted on macOS 27 (Apple Silicon), including
   the account menu, the new-chat and status dialogs and the mention
   suggestions.
+- Signed-in macOS sessions observed during the performance investigation and
+  after restarting the fixed release. The restarted session used 130 MiB
+  physical footprint with 0.0% idle CPU in four samples. This verifies session
+  restoration and a usable signed-in window, not every Graph feature. See
+  [performance measurements](performance.md).
+- Persistent signing on an existing macOS account: after re-signing, the user
+  quit and reopened Wren twice and confirmed that the second launch had no
+  Keychain prompt. See [signing verification](macos-keychain.md#repair-verification-16-october-2026).
 
 Not yet run:
 
-- A live sign-in and a live tenant. These need an Entra app registration and,
-  in most tenants, admin consent ([azure-app-registration.md](azure-app-registration.md)).
+- Full live-account acceptance: a fresh sign-in and consent flow, chat and
+  channel reads and writes, file sharing, presence, calendar, account switching,
+  sign-out cleanup, and real push notifications. Existing signed-in sessions
+  do not establish coverage of these workflows. Tests need an Entra app
+  registration and, in most tenants, admin consent
+  ([azure-app-registration.md](azure-app-registration.md)).
 - Windows and Linux windows. Both compile and pass tests in CI, but nobody
   has looked at a window there yet.
 - A real call in the Teams web window: the open questions are listed in
   [call-window.md §7](call-window.md#7-open-questions).
+
+The refreshed documentation screenshots were captured from the native macOS
+demo at 1280 x 800. The Calls view was also checked in both themes at
+760 x 700; its capability table currently clips at that width.

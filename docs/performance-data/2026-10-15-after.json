@@ -565,7 +565,6 @@
           "maximum_percent": 3.4
         },
         "gpu": {
-          "pid": 87553,
           "active_intervals": 4,
           "stable_window_seconds": [
             1,
@@ -625,7 +624,6 @@
           "maximum_percent": 0.5
         },
         "gpu": {
-          "pid": 89237,
           "active_intervals": 0,
           "stable_window_seconds": [
             1,
@@ -655,12 +653,6 @@
     }
   },
   "baseline_report": "performance-investigation-2026-10-15.md",
-  "binary_sha256": {
-    "after-wren": "a54493107f5d52a78c5dd7bfbf9fbac121e22a23740fcdc8f53cf148fb0996b7",
-    "after-perf_probe": "d8b21cc995a32feae4c0eb63d84e7f005cfaa6a0d91610d3967d5df26aa8fffc",
-    "verified-wren": "a99bbaa0ae2c186520196057ce91604c96d30a0a7916f216469568efdfe6a882",
-    "verified-perf_probe": "27642bfde59e44b7d4959f688aa319a72a4496321553afa2c633c9a6eed8add5"
-  },
   "checks": {
     "linux": {
       "fmt": true,
@@ -676,7 +668,7 @@
       "test_artifacts_forced_to_rebuild": true,
       "source_files_matched_linux": true
     },
-    "windows": "not compiled; reachable host has no Rust toolchain"
+    "windows": "not compiled or run as part of this investigation"
   },
   "notes": [
     "Memory is MiB. CPU 100% means one core.",
@@ -688,19 +680,13 @@
   ],
   "fixed_source_commit": "cb6aae884611936e768ab459549d524345ce6bad",
   "final_macos_release": {
-    "sha256": "8c633d099a3a0a08ad4c6c6a9be94674590126e0bfedd42ba2399b5fbeb56afa",
-    "bundle_on_macbook_air": "/tmp/wren-perf-486982bd/Wren-fixed.app",
-    "separate_bundle_identifier": "app.wren.performance.486982bd.fixed",
     "offline_smoke_first_ui_ms": 455,
     "installed_over_existing_app": false
   },
   "deployment_2026_10_16": {
     "host": "MacBook Air M3",
-    "app_path": "/Applications/Wren.app",
-    "bundle_identifier": "app.wren.Wren",
     "implementation_commit": "cb6aae8",
     "source_head_at_install": "0a507e1",
-    "installed_signed_binary_sha256": "853c57e1babb61cab5bb7face132bd13974ccc466843a9770ad014732ca653b3",
     "tested_executable_matches_after_removing_signatures": true,
     "strict_signature_verification": true,
     "restarted_real_session": true,
@@ -711,7 +697,6 @@
       0.0,
       0.0
     ],
-    "previous_bundle_backup": "~/Library/Caches/wren/performance-update-backups/20261016T050559Z/Wren.app",
     "note": "Fresh-session observation, not a matched long-session comparison."
   }
 }

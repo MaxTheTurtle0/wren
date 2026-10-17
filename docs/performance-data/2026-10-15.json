@@ -1,7 +1,6 @@
 {
   "date": "2026-10-15",
   "source_commit": "ff6ade2",
-  "installed_air_binary_sha256": "61445fd0faf88e416e483c39cb6445017b9d0adf7fac4013424e600297d8a1ca",
   "os": "macOS 27.0.1 26A434",
   "air": {
     "chip": "Apple M3",

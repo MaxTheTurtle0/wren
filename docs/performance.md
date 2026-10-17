@@ -12,6 +12,7 @@ the M3 MacBook Air uses a 2× Retina display. Memory is physical footprint in Mi
 | Workload | Mac mini | MacBook Air |
 |---|---:|---:|
 | Ordinary app, offline demo, settled | 57–59 MiB | Not measured after these fixes |
+| Signed-in app after restart, 16 October | Not measured | 130 MiB |
 | Performance fixture, idle | 57 MiB | 122 MiB |
 | Fixture after 20 full HD image previews, viewer closed | 86–88 MiB | 161 MiB |
 | Fixture after 100 full HD image previews | 92 MiB | Not measured |
@@ -20,8 +21,9 @@ the M3 MacBook Air uses a 2× Retina display. Memory is physical footprint in Mi
 
 The ordinary executable includes the tray/window shell; the fixture does not.
 The original signed-in Air process was measured at 529.7 MiB during the baseline
-investigation. That process was preserved, so these demo numbers do not measure
-a before/after restart of the same account.
+investigation and was preserved during the demo comparisons. The 130 MiB result
+was a separate observation after restarting the signed-in app on 16 October,
+with four idle CPU samples at 0.0%. It is not a matched long-session comparison.
 
 On the Air, holding a message-loading indicator changed GPU active time from
 19.3% to 0.0% in matched eight-second trace windows. This is Instruments GPU
@@ -69,6 +71,7 @@ Tests run the same views without a display or account.
 
 ```sh
 cargo build --locked --release --bin wren --example perf_probe
+CODESIGN_IDENTITY=- \
 packaging/macos/bundle.sh target/release/wren target/Wren.app 0.1.0
 open -W -n --stdout /tmp/wren-startup.txt target/Wren.app --args --demo --measure-startup
 open -n target/Wren.app --args --demo
