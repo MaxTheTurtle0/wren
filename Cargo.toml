@@ -103,9 +103,9 @@ rfd = { version = "0.17", default-features = false, features = ["xdg-portal", "w
 qrcodegen = "1.8"
 # Unicode grapheme handling for avatars' initials and text truncation.
 unicode-segmentation = "1"
-# The push relay's WebSocket (src/realtime.rs, experimental). The same
-# version axum uses in wren-relay, over the rustls stack reqwest already
-# links.
+# The push relay's WebSocket client (src/realtime.rs, experimental), over
+# the rustls stack reqwest already links. The relay's axum server pins its
+# own compatible WebSocket implementation.
 tokio-tungstenite = { version = "0.30", default-features = false, features = ["connect", "rustls-tls-native-roots"] }
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 # One protected-store API, with only each target's native provider below.

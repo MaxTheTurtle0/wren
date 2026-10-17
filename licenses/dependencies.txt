@@ -4965,6 +4965,9 @@ THE SOFTWARE.
 MIT License (MIT)
 
 Used by:
+  sha1 0.11.0 <https://github.com/RustCrypto/hashes>
+    Author: RustCrypto Developers
+    Source: registry+https://github.com/rust-lang/crates.io-index
   sha2 0.11.0 <https://github.com/RustCrypto/hashes>
     Author: RustCrypto Developers
     Source: registry+https://github.com/rust-lang/crates.io-index
@@ -5004,6 +5007,10 @@ MIT License (MIT)
 
 Used by:
   tungstenite 0.29.0 <https://github.com/snapview/tungstenite-rs>
+    Author: Alexey Galakhov
+    Author: Daniel Abramov
+    Source: registry+https://github.com/rust-lang/crates.io-index
+  tungstenite 0.30.0 <https://github.com/snapview/tungstenite-rs>
     Author: Alexey Galakhov
     Author: Daniel Abramov
     Source: registry+https://github.com/rust-lang/crates.io-index
@@ -5108,6 +5115,10 @@ MIT License (MIT)
 
 Used by:
   tokio-tungstenite 0.29.0 <https://github.com/snapview/tokio-tungstenite>
+    Author: Daniel Abramov <dabramov@snapview.de>
+    Author: Alexey Galakhov <agalakhov@snapview.de>
+    Source: registry+https://github.com/rust-lang/crates.io-index
+  tokio-tungstenite 0.30.0 <https://github.com/snapview/tokio-tungstenite>
     Author: Daniel Abramov <dabramov@snapview.de>
     Author: Alexey Galakhov <agalakhov@snapview.de>
     Source: registry+https://github.com/rust-lang/crates.io-index
@@ -6294,6 +6305,41 @@ DEALINGS IN THE SOFTWARE.
 MIT License (MIT)
 
 Used by:
+  rand_core 0.10.1 <https://github.com/rust-random/rand_core>
+    Author: The Rand Project Developers
+    Source: registry+https://github.com/rust-lang/crates.io-index
+
+Copyright (c) 2018-2026 The Rand Project Developers
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+
+===============================================================================
+MIT License (MIT)
+
+Used by:
   zeroize 1.9.1 <https://github.com/RustCrypto/utils>
     Author: The RustCrypto Project Developers
     Source: registry+https://github.com/rust-lang/crates.io-index
@@ -6704,6 +6750,41 @@ Used by:
     Source: registry+https://github.com/rust-lang/crates.io-index
 
 Copyright (c) 2019-2026 Sean McArthur & Hyper Contributors
+
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without
+limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice
+shall be included in all copies or substantial portions
+of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+
+
+===============================================================================
+MIT License (MIT)
+
+Used by:
+  chacha20 0.10.2 <https://github.com/RustCrypto/stream-ciphers>
+    Author: RustCrypto Developers
+    Source: registry+https://github.com/rust-lang/crates.io-index
+
+Copyright (c) 2019-2026 The RustCrypto Project Developers
 
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and associated
@@ -7965,6 +8046,10 @@ DEALINGS IN THE SOFTWARE.
 MIT License (MIT)
 
 Used by:
+  rand 0.10.3 <https://github.com/rust-random/rand>
+    Author: The Rand Project Developers
+    Author: The Rust Project Developers
+    Source: registry+https://github.com/rust-lang/crates.io-index
   rand 0.9.5 <https://github.com/rust-random/rand>
     Author: The Rand Project Developers
     Author: The Rust Project Developers
