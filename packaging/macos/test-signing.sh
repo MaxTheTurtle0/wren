@@ -57,7 +57,12 @@ for version in 1 2; do
     mkdir -p "$app/Contents/MacOS"
     sed "s/__VERSION__/$version.0.0/g" "$here/Info.plist" > "$app/Contents/Info.plist"
     printf 'int main(void) { return %s; }\n' "$version" | xcrun clang -isysroot "$(xcrun --sdk macosx --show-sdk-path)" -x c - -o "$app/Contents/MacOS/wren"
-    codesign --force --timestamp=none --options runtime --keychain "$keychain" --sign "$identity" "$app"
+    if ! codesign --force --timestamp=none --options runtime --keychain "$keychain" --sign "$identity" "$app"; then
+        # Only the synthetic fixture keychain is inspected, never real identities.
+        security find-identity -p codesigning "$keychain"
+        openssl x509 -in "$work/cert.pem" -noout -subject -dates
+        exit 1
+    fi
     codesign --verify --strict "$app"
     codesign -d -r- "$app" 2>&1 | sed -n 's/^designated => /designated => /p' > "$work/requirement-$version"
     test -s "$work/requirement-$version"
