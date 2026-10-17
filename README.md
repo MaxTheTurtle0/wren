@@ -134,8 +134,8 @@ tokio runtime on its own thread does all network and disk work. Details are in
 [docs/architecture.md](docs/architecture.md).
 
 Built on [fastframe](https://github.com/crmne/fastframe) (fonts, colour emoji,
-icons, palettes, tray, window shell, single instance, scrolling, logging) and
-the egui and winit forks shared with Spotifast and ZapFast.
+icons, palettes, tray, window shell, title bar, single instance, scrolling,
+logging) and the egui and winit forks shared with Spotifast and ZapFast.
 
 ## Known Microsoft API limitations
 

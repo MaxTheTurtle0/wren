@@ -3082,9 +3082,9 @@ third-party/chromium/LICENSE.
 ISC License (ISC)
 
 Used by:
-  fastframe-icons 0.4.1 <https://github.com/crmne/fastframe>
+  fastframe-icons 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
 
 ISC License
 
@@ -9119,42 +9119,48 @@ SOFTWARE.
 MIT License (MIT)
 
 Used by:
-  fastframe-emoji 0.4.1 <https://github.com/crmne/fastframe>
+  fastframe-desktop 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-fonts 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-emoji 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-icons 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-file 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-instance 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-fonts 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-log 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-icons 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-macos 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-instance 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-scroll 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-log 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-shell 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-scroll 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-text 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-shell 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-theme 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-text 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-tray 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-theme 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
-  fastframe-update 0.4.1 <https://github.com/crmne/fastframe>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-titlebar 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-tray 0.6.0 <https://github.com/crmne/fastframe>
+    Author: Carmine Paolino <carmine@paolino.me>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
+  fastframe-update 0.6.0 <https://github.com/crmne/fastframe>
+    Author: Carmine Paolino <carmine@paolino.me>
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
 
 MIT License
 
@@ -11416,9 +11422,9 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 SIL Open Font License 1.1 (OFL-1.1)
 
 Used by:
-  fastframe-fonts 0.4.1 <https://github.com/crmne/fastframe>
+  fastframe-fonts 0.6.0 <https://github.com/crmne/fastframe>
     Author: Carmine Paolino <carmine@paolino.me>
-    Source: git+https://github.com/crmne/fastframe?tag=v0.4.1#23d87e048185ef317f272e2a67416f516b2f2b04
+    Source: git+https://github.com/crmne/fastframe?tag=v0.6.0#0d65ca99eb6d00f10ff556bf985249658feed469
 
 Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
 

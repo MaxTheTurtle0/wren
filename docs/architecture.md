@@ -39,6 +39,10 @@ one-directional data flow between them.
    Windows and Linux. Platform pieces come from fastframe crates or sit
    in `#[cfg(target_os = …)]` blocks.
 
+`fastframe-titlebar` handles macOS header presses and traffic-light alignment.
+Windows and Linux retain their native window frames; `ui/widgets.rs` handles
+dragging and double-clicking the headers inside those frames.
+
 ## Accounts
 
 Each signed-in account is an `app::Account`: its own backend runtime, session,

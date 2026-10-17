@@ -49,6 +49,9 @@ The report covers the client and relay on all packaged targets. CI and
 release verification check it against `Cargo.lock`. Keep the supplemental
 font and icon licenses described in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
+Keep every fastframe crate on the same tag. Dependabot groups their updates
+into one pull request so internal dependencies use the same revision too.
+
 The protected `main` branch requires format/lint/docs, tests on all three
 platforms, the macOS signing regression, secret scanning, and the dependency
 audit. History stays linear; force pushes and branch deletion are blocked.

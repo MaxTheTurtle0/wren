@@ -288,21 +288,21 @@ pub fn request_photos(app: &mut App, ctx: &egui::Context) {
 /// Makes `rect` drag the window (the custom title bar on macOS), and
 /// double-clicking it zoom as the system setting says.
 pub fn window_drag(ui: &mut Ui, rect: egui::Rect, id: &str) {
-    let response = ui.interact(rect, ui.id().with(id), Sense::click_and_drag());
-    if response.drag_started_by(egui::PointerButton::Primary) {
-        ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
-    }
-    if response.double_clicked() {
-        match fastframe_macos::double_click_action() {
-            fastframe_macos::DoubleClick::Minimize => ui
-                .ctx()
-                .send_viewport_cmd(egui::ViewportCommand::Minimized(true)),
-            fastframe_macos::DoubleClick::Nothing => {}
-            _ => {
-                let maximized = ui.ctx().input(|i| i.viewport().maximized.unwrap_or(false));
-                ui.ctx()
-                    .send_viewport_cmd(egui::ViewportCommand::Maximized(!maximized));
-            }
+    #[cfg(target_os = "macos")]
+    ui.push_id(id, |ui| fastframe_titlebar::drag(ui, rect));
+
+    // Wren keeps the native frame on Windows and Linux. The shared drag
+    // helper only handles those platforms when its drawn title bar is on.
+    #[cfg(not(target_os = "macos"))]
+    {
+        let response = ui.interact(rect, ui.id().with(id), Sense::click_and_drag());
+        if response.drag_started_by(egui::PointerButton::Primary) {
+            ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
+        }
+        if response.double_clicked() {
+            let maximized = ui.ctx().input(|i| i.viewport().maximized.unwrap_or(false));
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::Maximized(!maximized));
         }
     }
 }

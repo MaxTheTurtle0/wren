@@ -4,6 +4,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      fastframe:
+        patterns:
+          - "fastframe-*"
   - package-ecosystem: github-actions
     directory: /
     schedule:

@@ -43,35 +43,37 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png",
 # compiled for egui_extras' SVG support, so it adds no code to the build.
 resvg = { version = "0.45", default-features = false }
 
-# Shared foundation of the crmne egui apps (github.com/crmne/fastframe): the
-# same tag ZapFast builds with. Every crate comes from the same revision.
+# Shared foundation of the crmne egui apps (github.com/crmne/fastframe).
+# Keep every crate on the same revision, including internal dependencies.
 # Interface font (the platform's own, Inter where there is none) and installed
 # fonts for other scripts.
 fastframe-fonts = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Follows the desktop's hinting and glyph coverage.
-fastframe-text = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-text = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # The icons! table, a loader that survives reduce_texture_memory, Lucide icons.
-fastframe-icons = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-icons = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Colour emoji in the platform's own style, drawn off the interface thread.
-fastframe-emoji = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-emoji = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Palette files and the shared presets (Catppuccin, Nord, Tokyo Night, ...).
-fastframe-theme = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-theme = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Logs to stderr and a per-run file, records panics without their payload.
-fastframe-log = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-log = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Tray item: StatusNotifier on Linux, notification area on Windows, menu bar
 # on macOS.
-fastframe-tray = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
-# Keeps Wren running (sync, notifications) with the window closed.
-fastframe-shell = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
-# Centres the macOS traffic lights on Wren's own header.
-fastframe-macos = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-tray = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
+# Keeps Wren running (sync, notifications) with the window closed. Its
+# fastframe-file dependency detects durable writes on the interface thread.
+fastframe-shell = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
+# macOS header dragging, double-click actions and traffic lights; replaces
+# fastframe-macos, which was removed in v0.6.0.
+fastframe-titlebar = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # One running copy per user; a second launch hands its request over.
-fastframe-instance = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-instance = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Platform-like wheel step and Linux touchpad glide.
-fastframe-scroll = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-scroll = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # The shared updater already used by the other fastframe apps: verified
 # downloads, platform installation checks, restart handoff and rollback.
-fastframe-update = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1", features = ["reqwest"] }
+fastframe-update = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0", features = ["reqwest"] }
 # egui already uses arboard, but exposes only text paste. Read clipboard
 # images on the backend and send them as Graph hosted content.
 arboard = { version = "3.6", features = ["wayland-data-control"] }

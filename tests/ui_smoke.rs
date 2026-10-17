@@ -17,6 +17,8 @@ struct Harness {
     size: egui::Vec2,
     shapes: Vec<egui::epaint::ClippedShape>,
     repaint_after: std::time::Duration,
+    #[cfg(not(target_os = "macos"))]
+    viewport_commands: Vec<egui::ViewportCommand>,
     _dir: tempfile::TempDir,
 }
 
@@ -38,6 +40,8 @@ impl Harness {
             size: egui::vec2(1280.0, 820.0),
             shapes: Vec::new(),
             repaint_after: std::time::Duration::MAX,
+            #[cfg(not(target_os = "macos"))]
+            viewport_commands: Vec::new(),
             _dir: dir,
         }
     }
@@ -63,6 +67,12 @@ impl Harness {
         output.textures_delta.clear();
         let count = output.shapes.len();
         self.repaint_after = output.viewport_output[&egui::ViewportId::ROOT].repaint_delay;
+        #[cfg(not(target_os = "macos"))]
+        {
+            self.viewport_commands = output.viewport_output[&egui::ViewportId::ROOT]
+                .commands
+                .clone();
+        }
         self.shapes = output.shapes;
         count
     }
@@ -111,6 +121,53 @@ impl Harness {
             modifiers: egui::Modifiers::NONE,
         }]);
         self.frames(3);
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+#[test]
+fn header_drag_and_double_click_work_with_native_decorations() {
+    for width in [720.0, 1280.0] {
+        for theme in [ThemeChoice::Dark, ThemeChoice::Light] {
+            let mut h = Harness::new();
+            h.size.x = width;
+            h.app.settings.theme = theme;
+            h.frames(3);
+            let header = egui::pos2(220.0, 24.0);
+            let press = egui::Event::PointerButton {
+                pos: header,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers: egui::Modifiers::NONE,
+            };
+            let release = egui::Event::PointerButton {
+                pos: header,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers: egui::Modifiers::NONE,
+            };
+
+            h.frame_with(vec![egui::Event::PointerMoved(header), press.clone()]);
+            h.frame_with(vec![egui::Event::PointerMoved(
+                header + egui::vec2(40.0, 0.0),
+            )]);
+            assert!(
+                h.viewport_commands
+                    .iter()
+                    .any(|command| matches!(command, egui::ViewportCommand::StartDrag))
+            );
+            h.frame_with(vec![release.clone()]);
+            h.frames(30);
+
+            h.click(header);
+            h.frame_with(vec![press]);
+            h.frame_with(vec![release]);
+            assert!(
+                h.viewport_commands
+                    .iter()
+                    .any(|command| matches!(command, egui::ViewportCommand::Maximized(true)))
+            );
+        }
     }
 }
 

@@ -418,7 +418,7 @@ impl eframe::App for Window {
         app.perf.record(frame.info().cpu_usage);
         app.observe_window(ctx);
         app.background(ctx);
-        fastframe_macos::align_traffic_lights(frame, ctx, wren::theme::HEADER_HEIGHT);
+        fastframe_titlebar::align_traffic_lights(frame, ctx, wren::theme::HEADER_HEIGHT);
         if app.wants_show {
             app.wants_show = false;
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
