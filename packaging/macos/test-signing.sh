@@ -7,16 +7,27 @@ here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$here/../.." && pwd)"
 work="$(mktemp -d)"
 keychain="$work/test.keychain-db"
-trusted=0
+search_list_changed=0
+original_keychains=()
 cleanup() {
-    if [ "$trusted" = 1 ]; then
-        sudo security remove-trusted-cert -d "$work/cert.pem" >/dev/null 2>&1 || true
-    fi
     security delete-keychain "$keychain" >/dev/null 2>&1 || true
+    if [ "$search_list_changed" = 1 ]; then
+        security list-keychains -d user -s "${original_keychains[@]}"
+    fi
     rm -rf "$work"
 }
 trap cleanup EXIT
 umask 077
+
+# codesign's identity lookup on hosted runners also needs the keychain in
+# the user search list, even when --keychain is supplied. Save and restore
+# only the disposable runner's list; leave contributor Macs untouched.
+if [ "${RUNNER_ENVIRONMENT:-}" = github-hosted ]; then
+    security list-keychains -d user > "$work/keychains"
+    while IFS= read -r entry; do
+        original_keychains+=("$(printf '%s\n' "$entry" | sed 's/^[[:space:]]*"//; s/"[[:space:]]*$//')")
+    done < "$work/keychains"
+fi
 
 # Neither a missing identity nor an ad-hoc release may destroy an output.
 mkdir "$work/Existing.app"
@@ -55,13 +66,9 @@ security import "$work/identity.p12" -k "$keychain" -P fixture -T /usr/bin/codes
 security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k fixture "$keychain" >/dev/null
 identity="$(openssl x509 -in "$work/cert.pem" -noout -fingerprint -sha1 | cut -d= -f2 | tr -d ':')"
 
-# Hosted macOS runners reject an otherwise usable self-signed identity as
-# CSSMERR_TP_NOT_TRUSTED. Trust only this fixture for code signing on the
-# disposable runner, and remove it before deleting its temporary keychain.
-# Never change trust settings on a contributor's Mac or a self-hosted runner.
 if [ "${RUNNER_ENVIRONMENT:-}" = github-hosted ]; then
-    trusted=1
-    sudo security add-trusted-cert -d -r trustRoot -p codeSign -k "$keychain" "$work/cert.pem"
+    search_list_changed=1
+    security list-keychains -d user -s "$keychain" "${original_keychains[@]}"
 fi
 
 # Different Mach-O contents and versions must still satisfy each other's DR.

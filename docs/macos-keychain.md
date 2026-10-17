@@ -54,9 +54,9 @@ lack a persistent signing identity; use the signed bundle for real accounts.
 them with a synthetic certificate, and verifies that each satisfies the same
 certificate-bound requirement. It also verifies that an ad-hoc replacement
 fails that check. The test uses a temporary keychain and no Wren credentials.
-On disposable GitHub-hosted runners, it temporarily trusts its synthetic
-certificate for code signing and removes that trust during cleanup. Local
-and self-hosted runs leave system trust settings alone.
+On disposable GitHub-hosted runners, it temporarily adds the fixture keychain
+to the user search list and restores the original list during cleanup. Local
+and self-hosted runs leave the search list alone. No trust settings are changed.
 
 Apple documents [Keychain tracking and designated requirements](https://developer.apple.com/library/archive/technotes/tn2206/_index.html)
 and [signing identity setup](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html).

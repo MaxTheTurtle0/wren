@@ -293,6 +293,16 @@ async fn sign_in_sync_send_restore_and_sign_out() {
         _ => None,
     });
     assert_eq!(cached_messages.len(), 3, "two fetched and one sent");
+    // Opening serves the cache before its Graph refresh completes. Wait for
+    // that refresh so its requests cannot be mistaken for a cache-only reopen.
+    wait_for(&backend, 5, |e| match e {
+        Event::Messages {
+            conversation: fetched,
+            cached: false,
+            ..
+        } if fetched == conversation => Some(()),
+        _ => None,
+    });
     // RAM eviction can reopen a conversation without claiming a Graph fetch.
     let requests_before = server.received_requests().await.unwrap().len();
     backend.send(Command::CachedMessages(conversation.clone()));

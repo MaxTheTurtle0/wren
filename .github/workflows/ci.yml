@@ -66,9 +66,6 @@ jobs:
           packaging/macos/bundle.sh target/release/wren "$RUNNER_TEMP/Wren.app" 0.1.0
           open -W -n "$RUNNER_TEMP/Wren.app" --args --screenshot "$RUNNER_TEMP/wren-demo.png" --page chats --size 1280x800 --screenshot-delay 3000
           test -s "$RUNNER_TEMP/wren-demo.png"
-      - name: macOS signing identity regression
-        if: runner.os == 'macOS'
-        run: packaging/macos/test-signing.sh
       - name: macOS screenshot
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v7
@@ -76,11 +73,19 @@ jobs:
           name: macos-screenshot
           path: ${{ runner.temp }}/wren-demo.png
 
+  signing:
+    name: macOS signing identity regression
+    runs-on: macos-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+      - run: packaging/macos/test-signing.sh
+
   package:
     name: package (${{ matrix.name }})
     # Builds installable artifacts on main; nothing is published as a release.
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: [quality, test]
+    needs: [quality, test, signing]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
