@@ -1,5 +1,5 @@
 //! Calls in Teams on the web: opening them, docking Wren beside the call
-//! window, and the call session behind the call bar (docs/call-window.md).
+//! window, and the call session behind the call bar (docs/calling.md).
 
 use egui::{ViewportCommand, pos2, vec2};
 

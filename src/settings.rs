@@ -53,7 +53,7 @@ pub struct Settings {
     pub last_update_check: i64,
 }
 
-/// How calls and meetings open (docs/call-window.md).
+/// How calls and meetings open (docs/calling.md).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct CallSettings {

@@ -154,7 +154,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             });
             ui.add_space(14.0);
             ui.label(
-                egui::RichText::new("Why: Microsoft Graph's calling API works only for bots. The Teams licence covers calls in Microsoft's own clients only; Azure Communication Services would bill every minute. The full investigation is in docs/calling.md and docs/video-calling-options.md.")
+                egui::RichText::new("Calls open in Teams. Use the Teams window for audio, video and call controls.")
                     .font(theme::regular(12.0))
                     .color(palette.dim),
             );

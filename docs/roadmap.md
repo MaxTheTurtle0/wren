@@ -26,11 +26,10 @@ push notifications, on 17 October 2026. The completed checks are listed in
 
 ## Calling
 
-Calls run in Teams on the web beside Wren ([call-window.md](call-window.md)).
+Calls run in Teams on the web beside Wren ([calling.md](calling.md)).
 Next:
 
-1. Answer the open questions in [call-window.md §7](call-window.md#7-open-questions)
+1. Answer the [calling open questions](calling.md#open-questions)
    with a real browser, meeting and tenant: window placement with a running
    browser, the join page, silent sign-in, presence timing.
-2. Decide on Teams desktop's third-party app API for in-call buttons (its
-   protocol is unpublished).
+2. Watch for an official, documented API for in-call controls.

@@ -565,7 +565,7 @@ pub fn populate(app: &mut App) {
         if let Some(m) = b.messages.last_mut() {
             m.replies = replies;
         }
-        b.text("u-hedy", now - 40 * MINUTE, "Calling: Graph can't place calls as a user, so v1 hands off to Teams through the documented deep links. ACS write-up in docs/calling.md.");
+        b.text("u-hedy", now - 40 * MINUTE, "Calling: Graph can't place calls as a user, so Wren opens Teams through the documented deep links. Details in docs/calling.md.");
         conversations.push(b.finish());
     }
     {

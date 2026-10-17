@@ -6,10 +6,10 @@ reasons:
 
 - Microsoft counts Teams throttling **per client ID across all tenants**,
   so a shared registration would share one global request budget
-  ([research §4](microsoft-api-research.md#4-real-time-updates-and-throttling)).
+  ([refresh and throttling](microsoft-api-research.md#refresh-and-throttling)).
 - Most tenants block users from consenting to unverified multi-tenant apps,
   and the default consent policy excludes `Chat.*` and `Calendars.*`
-  ([research §11](microsoft-api-research.md#11-consent)).
+  ([identity and consent](microsoft-api-research.md#identity-and-consent)).
 - Reusing one of Microsoft's own client IDs would breach the API terms.
 
 The registration takes about five minutes and costs nothing. App

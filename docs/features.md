@@ -51,7 +51,7 @@ Status as of Wren 0.1 (unreleased).
 | Meeting reminders | Works | 5 minutes before, from the cached calendar (no network) |
 | Start audio or video call | Works | Microsoft's call deep link in Teams on the web; Teams asks to confirm |
 | Join by pasted link | Works | Teams hosts only |
-| Where calls open | Works | Default: a chrome-less Edge or Chrome window (`--app`); without either, the default browser. The Teams app only if chosen in Settings. The browser is started with an argument list, never a shell, and only with Teams links ([call-window.md](call-window.md)) |
+| Where calls open | Works | Default: a chrome-less Edge or Chrome window (`--app`); without either, the default browser. The Teams app only if chosen in Settings. The browser is started with an argument list, never a shell, and only with Teams links ([calling.md](calling.md)) |
 | Docking beside the call | Works | Wren becomes a 380-point panel on the right of its frame and asks the browser to open the call on the left; restored when the call ends. Not on Wayland (no window positions) or for windows under 960 points |
 | Call bar and call status | Works | Follows your own presence: on focus, and with the relay through a presence subscription (Presence.Read.All). Ends a minute after presence leaves the call. Shows calls started elsewhere too |
 | Meeting chat beside the call | Works | From the cache by join link; otherwise `GET /me/onlineMeetings?$filter=JoinWebUrl eq '…'` with OnlineMeetings.Read, requested on first use |
@@ -83,77 +83,25 @@ Official portable downloads and macOS bundles check GitHub daily and download si
 
 ## Verification
 
-Tested and run:
+| Coverage | Verification |
+|---|---|
+| Authentication, Graph, cache and calling logic | Unit tests and local mock servers: PKCE, token rotation, paging, retries, token isolation, writes, uploads, search, browser arguments, docking and call state |
+| Backend and feature flows | `tests/backend_flow.rs` and `tests/features_flow.rs`: sign-in, session restoration, sign-out, messaging, files, new chats, mentions, presence and meeting-chat lookup |
+| Push | `tests/push_flow.rs`: real relay and backend with simulated Graph, subscription validation, notifications and cleanup |
+| Interface | `tests/ui_smoke.rs`: headless frames for every screen, dialogs, account switching and a 5,000-message chat |
+| Native macOS | Apple Silicon, macOS 27; demo screenshots at 1280 × 800, call bar, docked panel and QR code; signed-in performance checks in [performance.md](performance.md) |
+| Persistent macOS signing | Synthetic-certificate regression and maintainer-confirmed reopening without another Keychain prompt; setup in [macos-keychain.md](macos-keychain.md) |
 
-- Unit tests for the HTML parser, the PKCE values (RFC 7636 test vector),
-  the loopback redirect, and token exchange, refresh and device code against
-  a mock token endpoint.
-- Graph client behaviour against a mock Graph server: paging, 401 refresh,
-  `Retry-After`, refusing to send tokens to foreign hosts, every write
-  endpoint.
-- The cache: ordering, FTS5, diacritics, permissions.
-- **Files, new chats, mentions and status end to end**
-  (`tests/features_flow.rs`), through the real worker against a mock Graph:
-  the people search (`ConsistencyLevel: eventual`, `$search`, `$count`), the
-  `POST /chats` body, the upload with its read-back and the sharing invite,
-  the exact message body with an `<at>` mention and an `<attachment>`,
-  `setUserPreferredPresence`, `setStatusMessage`, a single `setPresence`
-  with the client ID as session ID, and `clearPresence` on exit.
-- Large uploads: the upload-session request and 5 MiB chunks without the
-  Graph token (unit tests in `graph/files.rs`).
-- Calls: finding Edge and Chrome on each platform, the exact argument lists,
-  refusing anything but Teams links, docking geometry, the call session's
-  states against presence sequences (flicker, calls elsewhere, calendar-only
-  meetings), join-link matching, the meeting-chat lookup end to end
-  (`tests/features_flow.rs`), and a presence notification through the real
-  relay causing a presence fetch (`tests/push_flow.rs`). The docked panel,
-  the call bar and the QR code are drawn in the UI tests and screenshotted
-  on macOS.
-- **The whole backend end to end** (`tests/backend_flow.rs`), against local
-  stand-ins for Entra ID and Graph:
-  - the browser sign-in through Wren's real loopback redirect, with PKCE;
-  - the token exchange, chat listing, message history and sending;
-  - a restart that restores the session from the credential store and shows
-    the cache before any request;
-  - refresh-token rotation;
-  - sign-out deleting the token and the cache.
-- **Push updates end to end** (`tests/push_flow.rs`):
-  - the real `wren-relay` and backend, with Graph simulated;
-  - the subscription request (resource, no resource data);
-  - the validation handshake through the relay;
-  - a change notification leading to a fetch of that chat;
-  - deleting the subscription when push is turned off.
-- Wren's requests against Microsoft's real token endpoint, with an
-  unregistered client ID. Entra parsed them and answered with the expected
-  AADSTS codes, which Wren now explains (single-tenant registrations need the
-  tenant set).
-- Model translation from Graph-shaped JSON.
-- Headless UI frames for every screen, including a 5,000-message
-  conversation, the new-chat, status-message and consent dialogs, switching
-  accounts, and a draft with a mention and an attached file.
-- The macOS app run and screenshotted on macOS 27 (Apple Silicon), including
-  the account menu, the new-chat and status dialogs and the mention
-  suggestions.
-- Signed-in macOS sessions observed during the performance investigation and
-  after restarting the fixed release. The restarted session used 130 MiB
-  physical footprint with 0.0% idle CPU in four samples. This verifies session
-  restoration and a usable signed-in window, not every Graph feature. See
-  [performance measurements](performance.md).
-- Persistent signing on an existing macOS account: after re-signing, the user
-  quit and reopened Wren twice and confirmed that the second launch had no
-  Keychain prompt. See [signing verification](macos-keychain.md#repair-verification-16-october-2026).
-- **Live-account acceptance**, confirmed by the maintainer on 17 October 2026:
-  a fresh sign-in and consent flow, chat and channel reads and writes, file
-  sharing, presence, calendar, account switching, sign-out cleanup, and real
-  push notifications. This was a manual check with a real account.
+**Live-account acceptance**, confirmed by the maintainer on 17 October 2026:
+a fresh sign-in and consent flow, chat and channel reads and writes, file
+sharing, presence, calendar, account switching, sign-out cleanup, and real
+push notifications. This was a manual check with a real account.
 
-Not yet run:
+Remaining checks and known issues:
 
-- Windows and Linux windows. Both compile and pass tests in CI, but nobody
-  has looked at a window there yet.
-- A real call in the Teams web window: the open questions are listed in
-  [call-window.md §7](call-window.md#7-open-questions).
-
-The refreshed documentation screenshots were captured from the native macOS
-demo at 1280 x 800. The Calls view was also checked in both themes at
-760 x 700; its capability table currently clips at that width.
+- Native Windows and Linux windows have not been inspected. Both compile
+  and pass tests in CI.
+- A real call in the Teams web window has not been confirmed. See the
+  [calling open questions](calling.md#open-questions).
+- The Calls capability table clips at 760 × 700, observed in both themes
+  during the macOS demo checks.

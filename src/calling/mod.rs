@@ -7,7 +7,7 @@
 //! itself runs in Teams on the web, by default in a chrome-less Edge or
 //! Chrome window that Wren opens beside itself ([`browser`], [`dock`]), and
 //! Wren follows it as the companion: the call bar, the meeting chat and the
-//! person's presence ([`session`]). See docs/call-window.md.
+//! person's presence ([`session`]). See docs/calling.md.
 
 pub mod browser;
 pub mod dock;

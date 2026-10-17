@@ -60,15 +60,3 @@ and self-hosted runs leave the search list alone. No trust settings are changed.
 
 Apple documents [Keychain tracking and designated requirements](https://developer.apple.com/library/archive/technotes/tn2206/_index.html)
 and [signing identity setup](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html).
-
-## Repair verification, 16 October 2026
-
-The existing MacBook Air installation was re-signed with its installed Apple
-Development identity. Executable code and bundled resources were unchanged.
-Strict signature verification and a native demo launch passed. The user then
-quit and reopened Wren twice and confirmed that the second launch showed no
-Keychain popup.
-
-The signing regression passed on both the MacBook Air and Mac mini. Linux
-formatting, Clippy, all 179 workspace tests, and rustdoc passed, as did
-ShellCheck and workflow validation. Windows was not built or run.

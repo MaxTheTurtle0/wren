@@ -1,115 +1,86 @@
 # Calling and meetings
 
-**Status: calls in a Teams web window, with Wren as the companion.** Wren
-opens calls and meetings in Teams on the web, by default in a chrome-less
-Edge or Chrome window placed beside Wren, and docks itself next to it with
-the meeting chat and a call bar that follows your presence
-([call-window.md](call-window.md)). The call itself runs in Microsoft's own
-client, so it costs nothing extra. Wren has no audio or video of its own and
-shows no incoming calls. This page explains why. Sources are in
-[microsoft-api-research.md §7](microsoft-api-research.md#7-calling).
+Wren opens calls in Microsoft Teams on the web and stays beside them for
+chat and call status. Audio, video, screen sharing and call controls stay in
+Teams. Wren does not show incoming-call alerts or request microphone, camera
+or screen-recording access.
 
-## What Microsoft offers
+The implementation has mock, headless UI and macOS screenshot coverage.
+A real call has not yet been confirmed; see [open questions](#open-questions).
 
-### Microsoft Graph cloud communications: not usable
+## Opening a call
 
-`POST /communications/calls` lists delegated permissions as *Not
-supported*. Every `Calls.*` permission is application-only with admin
-consent, and the API exists for bots that answer or place calls as
-themselves. App-hosted media bots must be written in C# and run on Windows
-Server in Azure. None of it lets a desktop app call **as the signed-in
-person**.
+Select **Call** in a chat, **Join** on a meeting, or paste a Teams meeting
+link in the Calls page. By default, Wren opens an Edge or Chrome app window
+without browser tabs. If neither browser is installed, it uses the default
+browser. The Teams desktop app is an explicit choice in Settings.
 
-### Azure Communication Services (ACS) as a Teams user: possible, with costs
+Settings → Calls and meetings controls:
 
-ACS can act as a Teams user (the "Custom Teams Endpoint").
-
-1. The person signs in to an Entra app with the
-   `https://auth.msft.communication.azure.com/Teams.ManageCalls` (and
-   `Teams.ManageChats`) scopes.
-2. A service exchanges that token for an ACS token with
-   `getTokenForTeamsUser`, against an **ACS resource in Azure**. Microsoft
-   recommends doing this in a backend, because the exchange is authenticated
-   with the resource's key or Entra RBAC.
-3. The ACS Calling SDK then places and receives VoIP and PSTN calls, joins
-   Teams meetings, and runs group calls, as that Teams user.
-
-What it cannot do:
-
-- Join an existing Teams ad-hoc group call after it has started.
-- Run natively on macOS or Linux. The Calling SDK exists for the web
-  (JavaScript), Windows, iOS and Android. It is closed source, with no C or
-  C++ build. The iOS framework has no macOS or Mac Catalyst slice.
-- Run on Windows without packaging, or on Windows on Arm natively. Windows SDK
-  2.0.0 ships only x64 binaries for `net8.0-windows` (WinUI 3, MSIX), with no
-  `.winmd` metadata for non-.NET callers.
-- Run in an embedded webview. Microsoft lists WebView2, CEF and WebKitGTK as
-  unsupported. Electron is supported on macOS and Windows; Chrome, Edge and
-  Safari on macOS; Chrome only on Linux.
-- Run for free. Teams users calling through ACS cost $0.004 per
-  participant-minute, billed to the ACS resource's Azure subscription.
-  Starting calls with Teams users may also need a Teams Phone licence
-  (unverified).
-- Ship without a licence review. The npm Web SDK 2.0.0 allows redistribution
-  with conditions; the Windows 2.0.0 and iOS 3.0.0 licence files say
-  "pre-release" and grant no right to distribute.
-- Last forever without change. On 2026-09-23 Microsoft announced the
-  retirement of ACS as a standalone offering, effective 2028-09-30. The
-  Calling SDK continues "in conjunction with a Microsoft Teams-aligned
-  product", with new major versions.
-
-### Deep links: what Wren does today
-
-| Action | Link |
+| Setting | Behavior |
 |---|---|
-| Call one or more people | `https://teams.microsoft.com/l/call/0/0?users=<upn>,<upn>[&withVideo=true]` (Teams asks to confirm) |
-| Join a meeting | The meeting's `joinUrl` from the calendar or the meeting chat |
-| Open a chat or channel in Teams | Its `webUrl` |
+| Open in | A Teams web app window, the default browser, or the Teams app |
+| Browser | An installed Edge or Chrome; Edge is preferred by default |
+| Move Wren beside the call window during calls | Dock Wren in a 380-point panel and restore its previous geometry afterward; on by default |
+| A separate browser profile for each account | Optional, shown with multiple accounts; off by default |
+| Signing out of Wren also signs the browser out of Microsoft | Optional; off by default |
+| Sign in to Teams on the web | Open Teams once to complete browser sign-in and choose whether to stay signed in |
 
-Wren only opens join links on Teams hosts (`teams.microsoft.com`,
-`teams.live.com`, `teams.cloud.microsoft` and the US government clouds),
-because calendar invitations can carry anyone's links.
+Docking needs a window at least 960 × 400 points. It is unavailable on
+Wayland and beside the Teams desktop app. Browser window placement is a
+request; the browser may choose a different position.
 
-## What is not possible
+## During a call
 
-- A native WebRTC stack talking to Teams directly. The signalling is
-  undocumented, and the API terms forbid working around technical
-  limitations.
-- Incoming-call alerts without ACS. No delegated Graph API reports ringing
-  calls. `callRecords` is application-only and appears after the call ends.
+The call bar offers **Meeting chat**, **Join on phone**, **Dock/Restore**,
+and **Done**. **Show call** activates the browser on macOS. Joining the same
+meeting again brings the current call forward.
 
-## Paths forward
+Wren finds the meeting chat in its cache. If it is missing, **Meeting chat**
+requests `OnlineMeetings.Read` and looks it up through Graph. This permission
+is requested only when needed. Calls started from a chat use that chat.
 
-Calls must cost nothing beyond the Microsoft 365 licence people already have.
-Microsoft's licence covers calls only in its own clients (Teams web, desktop
-and mobile); a third-party client carrying call media is billed through ACS
-per participant-minute. So the call itself stays in a Microsoft client, and
-Wren integrates around it. The comparison and sources are in
-[video-calling-options.md](video-calling-options.md).
+Call status follows your presence on focus and, with a relay, through
+presence change notifications. These trigger ordinary Graph fetches; Wren
+does not poll. After presence leaves a call, a one-minute grace period
+avoids flicker before the window is restored. **Done** restores it at once.
 
-1. **Implemented: Teams on the web beside Wren.** Calls and meetings open
-   in a chrome-less Edge or Chrome window (`--app`), by default; or in the
-   default browser; or, if chosen in Settings, the Teams app. Wren docks
-   itself beside the call window, shows the meeting chat, and follows the
-   call through your own presence (`InACall`, `InAConferenceCall`,
-   `Presenting`, and `InAMeeting` for meetings Wren opened). Wren signs in
-   through the same browser, so Teams on the web finds your Microsoft
-   session. A QR code joins on your phone. Design and limits:
-   [call-window.md](call-window.md).
-2. **Owner decision:** in-call buttons (mute, camera, leave) in Wren through
-   Teams desktop's third-party app API. Free and approved by the person, but
-   its protocol is not published.
-3. **Not pursued:** the ACS Calling SDK (it costs per minute), Teams web in
-   an embedded webview (Teams refuses it, see
-   [video-calling-options.md](video-calling-options.md)), an own WebRTC
-   stack, and drawing call video in egui.
-4. **Watch:** whether Microsoft documents delegated calling in Graph, a
-   native macOS or Linux SDK covered by the Teams licence, or the
-   third-party app API's protocol.
+Calendar-derived `InAMeeting` counts only for meetings Wren opened. It can
+outlast a meeting you leave early; use **Done** if the bar stays visible.
+Calls started elsewhere can also appear when your presence indicates a call.
 
-## Microphone, camera and screen sharing
+## Sign-in and privacy
 
-The browser asks for them, for Teams on the web, as it does for any site.
-Wren itself never touches those devices, so its macOS bundle declares no
-`NSMicrophoneUsageDescription`, `NSCameraUsageDescription` or Screen
-Recording permission.
+Wren opens its Microsoft sign-in in the selected call browser and profile.
+Teams on the web then uses that browser's Microsoft session. Tenant policy
+and multiple signed-in accounts can still require an account picker or a
+new sign-in. Wren never passes its tokens to Teams or reads browser cookies.
+
+Separate browser profiles keep account sessions apart. Optional browser
+sign-out opens Microsoft's logout page, which can sign that browser out of
+other Microsoft sites too.
+
+Only HTTPS links on Teams hosts are opened, using process arguments without
+a shell. Join links and browser command lines are not logged.
+
+## API limits
+
+Graph calling is for bots, with no delegated calling permission. ACS carries
+additional usage charges; Wren keeps media in Microsoft's own clients.
+See the official sources in the [API reference](microsoft-api-research.md#calling).
+
+Wren has no embedded browser engine and uses no undocumented Teams endpoints
+or call-control protocols. Ringing, mute, camera and leave controls belong to
+the Teams client carrying the call.
+
+## Open questions
+
+These still need a real browser, meeting and tenant:
+
+| Check | Current fallback |
+|---|---|
+| Placement with an already-running browser and Windows display scaling | Wren docks itself; browser placement is best effort |
+| Teams' pre-join page and remembered browser choice | Follow Teams' own join prompts |
+| Browser session reuse and creation of missing account profiles | Sign in to Teams on the web; separate profiles are optional |
+| Presence timing when entering or leaving a real call | One-minute grace period and **Done** |
+| Focusing the exact call window | **Show call** activates the browser on macOS |

@@ -45,7 +45,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Teams and channels, threaded posts and replies | ✅ Implemented; reading channel posts needs admin consent |
 | Local full-text search plus Microsoft Search, ⌘K switcher | ✅ Implemented |
 | Calendar, meeting reminders, Join | ✅ Implemented |
-| Calls and meetings | ✅ In Teams on the web, in its own Edge or Chrome window beside Wren, with the meeting chat and a call bar in Wren; free, since the call runs in Microsoft's client ([how](docs/call-window.md)) |
+| Calls and meetings | ✅ In Teams on the web, in its own Edge or Chrome window beside Wren, with the meeting chat and a call bar in Wren; free, since the call runs in Microsoft's client ([how](docs/calling.md)) |
 | Presence, photos | ✅ Implemented |
 | Light, dark and system themes, 8 palettes, keyboard shortcuts, tray, notifications | ✅ Implemented |
 | Offline demo mode | ✅ `wren --demo` |
@@ -55,8 +55,8 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Audio and video inside Wren's own window, incoming calls | ❌ No free official way: Microsoft's licence covers call media only in its own clients ([why](docs/calling.md)) |
 
 The full matrix, including what was verified and how, is in
-[docs/features.md](docs/features.md). The Microsoft API investigation behind
-it, with sources, is in
+[docs/features.md](docs/features.md). API constraints and official references
+are in
 [docs/microsoft-api-research.md](docs/microsoft-api-research.md).
 
 ## Getting started
@@ -132,24 +132,6 @@ fields use the same padded input style.
 The views read state and emit actions, a single reducer applies them, and a
 tokio runtime on its own thread does all network and disk work. Details are in
 [docs/architecture.md](docs/architecture.md).
-
-```
-src/
-  main.rs        window, CLI, single instance, tray, screenshot mode
-  app.rs         state and the action reducer
-  model.rs       Wren's types and actions
-  ui/            views: rail, chat list, teams, conversation, calendar, calls, overlays
-  backend/       tokio runtime: sign-in, Graph calls, cache, sends
-  auth/          Entra ID: PKCE, loopback redirect, device code, refresh-token rotation
-  graph/         Graph client (throttling, retries, token scoping), endpoints, JSON shapes
-  store.rs       SQLite cache with FTS5 search, one database per account
-  sync.rs        when to fetch (never polls)
-  html.rs        Teams HTML in, composer markdown out
-  realtime.rs    push updates through a wren-relay (experimental)
-  calling/       calls in a Teams web window: browsers, docking, call session
-  secrets.rs     refresh tokens in the OS credential store
-relay/           wren-relay: forwards Graph change notifications over WebSocket
-```
 
 Built on [fastframe](https://github.com/crmne/fastframe) (fonts, colour emoji,
 icons, palettes, tray, window shell, single instance, scrolling, logging) and
