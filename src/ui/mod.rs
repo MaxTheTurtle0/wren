@@ -131,7 +131,7 @@ fn docked(app: &mut App, ui: &mut egui::Ui) {
 
 /// Left padding for a header that sits under the macOS traffic lights.
 pub fn header_inset(ctx: &egui::Context, x: f32) -> f32 {
-    (fastframe_macos::traffic_light_inset(ctx) - x).max(0.0)
+    (fastframe_titlebar::footprint(ctx, theme::HEADER_HEIGHT).left - x).max(0.0)
 }
 
 fn sidebar(app: &mut App, ui: &mut egui::Ui) {

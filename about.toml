@@ -146,9 +146,23 @@ path = "../../LICENSE-MIT"
 license = "MIT"
 checksum = "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
 
+[fastframe-desktop.clarify]
+license = "MIT"
+[[fastframe-desktop.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
 [fastframe-emoji.clarify]
 license = "MIT"
 [[fastframe-emoji.clarify.files]]
+path = "../../LICENSE"
+license = "MIT"
+checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
+
+[fastframe-file.clarify]
+license = "MIT"
+[[fastframe-file.clarify.files]]
 path = "../../LICENSE"
 license = "MIT"
 checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
@@ -189,9 +203,9 @@ path = "../../LICENSE"
 license = "MIT"
 checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
 
-[fastframe-macos.clarify]
+[fastframe-titlebar.clarify]
 license = "MIT"
-[[fastframe-macos.clarify.files]]
+[[fastframe-titlebar.clarify.files]]
 path = "../../LICENSE"
 license = "MIT"
 checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
