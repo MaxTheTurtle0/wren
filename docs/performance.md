@@ -1,6 +1,6 @@
 # Performance
 
-Measured on 15 October 2026, after the fixes based on `origin/main` at `ff6ade2`.
+Measured on 15 October 2026, after the fixes based on `origin/main` at `f402485`.
 See the [baseline investigation](performance-investigation-2026-10-15.md) and
 [fixes, comparisons and reproduction details](performance-improvements-2026-10-15.md).
 

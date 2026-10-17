@@ -12,14 +12,14 @@ available as [machine-readable data](performance-data/2026-10-15.json).
 
 ## Builds and machines
 
-- Baseline source: `ff6ade2`.
+- Baseline source: `f402485`.
 - The MacBook Air baseline used the installed release with a signed-in account.
 - MacBook Air: Apple M3, 16 GiB, macOS 27.0.1, Retina scale 2. Its reported
   desktop size was 1470 x 956 points. The real Wren window was 1470 x 923 points.
 - Mac mini: Apple M4, 16 GiB, the same macOS build, 1920 x 1080 display at
   scale 1. The original installed binary was copied into a separate demo bundle
   here to establish the ordinary-app baseline.
-- The diagnostic executable used the source at `ff6ade2`, release optimizations,
+- The diagnostic executable used the source at `f402485`, release optimizations,
   the existing glow renderer, real Wren views, and offline demo state. Its native
   window was 1280 x 800 points. It does not include the normal tray/window shell.
 

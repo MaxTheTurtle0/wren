@@ -3,8 +3,8 @@
 These changes address the retained image memory and repeated rendering found in
 [the baseline investigation](performance-investigation-2026-10-15.md). They also
 remove the full-history scan from ordinary frames and defer large script fonts
-until visible text needs them. The baseline was `origin/main` at `ff6ade2`; implementation commit is
-`cb6aae8`.
+until visible text needs them. The baseline was `origin/main` at `f402485`; implementation commit is
+`81d0b83`.
 The repository has `main`, not `master`; origin was checked again before the
 final measurements.
 

@@ -1,6 +1,6 @@
 {
   "date": "2026-10-15",
-  "baseline_source_commit": "ff6ade2",
+  "baseline_source_commit": "f402485",
   "platforms": {
     "mini": {
       "after-4k5-native": {
@@ -678,15 +678,15 @@
     "The original signed-in Air process and installed app were preserved.",
     "The final image-loader validation repeated 20 images at 88 MiB; the initial fixed run was 86 MiB. Cache counters were identical."
   ],
-  "fixed_source_commit": "cb6aae884611936e768ab459549d524345ce6bad",
+  "fixed_source_commit": "81d0b83b8275a45acb0590f38756f287aeed6036",
   "final_macos_release": {
     "offline_smoke_first_ui_ms": 455,
     "installed_over_existing_app": false
   },
   "deployment_2026_10_16": {
     "host": "MacBook Air M3",
-    "implementation_commit": "cb6aae8",
-    "source_head_at_install": "0a507e1",
+    "implementation_commit": "81d0b83",
+    "source_head_at_install": "7e9c6ba",
     "tested_executable_matches_after_removing_signatures": true,
     "strict_signature_verification": true,
     "restarted_real_session": true,
