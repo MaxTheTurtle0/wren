@@ -3,9 +3,8 @@
 Status as of Wren 0.1 (unreleased).
 
 - **Works**: implemented against Microsoft Graph, unit-tested against a mock
-  Graph server and drawn in the headless UI tests. This does not imply live
-  acceptance of every feature. Signed-in macOS sessions have been used for
-  performance and Keychain checks; the verified scope is listed below.
+  Graph server and drawn in the headless UI tests. Automated coverage and
+  maintainer-confirmed live-account acceptance are listed below.
 - **Demo only**: drawn and interactive with sample data, with no Graph
   integration yet.
 - **Hand-off**: opens Microsoft Teams through documented deep links.
@@ -71,7 +70,7 @@ Status as of Wren 0.1 (unreleased).
 | Multiple accounts | Works | Add from the account menu or Settings; ⌘⇧A switches. Each account has its own backend, cache, credentials and push connection. Unread chats in other accounts show as a dot on your picture; their notifications still arrive. Signing in to an account twice keeps one |
 | Light, dark, system theme, 8 shared palettes | Works | fastframe-theme presets |
 | Keyboard shortcuts, ⌘K switcher | Works | ⌘/ lists them |
-| Tray / menu-bar item, keep running | Works | Off by default (no push yet) |
+| Tray / menu-bar item, keep running | Works | Off by default; with a self-hosted relay, push notifications continue while the window is closed |
 | Desktop notifications | Works | notify-rust |
 | Single running instance | Works | fastframe-instance |
 | Demo mode | Works | `wren --demo`, or "Explore the demo" on the welcome screen |
@@ -143,15 +142,13 @@ Tested and run:
 - Persistent signing on an existing macOS account: after re-signing, the user
   quit and reopened Wren twice and confirmed that the second launch had no
   Keychain prompt. See [signing verification](macos-keychain.md#repair-verification-16-october-2026).
+- **Live-account acceptance**, confirmed by the maintainer on 17 October 2026:
+  a fresh sign-in and consent flow, chat and channel reads and writes, file
+  sharing, presence, calendar, account switching, sign-out cleanup, and real
+  push notifications. This was a manual check with a real account.
 
 Not yet run:
 
-- Full live-account acceptance: a fresh sign-in and consent flow, chat and
-  channel reads and writes, file sharing, presence, calendar, account switching,
-  sign-out cleanup, and real push notifications. Existing signed-in sessions
-  do not establish coverage of these workflows. Tests need an Entra app
-  registration and, in most tenants, admin consent
-  ([azure-app-registration.md](azure-app-registration.md)).
 - Windows and Linux windows. Both compile and pass tests in CI, but nobody
   has looked at a window there yet.
 - A real call in the Teams web window: the open questions are listed in

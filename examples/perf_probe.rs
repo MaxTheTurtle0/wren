@@ -1,4 +1,4 @@
-//! Offline performance workloads. See docs/performance-investigation-2026-10-15.md.
+//! Offline performance workloads. See docs/performance.md.
 //! This executable uses demo data and never reads credentials or contacts Graph.
 
 use std::io::{BufWriter, Write};

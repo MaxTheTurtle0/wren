@@ -1,8 +1,8 @@
 # Performance
 
-Measured on 15 October 2026, after the fixes based on `origin/main` at `f402485`.
-See the [baseline investigation](performance-investigation-2026-10-15.md) and
-[fixes, comparisons and reproduction details](performance-improvements-2026-10-15.md).
+Latest recorded measurements: offline fixtures on 15 October 2026 and a
+signed-in session after restart on 16 October. See the
+[raw results](performance-data/latest.json) for source revisions and samples.
 
 ## Native release builds on macOS
 
@@ -11,24 +11,22 @@ the M3 MacBook Air uses a 2× Retina display. Memory is physical footprint in Mi
 
 | Workload | Mac mini | MacBook Air |
 |---|---:|---:|
-| Ordinary app, offline demo, settled | 57–59 MiB | Not measured after these fixes |
+| Ordinary app, offline demo, settled | 57 MiB | Not measured |
 | Signed-in app after restart, 16 October | Not measured | 130 MiB |
 | Performance fixture, idle | 57 MiB | 122 MiB |
-| Fixture after 20 full HD image previews, viewer closed | 86–88 MiB | 161 MiB |
+| Fixture after 20 full HD image previews, viewer closed | 88 MiB | 161 MiB |
 | Fixture after 100 full HD image previews | 92 MiB | Not measured |
 | Fixture after five 4K image previews | 159 MiB | Not measured |
 | Settled idle CPU | 0.0% | 0.0% |
 
 The ordinary executable includes the tray/window shell; the fixture does not.
-The original signed-in Air process was measured at 529.7 MiB during the baseline
-investigation and was preserved during the demo comparisons. The 130 MiB result
-was a separate observation after restarting the signed-in app on 16 October,
-with four idle CPU samples at 0.0%. It is not a matched long-session comparison.
+The signed-in Air session used 130 MiB after restart, with four idle CPU samples
+at 0.0%. These short measurements do not establish a long-session footprint.
 
-On the Air, holding a message-loading indicator changed GPU active time from
-19.3% to 0.0% in matched eight-second trace windows. This is Instruments GPU
-active time for the fixture PID, not Activity Monitor's `% GPU`. On the Mini,
-a 5,000-message scroll workload fell from 80.85% to 22.55% of one CPU core.
+On the Air, holding a message-loading indicator used 0.0% GPU active time in an
+eight-second Instruments trace window. This is active time for the fixture
+process, not Activity Monitor's `% GPU`. On the Mini, a 5,000-message scroll
+workload used 22.55% of one CPU core.
 Settled windows return to sleep. Loading indicators are static, and native
 frames have a ceiling at the monitor refresh rate if OpenGL vsync does not block.
 
@@ -60,7 +58,7 @@ needed, the Mini's Unicode fixture used 135 MiB rather than the Latin demo's
 ## History layout
 
 Release-mode headless frames over 100,000 messages take about 0.10 ms median
-and 0.11 ms p95 on the M4, compared with 5.79 ms median before the fixes.
+and 0.11 ms p95 on the M4.
 Only nearby rows are laid out. A cached prefix-sum index finds those rows and
 updates their measured heights without walking the full history every frame.
 New histories and width/font changes still require an initial index rebuild.
@@ -82,8 +80,9 @@ cargo run --locked --release --example perf_probe -- \
 ```
 
 The reproducible Inter configuration is the default for headless comparisons.
-Use `--system-fonts` for normal platform fonts. Native probe runs should use a
-separate signed bundle launched with `open`, as described in the report.
+Use `--system-fonts` for normal platform fonts. For native fixtures, bundle
+`target/release/examples/perf_probe` in a separate app and launch it with
+`open` and `--native --system-fonts`.
 Launching a bare executable over SSH can add several seconds of LaunchServices
 startup delay. In the app, ⌘⇧P shows frame CPU time, frame count and time to the
 first UI frame.

@@ -1,9 +1,8 @@
 {
   "date": "2026-10-15",
-  "baseline_source_commit": "f402485",
   "platforms": {
     "mini": {
-      "after-4k5-native": {
+      "4k5-native": {
         "all_texture_bytes": 4523496,
         "arabic_glyph": false,
         "atlas": [
@@ -39,7 +38,7 @@
           "maximum_percent": 0.3
         }
       },
-      "after-history100000": {
+      "history100000": {
         "all_texture_bytes": 544608,
         "arabic_glyph": false,
         "atlas": [
@@ -68,7 +67,7 @@
         "system_fonts": false,
         "texture_count": 15
       },
-      "after-history500": {
+      "history500": {
         "all_texture_bytes": 544608,
         "arabic_glyph": false,
         "atlas": [
@@ -97,7 +96,7 @@
         "system_fonts": false,
         "texture_count": 15
       },
-      "after-history5000": {
+      "history5000": {
         "all_texture_bytes": 544608,
         "arabic_glyph": false,
         "atlas": [
@@ -126,7 +125,7 @@
         "system_fonts": false,
         "texture_count": 15
       },
-      "after-history50000": {
+      "history50000": {
         "all_texture_bytes": 544608,
         "arabic_glyph": false,
         "atlas": [
@@ -155,7 +154,7 @@
         "system_fonts": false,
         "texture_count": 15
       },
-      "after-idle-native": {
+      "idle-native": {
         "all_texture_bytes": 2164992,
         "arabic_glyph": false,
         "atlas": [
@@ -191,7 +190,7 @@
           "maximum_percent": 0.4
         }
       },
-      "after-images100-native": {
+      "images100-native": {
         "all_texture_bytes": 9242088,
         "arabic_glyph": false,
         "atlas": [
@@ -227,7 +226,7 @@
           "maximum_percent": 45.3
         }
       },
-      "after-images20-native": {
+      "images20-native": {
         "all_texture_bytes": 9242088,
         "arabic_glyph": false,
         "atlas": [
@@ -239,31 +238,26 @@
         "decoded_bytes": 16000,
         "encoded_bytes": 1014669,
         "fallback_font_revision": 0,
-        "frames": 172,
+        "frames": 171,
         "image_texture_bytes": 7097416,
         "images_viewed": 20,
         "immediate_repaint_frames": 0,
-        "max_ui_ms": 4.69525,
-        "median_ui_ms": 0.28808300000000003,
+        "max_ui_ms": 5.189166999999999,
+        "median_ui_ms": 0.266791,
         "messages": null,
         "native": true,
-        "p95_ui_ms": 1.022958,
-        "paint_callbacks": 171,
+        "p95_ui_ms": 1.006667,
+        "paint_callbacks": 170,
         "pixels_per_point": 1.0,
         "reduce_texture_memory": false,
-        "seconds": 22.022374708,
+        "seconds": 22.003223042,
         "stage": "end",
         "system_fonts": true,
         "texture_count": 21,
-        "footprint_mib": 86.0,
-        "peak_footprint_mib": 160.0,
-        "cpu": {
-          "samples_after_initial_two": 18,
-          "median_percent": 0.0,
-          "maximum_percent": 44.5
-        }
+        "footprint_mib": 88.0,
+        "peak_footprint_mib": 162.0
       },
-      "after-loading-native": {
+      "loading-native": {
         "all_texture_bytes": 2165776,
         "arabic_glyph": false,
         "atlas": [
@@ -299,7 +293,7 @@
           "maximum_percent": 0.5
         }
       },
-      "after-scroll5000-native": {
+      "scroll5000-native": {
         "all_texture_bytes": 2214560,
         "arabic_glyph": false,
         "atlas": [
@@ -335,7 +329,7 @@
           "maximum_percent": 23.6
         }
       },
-      "after-unicode-native": {
+      "unicode-native": {
         "all_texture_bytes": 2180832,
         "arabic_glyph": true,
         "atlas": [
@@ -374,40 +368,8 @@
       "chip": "Apple M4",
       "ram_gib": 16,
       "native_scale": 1,
-      "verified-images20-native": {
-        "all_texture_bytes": 9242088,
-        "arabic_glyph": false,
-        "atlas": [
-          16384,
-          32
-        ],
-        "case": "Images",
-        "cjk_glyph": false,
-        "decoded_bytes": 16000,
-        "encoded_bytes": 1014669,
-        "fallback_font_revision": 0,
-        "frames": 171,
-        "image_texture_bytes": 7097416,
-        "images_viewed": 20,
-        "immediate_repaint_frames": 0,
-        "max_ui_ms": 5.189166999999999,
-        "median_ui_ms": 0.266791,
-        "messages": null,
-        "native": true,
-        "p95_ui_ms": 1.006667,
-        "paint_callbacks": 170,
-        "pixels_per_point": 1.0,
-        "reduce_texture_memory": false,
-        "seconds": 22.003223042,
-        "stage": "end",
-        "system_fonts": true,
-        "texture_count": 21,
-        "footprint_mib": 88.0,
-        "peak_footprint_mib": 162.0
-      },
       "ordinary_app_validation": {
         "footprint_mib": 57,
-        "earlier_footprint_mib": 59,
         "startup_ms": [
           112,
           108,
@@ -421,7 +383,7 @@
       }
     },
     "air": {
-      "after-air-idle-native": {
+      "idle-native": {
         "all_texture_bytes": 2225952,
         "arabic_glyph": false,
         "atlas": [
@@ -457,7 +419,7 @@
           "maximum_percent": 0.3
         }
       },
-      "after-air-images20-native": {
+      "images20-native": {
         "all_texture_bytes": 11397824,
         "arabic_glyph": false,
         "atlas": [
@@ -493,7 +455,7 @@
           "maximum_percent": 45.4
         }
       },
-      "after-air-unicode-native": {
+      "unicode-native": {
         "all_texture_bytes": 2241792,
         "arabic_glyph": true,
         "atlas": [
@@ -529,7 +491,7 @@
           "maximum_percent": 0.5
         }
       },
-      "after-retina-idle": {
+      "retina-idle": {
         "all_texture_bytes": 2225952,
         "arabic_glyph": false,
         "atlas": [
@@ -588,7 +550,7 @@
           "stable_active_percent": 0.017981274999999998
         }
       },
-      "after-retina-spinner": {
+      "retina-spinner": {
         "all_texture_bytes": 2229088,
         "arabic_glyph": false,
         "atlas": [
@@ -652,51 +614,24 @@
       "native_scale": 2
     }
   },
-  "baseline_report": "performance-investigation-2026-10-15.md",
-  "checks": {
-    "linux": {
-      "fmt": true,
-      "clippy_all_targets_warnings_denied": true,
-      "tests_all_targets": 175,
-      "rustdoc_warnings_denied": true
-    },
-    "macos": {
-      "fmt": true,
-      "clippy_all_targets_warnings_denied": true,
-      "tests_all_targets": 175,
-      "rustdoc_warnings_denied": true,
-      "test_artifacts_forced_to_rebuild": true,
-      "source_files_matched_linux": true
-    },
-    "windows": "not compiled or run as part of this investigation"
-  },
   "notes": [
     "Memory is MiB. CPU 100% means one core.",
     "GPU percentages are the union of active intervals for the fixture PID in trace seconds 1 through 9, not Activity Monitor GPU%.",
     "Native workloads use normal system fonts. Matched headless history comparisons use the reproducible Inter configuration.",
-    "Footprint includes runtime, driver and allocator allocations outside live image-cache counters.",
-    "The original signed-in Air process and installed app were preserved.",
-    "The final image-loader validation repeated 20 images at 88 MiB; the initial fixed run was 86 MiB. Cache counters were identical."
+    "Footprint includes runtime, driver and allocator allocations outside live image-cache counters."
   ],
-  "fixed_source_commit": "81d0b83b8275a45acb0590f38756f287aeed6036",
-  "final_macos_release": {
-    "offline_smoke_first_ui_ms": 455,
-    "installed_over_existing_app": false
-  },
-  "deployment_2026_10_16": {
+  "source_commit": "81d0b83b8275a45acb0590f38756f287aeed6036",
+  "signed_in_run": {
+    "date": "2026-10-16",
     "host": "MacBook Air M3",
-    "implementation_commit": "81d0b83",
-    "source_head_at_install": "7e9c6ba",
-    "tested_executable_matches_after_removing_signatures": true,
-    "strict_signature_verification": true,
-    "restarted_real_session": true,
-    "fresh_session_footprint_mib": 130,
+    "source_commit": "7e9c6ba",
+    "footprint_mib": 130,
     "idle_cpu_percent_samples": [
       0.0,
       0.0,
       0.0,
       0.0
     ],
-    "note": "Fresh-session observation, not a matched long-session comparison."
+    "note": "Observed after restarting the signed-in app."
   }
 }

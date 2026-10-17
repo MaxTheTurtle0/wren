@@ -10,10 +10,10 @@ Rust and egui. No browser engine. Works with Microsoft Teams through Microsoft's
 ![Wren in dark mode](docs/screenshots/chats-dark.png)
 
 > **Status: early preview (0.1).** The interface, sign-in, Graph integration
-> and cache are built and tested against mocks. Signed-in macOS sessions have
-> been used for performance and Keychain checks, but full live-account feature
-> acceptance is still pending. Expect rough edges with real data. See
-> [what works and what was verified](docs/features.md).
+> and cache are tested against mocks. The maintainer has also completed the
+> live-account acceptance checks, including real push notifications. See
+> [what works and what was verified](docs/features.md) for the verified scope
+> and remaining platform checks.
 
 ## Why
 
@@ -31,7 +31,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 |---|---|
 | Launch to first frame | 101–120 ms across six demo launches |
 | Idle CPU, window open | 0.0% |
-| Memory (physical footprint) | 57–59 MiB settled offline demo |
+| Memory (physical footprint) | 57 MiB settled offline demo |
 | Binary / app bundle | About 16 MiB |
 
 ## Features

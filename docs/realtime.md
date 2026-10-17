@@ -49,8 +49,9 @@ What this means in practice:
 ## With a relay: push updates (experimental)
 
 **Status:** implemented and tested end to end against a local relay and a
-simulated Graph (`tests/push_flow.rs`). It has **not yet been run against a
-live tenant**.
+simulated Graph (`tests/push_flow.rs`). The maintainer confirmed real push
+notifications during live-account acceptance on 17 October 2026. See the
+[verification record](features.md#verification). Push remains experimental.
 
 How it works:
 
