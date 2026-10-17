@@ -47,7 +47,7 @@ resvg = { version = "0.45", default-features = false }
 # same tag ZapFast builds with. Every crate comes from the same revision.
 # Interface font (the platform's own, Inter where there is none) and installed
 # fonts for other scripts.
-fastframe-fonts = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
+fastframe-fonts = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Follows the desktop's hinting and glyph coverage.
 fastframe-text = { git = "https://github.com/crmne/fastframe", tag = "v0.4.1" }
 # The icons! table, a loader that survives reduce_texture_memory, Lucide icons.
