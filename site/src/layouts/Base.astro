@@ -1,8 +1,7 @@
 ---
-import "@fontsource/instrument-serif/400.css";
-import "@fontsource/instrument-serif/400-italic.css";
-import "@fontsource-variable/hanken-grotesk";
-import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/schibsted-grotesk";
+import "@fontsource/ibm-plex-mono/400.css";
+import "@fontsource/ibm-plex-mono/500.css";
 import "../styles/global.css";
 
 interface Props {
@@ -20,8 +19,8 @@ const { title, description } = Astro.props;
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f3eee4" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#11100e" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#17181b" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/wren-256.png" />
     <meta property="og:title" content={title} />
