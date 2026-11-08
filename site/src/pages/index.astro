@@ -1,0 +1,1316 @@
+---
+import Base from "../layouts/Base.astro";
+
+const repo = "https://github.com/MaxTheTurtle0/wren";
+const blob = `${repo}/blob/main`;
+
+// Every fact on this page comes from the repository's README.md and docs/.
+const marks = [
+  { value: "101–120", unit: "ms", label: "Launch to first frame", note: "across six demo launches" },
+  { value: "0.0", unit: "%", label: "Idle CPU, window open", note: "draws only when something changes" },
+  { value: "57", unit: "MiB", label: "Memory", note: "physical footprint, settled offline demo" },
+  { value: "≈16", unit: "MiB", label: "Binary / app bundle", note: "one small binary" },
+];
+
+const features = [
+  {
+    title: "Chats",
+    body: "List, unread, history, send, quote replies, reactions, edit, delete and mark read. Start new chats, @mention people from the composer, and send files through OneDrive upload and sharing.",
+  },
+  {
+    title: "Rich text, rendered natively",
+    body: "Mentions, emoji, links, code and inline images, drawn from Teams HTML without a browser engine. Images in chats and drafts open in the same full preview, with fit and 100% views.",
+  },
+  {
+    title: "Teams and channels",
+    body: "Threaded posts and replies. Reading channel posts needs admin consent in your tenant.",
+  },
+  {
+    title: "Search everything",
+    body: "Local full-text search plus Microsoft Search, and a ⌘K switcher to jump anywhere.",
+  },
+  {
+    title: "Calendar and meetings",
+    body: "Your calendar, meeting reminders and Join. Calls run in Teams on the web in their own Edge or Chrome window beside Wren, with the meeting chat and a call bar in Wren.",
+  },
+  {
+    title: "Presence and accounts",
+    body: "Presence and photos, multiple accounts, and setting your availability and status message.",
+  },
+  {
+    title: "Made to fit",
+    body: "Light, dark and system themes, 8 palettes, keyboard shortcuts, a tray icon and notifications.",
+  },
+  {
+    title: "Real-time, by the rules",
+    body: "Refreshes on open, focus and refresh, never in a loop. Optional push through a wren-relay you host yourself (experimental), since Microsoft forbids polling.",
+  },
+  {
+    title: "Updates",
+    body: "Daily checks and verified downloads from GitHub releases. Restart when you are ready.",
+  },
+];
+
+const keys = [
+  ["⌘K", "jump anywhere or search messages"],
+  ["⌘N", "new chat"],
+  ["⌘1–4", "sections"],
+  ["Alt ↑/↓", "previous or next conversation"],
+  ["⌘⇧A", "next account"],
+  ["↑", "edit last message"],
+  ["⌘R", "refresh"],
+  ["⌘/", "all shortcuts"],
+];
+---
+
+<Base
+  title="Wren · a native client for Microsoft Teams"
+  description="A fast, native client for Microsoft Teams chats, channels and meetings. Rust and egui, official Microsoft Graph APIs only."
+>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top">
+    <div class="wrap top-in">
+      <a class="brand" href="/" aria-label="Wren home">
+        <img src="/wren-256.png" width="34" height="34" alt="" />
+        <span>Wren</span>
+      </a>
+      <nav aria-label="Sections">
+        <a href="#features">Features</a>
+        <a href="#marks">Field marks</a>
+        <a href="#install">Install</a>
+        <a href={repo} class="nav-gh">GitHub</a>
+      </nav>
+      <button class="theme" type="button" aria-label="Toggle colour theme" title="Toggle colour theme">
+        <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow load" style="--d:0.05s">Plate 0.1 · Early preview · Open source, MIT</p>
+          <h1 class="load" style="--d:0.15s">
+            A fast, <em>native</em> client for Microsoft&nbsp;Teams chats, channels and meetings.
+          </h1>
+          <p class="lede load" style="--d:0.3s">
+            Rust and egui. No browser engine. Official Microsoft Graph APIs only, with delegated
+            permissions. Works with Microsoft Teams; not made by Microsoft.
+          </p>
+          <div class="ctas load" style="--d:0.45s">
+            <a class="btn primary" href={repo}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"></path></svg>
+              View on GitHub
+            </a>
+            <a class="btn ghost" href="#install">Try the demo <span aria-hidden="true">↓</span></a>
+          </div>
+          <p class="platforms load" style="--d:0.6s">
+            <span>macOS</span><span>Linux</span><span>Windows</span>
+          </p>
+        </div>
+
+        <figure class="plate load" style="--d:0.25s" aria-label="The Wren icon, annotated with what makes the app small">
+          <div class="plate-frame">
+            <span class="plate-no">Fig. 1</span>
+            <svg class="plate-art" viewBox="0 0 100 80" role="img" aria-label="Wren, the bird">
+              <g class="bird" transform="translate(4.9 10.1) scale(1.1)">
+                <path d="m32.14 24.14c0.08-0.04 0.08-0.15-0.03-0.19-0.86-0.39-1.9-1.34-3-2.53-4.55-4.85-8.73-10.23-9.87-10.23-0.31 0-0.38 0.24-0.38 0.56 0 2.76 5.69 13.02 7.72 15.76 0.04 0.06 0.12 0.07 0.17 0.03 1.68-1.23 3.63-2.45 5.39-3.4z"></path>
+                <path d="m48.32 24.41c0-0.73-0.81-1.09-3.23-1.09-8.95 0-19.73 6.15-23.37 11.3-0.11 0.14-0.01 0.22 0.17 0.2 2.54-0.6 4.89-0.78 7.49-0.78h2.84c11.46 0 16.1-7.58 16.1-9.63z"></path>
+                <path d="m62.23 14.15h-4.48c-1.56-1.48-3.36-2.41-5.83-2.41-3.09 0-5.64 1.8-8.02 3.91-2.79 2.54-5.78 5.49-8.19 7.36-0.14 0.11-0.06 0.21 0.13 0.19 2.96-0.63 6.27-1.11 8.86-1.11 4.04 0 6.09 0.7 5.95 1.93-0.77 5.06-7.67 11.97-17.4 11.97-0.62 0-1.21-0.02-1.64-0.02-0.17 0-0.17 0.12-0.06 0.24 0.6 0.54 1.53 1.2 2.13 1.66l8.86 7.92c0.06 0.04 0.13 0.05 0.2 0.05h1.77c0.09 0 0.1-0.08 0.03-0.15l-7.2-6.81c0.55 0.07 1.18 0.11 1.81 0.11 7.48 0 14.28-5.14 15.76-13.91 0.57-3.42 1.47-6.35 3.06-8.17 1.18-1.03 3.24-1.86 4.45-2.3 0.37-0.14 0.19-0.46-0.19-0.46zm-9.29 3.01c-0.72 0-1.27-0.55-1.27-1.27 0-0.71 0.55-1.24 1.27-1.24 0.7 0 1.29 0.53 1.29 1.24 0 0.72-0.59 1.27-1.29 1.27z"></path>
+              </g>
+              <g class="leaders">
+                <path d="M63.1 27.2 L76 12 L98 12"></path>
+                <path d="M27.5 24 L16 12 L2 12"></path>
+                <path d="M47 42 L22 60 L2 60"></path>
+                <path d="M53.5 60.5 L68 70 L98 70"></path>
+              </g>
+              <g class="dots">
+                <circle cx="63.1" cy="27.2" r="1"></circle>
+                <circle cx="27.5" cy="24" r="1"></circle>
+                <circle cx="47" cy="42" r="1"></circle>
+                <circle cx="53.5" cy="60.5" r="1"></circle>
+              </g>
+            </svg>
+            <span class="note n1"><b>a.</b> Every view served from a local cache first</span>
+            <span class="note n2"><b>b.</b> One small binary</span>
+            <span class="note n3"><b>c.</b> A window that draws only when something changes</span>
+            <span class="note n4"><b>d.</b> Bounded image caches</span>
+          </div>
+          <figcaption>
+            <i>Wren</i>, a purpose-built native messaging client, in the spirit of{" "}
+            <a href="https://github.com/crmne/spotifast">Spotifast</a> and{" "}
+            <a href="https://github.com/crmne/zapfast">ZapFast</a>.
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="wrap">
+        <figure class="window reveal">
+          <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i><span>wren --demo</span></div>
+          <picture>
+            <source srcset="/shots/chats-dark.png" media="(prefers-color-scheme: dark)" data-dark />
+            <img
+              class="shot"
+              src="/shots/chats-light.png"
+              data-light="/shots/chats-light.png"
+              data-darksrc="/shots/chats-dark.png"
+              width="1280"
+              height="800"
+              alt="Wren's chat view with a conversation open, from the offline demo"
+              fetchpriority="high"
+            />
+          </picture>
+        </figure>
+      </div>
+    </section>
+
+    <!-- FIELD MARKS -->
+    <section id="marks" class="marks">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <p class="eyebrow">§ 1 · Field marks</p>
+          <h2>How to recognise it: <em>it is small, and it sits still.</em></h2>
+          <p class="sec-note">
+            Microsoft's Teams client is a large web application. Wren is one native binary.
+            Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data.{" "}
+            <a href={`${blob}/docs/performance.md`}>Details and method</a>.
+          </p>
+        </div>
+        <dl class="mark-grid">
+          {
+            marks.map((m, i) => (
+              <div class="mark reveal" style={`--d:${i * 0.08}s`}>
+                <dt>{m.label}</dt>
+                <dd>
+                  <span class="num">{m.value}</span>
+                  <span class="unit">{m.unit}</span>
+                </dd>
+                <dd class="mark-note">{m.note}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features" class="features">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <p class="eyebrow">§ 2 · Habits</p>
+          <h2>Everything you open Teams for, <em>without the weight.</em></h2>
+          <p class="sec-note">
+            The full matrix, including what was verified and how, is in{" "}
+            <a href={`${blob}/docs/features.md`}>docs/features.md</a>.
+          </p>
+        </div>
+        <ol class="feat-grid">
+          {
+            features.map((f, i) => (
+              <li class="feat reveal" style={`--d:${(i % 3) * 0.07}s`}>
+                <span class="feat-no">{String(i + 1).padStart(2, "0")}</span>
+                <h3>{f.title}</h3>
+                <p>{f.body}</p>
+              </li>
+            ))
+          }
+        </ol>
+
+        <div class="gallery">
+          <figure class="reveal">
+            <img src="/shots/channel-dark.png" width="1280" height="800" loading="lazy" alt="A channel with threaded replies" />
+            <figcaption>Fig. 2 · A channel with threaded replies</figcaption>
+          </figure>
+          <figure class="reveal" style="--d:0.1s">
+            <img src="/shots/calendar-light.png" width="1280" height="800" loading="lazy" alt="The calendar in light mode" />
+            <figcaption>Fig. 3 · The calendar, light mode</figcaption>
+          </figure>
+          <figure class="reveal" style="--d:0.2s">
+            <img src="/shots/calls-dark.png" width="1280" height="800" loading="lazy" alt="The Calls page" />
+            <figcaption>Fig. 4 · Calls open in Teams on the web, beside Wren</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRINCIPLES / LIMITS -->
+    <section class="limits">
+      <div class="wrap limits-grid">
+        <div class="reveal">
+          <p class="eyebrow">§ 3 · Temperament</p>
+          <h2>Polite to your tenant. <em>Honest about the rest.</em></h2>
+        </div>
+        <div class="ledger">
+          <div class="ledger-col reveal">
+            <h3><span class="tick ok" aria-hidden="true">✓</span> What it does</h3>
+            <ul>
+              <li><b>Official APIs only.</b> Microsoft Graph with delegated permissions, Entra ID sign-in with PKCE.</li>
+              <li><b>No telemetry, no Wren server.</b> It talks to Microsoft sign-in and Graph, plus GitHub for update checks.</li>
+              <li><b>Your password never reaches Wren.</b> You sign in on Microsoft's page in your browser.</li>
+              <li><b>Tokens in the OS credential store</b>: Keychain, Windows Credential Manager or Secret Service. Never in files.</li>
+              <li><b>Messages cached only on your computer.</b> Signing out deletes them.</li>
+            </ul>
+          </div>
+          <div class="ledger-col reveal" style="--d:0.1s">
+            <h3><span class="tick no" aria-hidden="true">✕</span> What it won't do</h3>
+            <ul>
+              <li><b>No audio or video in its own window, no incoming calls.</b> Microsoft's licence covers call media only in its own clients, so calls open in Teams on the web.</li>
+              <li><b>No polling.</b> Microsoft's terms forbid it. Wren refreshes when you look; push needs a relay you run yourself.</li>
+              <li><b>No personal accounts or Teams (free).</b> Graph's Teams APIs serve work and school accounts only.</li>
+              <li><b>Expect an admin.</b> Most tenants need an administrator to approve Wren's permissions.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTALL -->
+    <section id="install" class="install">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <p class="eyebrow">§ 4 · Getting started</p>
+          <h2>Watch it in the wild, <em>in under a minute.</em></h2>
+          <p class="sec-note">
+            Wren is an early preview (0.1). No release has been published yet, so for now you build it from source.
+          </p>
+        </div>
+
+        <div class="steps">
+          <article class="step reveal">
+            <span class="step-no">i.</span>
+            <h3>Try the demo</h3>
+            <p>No account needed. Offline demo data, the full interface.</p>
+            <div class="code">
+              <pre><code><span class="p">$</span> git clone https://github.com/MaxTheTurtle0/wren && cd wren
+<span class="p">$</span> cargo run --release -- --demo</code></pre>
+              <button class="copy" type="button" data-copy="git clone https://github.com/MaxTheTurtle0/wren && cd wren
+cargo run --release -- --demo">Copy</button>
+            </div>
+            <p class="small">
+              Linux needs <code>libxkbcommon-dev libwayland-dev libgl1-mesa-dev</code> (Debian and Ubuntu package names) to build.
+            </p>
+          </article>
+
+          <article class="step reveal" style="--d:0.08s">
+            <span class="step-no">ii.</span>
+            <h3>Use it with Microsoft 365</h3>
+            <ol class="numbered">
+              <li>
+                Register the app in your organisation's Entra ID. About five minutes, no secrets:{" "}
+                <a href={`${blob}/docs/azure-app-registration.md`}>the guide</a>.
+              </li>
+              <li>
+                Start Wren, enter the <b>Application (client) ID</b> and your <b>tenant</b>, then select{" "}
+                <b>Sign in with Microsoft</b>. Or set <code>WREN_CLIENT_ID</code> and <code>WREN_TENANT</code>.
+              </li>
+              <li>
+                In most tenants an administrator approves <code>Chat.ReadWrite</code> and <code>Calendars.Read</code>,
+                and <code>ChannelMessage.Read.All</code> for channel posts.{" "}
+                <a href={`${blob}/docs/permissions.md`}>Each permission, explained</a>.
+              </li>
+            </ol>
+          </article>
+
+          <article class="step reveal" style="--d:0.16s">
+            <span class="step-no">iii.</span>
+            <h3>Build packages</h3>
+            <dl class="pkg">
+              <div>
+                <dt>macOS</dt>
+                <dd><code>cargo build --release && packaging/macos/bundle.sh target/release/wren Wren.app 0.1.0</code><small>Set a persistent <code>CODESIGN_IDENTITY</code> first so Keychain approval survives updates.</small></dd>
+              </div>
+              <div>
+                <dt>Linux</dt>
+                <dd><code>cargo build --release && packaging/linux/install.sh</code><small>Installs to <code>~/.local</code>.</small></dd>
+              </div>
+              <div>
+                <dt>Windows</dt>
+                <dd><code>cargo build --release</code><small>Icon and version embedded by <code>build.rs</code>.</small></dd>
+              </div>
+            </dl>
+            <p class="small">
+              Checked natively on macOS (Apple Silicon). Windows and Linux compile and pass tests in CI; their native
+              windows have not been inspected yet.
+            </p>
+          </article>
+        </div>
+
+        <div class="keys reveal">
+          <p class="eyebrow">Keyboard · <span class="lower">⌘ is Ctrl on Windows and Linux</span></p>
+          <ul>
+            {keys.map(([k, v]) => (<li><kbd>{k}</kbd><span>{v}</span></li>))}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta">
+      <div class="wrap cta-in reveal">
+        <img src="/wren-256.png" width="96" height="96" alt="" loading="lazy" />
+        <h2>Small, quick, <em>and quiet.</em></h2>
+        <p>Read the source, open an issue, or build it tonight.</p>
+        <div class="ctas center">
+          <a class="btn primary" href={repo}>Get Wren on GitHub</a>
+          <a class="btn ghost" href={`${blob}/docs/features.md`}>What works, and what was verified</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-in">
+      <div class="foot-brand">
+        <img src="/wren-256.png" width="28" height="28" alt="" loading="lazy" />
+        <span>Wren · MIT licence</span>
+      </div>
+      <p class="disclaimer">
+        Wren is an independent project, not affiliated with or endorsed by Microsoft. Microsoft Teams is a trademark of the
+        Microsoft group of companies.
+      </p>
+      <nav class="foot-links" aria-label="Footer">
+        <a href={repo}>GitHub</a>
+        <a href={`${blob}/docs/privacy.md`}>Privacy</a>
+        <a href={`${blob}/SECURITY.md`}>Security</a>
+        <a href="https://ma2.dev" class="more">More projects by Andrei <span aria-hidden="true">→</span></a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    const root = document.documentElement;
+    const shot = document.querySelector<HTMLImageElement>("img.shot");
+    const source = document.querySelector<HTMLSourceElement>("source[data-dark]");
+
+    function isDark() {
+      const t = root.dataset.theme;
+      if (t === "dark") return true;
+      if (t === "light") return false;
+      return matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+
+    // Keep the hero screenshot in step with an explicit theme choice.
+    function syncShot() {
+      if (!shot || !source) return;
+      if (root.dataset.theme) {
+        source.media = "not all";
+        shot.src = isDark() ? shot.dataset.darksrc! : shot.dataset.light!;
+      } else {
+        source.media = "(prefers-color-scheme: dark)";
+        shot.src = shot.dataset.light!;
+      }
+    }
+    syncShot();
+
+    document.querySelector(".theme")?.addEventListener("click", () => {
+      const next = isDark() ? "light" : "dark";
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem("wren-theme", next);
+      } catch {}
+      syncShot();
+    });
+
+    document.querySelectorAll<HTMLButtonElement>(".copy").forEach((b) => {
+      b.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(b.dataset.copy ?? "");
+          b.textContent = "Copied";
+        } catch {
+          b.textContent = "Select and copy";
+        }
+        setTimeout(() => (b.textContent = "Copy"), 1600);
+      });
+    });
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add("in");
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+    );
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    root.classList.add("ready");
+  </script>
+</Base>
+
+<style>
+  /* Header */
+  .top {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    background: color-mix(in srgb, var(--paper) 82%, transparent);
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .top-in {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 64px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-family: var(--serif);
+    font-size: 28px;
+    letter-spacing: -0.01em;
+  }
+  .brand img {
+    border-radius: 8px;
+  }
+  .top nav {
+    margin-left: auto;
+    display: flex;
+    gap: 26px;
+    font-size: 14px;
+  }
+  .top nav a {
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+  .top nav a:hover {
+    color: var(--accent-ink);
+  }
+  .theme {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .theme:hover {
+    border-color: var(--accent);
+  }
+  .theme svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    grid-area: 1 / 1;
+  }
+  .theme .moon {
+    display: none;
+  }
+  :global(:root[data-theme="dark"]) .theme .sun {
+    display: none;
+  }
+  :global(:root[data-theme="dark"]) .theme .moon {
+    display: block;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme="light"])) .theme .sun {
+      display: none;
+    }
+    :global(:root:not([data-theme="light"])) .theme .moon {
+      display: block;
+    }
+  }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    padding: clamp(40px, 7vw, 96px) 0 clamp(48px, 7vw, 96px);
+    background:
+      radial-gradient(60% 50% at 85% 10%, var(--accent-wash), transparent 70%),
+      linear-gradient(color-mix(in srgb, var(--rule-soft) 55%, transparent) 1px, transparent 1px) 0 0 / 100% 32px;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent 55%, var(--paper) 92%);
+  }
+  .hero > .wrap {
+    position: relative;
+    z-index: 1;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(32px, 5vw, 72px);
+    align-items: center;
+  }
+  h1,
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+  h1 {
+    font-size: clamp(44px, 6.4vw, 84px);
+    line-height: 0.98;
+    margin: 18px 0 24px;
+    text-wrap: balance;
+  }
+  h1 em,
+  h2 em {
+    font-style: italic;
+    color: var(--accent-ink);
+  }
+  .lede {
+    font-size: clamp(17px, 1.6vw, 20px);
+    color: var(--ink-2);
+    max-width: 34em;
+    margin: 0 0 32px;
+  }
+  .ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .ctas.center {
+    justify-content: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 20px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s;
+  }
+  .btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+  .btn.primary {
+    background: var(--ink);
+    color: var(--paper);
+    box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.6);
+  }
+  .btn.primary:hover {
+    background: var(--accent);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+  .btn.ghost {
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+  .btn.ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .platforms {
+    display: flex;
+    gap: 8px;
+    margin: 28px 0 0;
+    flex-wrap: wrap;
+  }
+  .platforms span {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 4px 10px;
+    border: 1px dashed var(--rule);
+    border-radius: 6px;
+    color: var(--ink-2);
+  }
+
+  .load {
+    opacity: 0;
+    transform: translateY(14px);
+    animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+    animation-delay: var(--d, 0s);
+  }
+  @keyframes rise {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Plate */
+  .plate {
+    margin: 0;
+  }
+  .plate-frame {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: 6% 4%;
+    outline: 1px solid var(--rule-soft);
+    outline-offset: 6px;
+  }
+  .plate-no {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .plate-art {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .bird {
+    fill: var(--ink);
+  }
+  .leaders path {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 0.35;
+    stroke-dasharray: 120;
+    stroke-dashoffset: 120;
+    animation: draw 1.6s 0.9s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+  }
+  .dots circle {
+    fill: var(--accent);
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(0);
+    animation: pop 0.4s 0.8s ease-out forwards;
+  }
+  @keyframes draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes pop {
+    to {
+      transform: scale(1);
+    }
+  }
+  .note {
+    position: absolute;
+    font-size: clamp(11px, 1.05vw, 13px);
+    line-height: 1.3;
+    color: var(--ink-2);
+    max-width: 30%;
+    opacity: 0;
+    animation: fade 0.6s 1.9s ease forwards;
+  }
+  .note b {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent-ink);
+    margin-right: 2px;
+  }
+  @keyframes fade {
+    to {
+      opacity: 1;
+    }
+  }
+  /* Positions match the leader ends in the 100 × 80 viewBox */
+  .n1 {
+    right: 4%;
+    top: calc(6% + 12 / 80 * 88% - 2.6em);
+    text-align: right;
+  }
+  .n2 {
+    left: 4%;
+    top: calc(6% + 12 / 80 * 88% - 2.6em);
+  }
+  .n3 {
+    left: 4%;
+    top: calc(6% + 60 / 80 * 88% + 0.5em);
+  }
+  .n4 {
+    right: 4%;
+    top: calc(6% + 70 / 80 * 88% + 0.5em);
+    text-align: right;
+  }
+  .plate figcaption {
+    margin-top: 22px;
+    font-size: 14px;
+    color: var(--muted);
+    font-style: normal;
+  }
+  .plate figcaption i {
+    font-family: var(--serif);
+    font-size: 17px;
+    color: var(--ink);
+  }
+
+  /* App window */
+  .window {
+    margin: clamp(56px, 8vw, 104px) 0 0;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    background: var(--card);
+    transform-origin: 50% 0;
+  }
+  .window-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper-2);
+  }
+  .window-bar i {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--rule);
+  }
+  .window-bar i:first-child {
+    background: var(--accent);
+  }
+  .window-bar span {
+    margin-left: auto;
+    margin-right: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    transform: translateX(-22px);
+  }
+
+  /* Section heads */
+  section:not(.hero) {
+    padding: clamp(64px, 10vw, 128px) 0;
+  }
+  .sec-head {
+    max-width: 760px;
+    margin-bottom: clamp(36px, 5vw, 56px);
+  }
+  h2 {
+    font-size: clamp(34px, 4.6vw, 58px);
+    line-height: 1.02;
+    margin: 14px 0 18px;
+    text-wrap: balance;
+  }
+  .sec-note {
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 40em;
+  }
+
+  /* Field marks */
+  .marks {
+    border-top: 1px solid var(--rule);
+  }
+  .mark-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    border-top: 2px solid var(--ink);
+  }
+  .mark {
+    padding: 22px 22px 26px 0;
+    border-right: 1px solid var(--rule);
+    padding-left: 22px;
+  }
+  .mark:first-child {
+    padding-left: 0;
+  }
+  .mark:last-child {
+    border-right: 0;
+  }
+  .mark dt {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .mark dd {
+    margin: 0;
+  }
+  .num {
+    font-family: var(--serif);
+    font-size: clamp(54px, 6.5vw, 88px);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-variant-numeric: lining-nums;
+  }
+  .unit {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 24px;
+    color: var(--accent-ink);
+    margin-left: 6px;
+  }
+  .mark-note {
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  /* Features */
+  .features {
+    background: var(--paper-2);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .feat-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-left: 1px solid var(--rule);
+    border-top: 1px solid var(--rule);
+  }
+  .feat {
+    padding: 28px 26px 30px;
+    border-right: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper-2);
+    transition: background-color 0.25s ease;
+    position: relative;
+  }
+  .feat:hover {
+    background: var(--card);
+  }
+  .feat-no {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-ink);
+  }
+  .feat h3 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 27px;
+    line-height: 1.1;
+    margin: 10px 0 10px;
+  }
+  .feat p {
+    margin: 0;
+    font-size: 15.5px;
+    color: var(--ink-2);
+  }
+  .gallery {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 20px;
+    margin-top: clamp(40px, 6vw, 72px);
+    align-items: start;
+  }
+  .gallery figure {
+    margin: 0;
+  }
+  .gallery figure:nth-child(2) {
+    margin-top: 48px;
+  }
+  .gallery figure:nth-child(3) {
+    margin-top: 16px;
+  }
+  .gallery img {
+    border-radius: 10px;
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+  }
+  .gallery figcaption {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 10px;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 16px;
+  }
+
+  /* Limits */
+  .limits-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr);
+    gap: clamp(32px, 5vw, 72px);
+  }
+  .ledger {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-top: 2px solid var(--ink);
+  }
+  .ledger-col {
+    padding: 22px 24px 0 0;
+  }
+  .ledger-col + .ledger-col {
+    border-left: 1px solid var(--rule);
+    padding-left: 24px;
+    padding-right: 0;
+  }
+  .ledger h3 {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--muted);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tick {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    color: var(--paper);
+  }
+  .tick.ok {
+    background: var(--ok);
+  }
+  .tick.no {
+    background: var(--no);
+  }
+  .ledger ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ledger li {
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--rule);
+    font-size: 15.5px;
+    color: var(--ink-2);
+  }
+  .ledger li b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Install */
+  .install {
+    border-top: 1px solid var(--rule);
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .step {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 26px 24px;
+    position: relative;
+    min-width: 0;
+  }
+  .step-no {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--accent-ink);
+  }
+  .step h3 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 1.05;
+    margin: 4px 0 12px;
+  }
+  .step p,
+  .step li {
+    font-size: 15px;
+    color: var(--ink-2);
+  }
+  .step p {
+    margin: 0 0 14px;
+  }
+  .small {
+    font-size: 13.5px !important;
+    color: var(--muted) !important;
+  }
+  .step code {
+    background: var(--paper-2);
+    border: 1px solid var(--rule-soft);
+    padding: 1px 5px;
+    border-radius: 4px;
+    overflow-wrap: anywhere;
+  }
+  .code {
+    position: relative;
+    background: #17150f;
+    color: #efe7d8;
+    border-radius: 6px;
+    margin: 0 0 14px;
+  }
+  .code pre {
+    margin: 0;
+    padding: 16px 16px 16px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.75;
+  }
+  .code .p {
+    color: #f08a3e;
+    user-select: none;
+  }
+  .copy {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font: 500 11px var(--mono);
+    color: #efe7d8;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  .copy:hover {
+    background: #d9661f;
+  }
+  .numbered {
+    margin: 0;
+    padding-left: 20px;
+  }
+  .numbered li {
+    margin-bottom: 10px;
+  }
+  .numbered li::marker {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--accent-ink);
+  }
+  .pkg {
+    margin: 0 0 14px;
+  }
+  .pkg > div {
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .pkg dt {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .pkg dd {
+    margin: 0;
+    font-size: 13px;
+  }
+  .pkg dd code {
+    display: block;
+    padding: 6px 8px;
+    line-height: 1.5;
+  }
+  .pkg small {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .pkg small code {
+    display: inline;
+    padding: 1px 4px;
+  }
+
+  .keys {
+    margin-top: clamp(40px, 6vw, 64px);
+    border-top: 2px solid var(--ink);
+    padding-top: 18px;
+  }
+  .lower {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .keys ul {
+    list-style: none;
+    padding: 0;
+    margin: 14px 0 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px 24px;
+  }
+  .keys li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  kbd {
+    flex: none;
+    min-width: 2.2em;
+    text-align: center;
+    padding: 3px 7px;
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    background: var(--card);
+    color: var(--ink);
+    font-size: 12.5px;
+  }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    background:
+      radial-gradient(50% 70% at 50% 100%, var(--accent-wash), transparent 70%),
+      var(--paper);
+    border-top: 1px solid var(--rule);
+  }
+  .cta-in img {
+    margin: 0 auto 18px;
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+  }
+  .cta h2 {
+    font-size: clamp(42px, 6vw, 76px);
+  }
+  .cta p {
+    color: var(--ink-2);
+    margin: 0 0 28px;
+  }
+
+  /* Footer */
+  .foot {
+    border-top: 1px solid var(--rule);
+    padding: 32px 0 40px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .foot-in {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+  }
+  .foot-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+  }
+  .foot-brand img {
+    border-radius: 6px;
+  }
+  .disclaimer {
+    margin: 0;
+    font-size: 13px;
+    max-width: 52em;
+  }
+  .foot-links {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .foot-links a {
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+  .foot-links a:hover {
+    color: var(--accent-ink);
+  }
+  .foot-links .more {
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  /* Responsive */
+  @media (max-width: 1000px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+    .plate {
+      max-width: 640px;
+    }
+    .mark-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .mark:nth-child(2) {
+      border-right: 0;
+    }
+    .mark:nth-child(3) {
+      padding-left: 0;
+    }
+    .mark:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--rule);
+    }
+    .feat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .limits-grid {
+      grid-template-columns: 1fr;
+    }
+    .steps {
+      grid-template-columns: 1fr;
+    }
+    .keys ul {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .foot-in {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 640px) {
+    body {
+      font-size: 16px;
+    }
+    .top nav a:not(.nav-gh) {
+      display: none;
+    }
+    .feat-grid,
+    .ledger,
+    .keys ul {
+      grid-template-columns: 1fr;
+    }
+    .ledger-col + .ledger-col {
+      border-left: 0;
+      padding-left: 0;
+      border-top: 1px solid var(--rule);
+      margin-top: 18px;
+    }
+    .ledger-col {
+      padding-right: 0;
+    }
+    .gallery {
+      grid-template-columns: 1fr;
+    }
+    .gallery figure:nth-child(n) {
+      margin-top: 0;
+    }
+    .mark {
+      padding-left: 0 !important;
+      padding-right: 12px;
+    }
+    .mark:nth-child(odd) {
+      padding-right: 14px;
+    }
+    .mark:nth-child(even) {
+      padding-left: 14px !important;
+    }
+    .unit {
+      font-size: 18px;
+    }
+    .plate-frame {
+      padding: 14% 3% 16%;
+    }
+    .note {
+      max-width: 42%;
+    }
+    .window-bar span {
+      display: none;
+    }
+  }
+</style>
