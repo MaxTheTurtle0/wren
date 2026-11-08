@@ -29,6 +29,7 @@ const { title, description } = Astro.props;
     <meta property="og:url" content="https://wren.ma2.dev/" />
     <meta name="twitter:card" content="summary_large_image" />
     <script is:inline>
+      document.documentElement.classList.add("js");
       try {
         const saved = localStorage.getItem("wren-theme");
         if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;

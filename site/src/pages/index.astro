@@ -7,11 +7,21 @@ const blob = `${repo}/blob/main`;
 // Every fact on this page comes from the repository's README.md and docs/.
 // Keep it in step with those files; don't add claims they don't make.
 
-const numbers = [
-  { value: "101–120", unit: "ms", label: "Launch to first frame", note: "six demo launches" },
-  { value: "0.0", unit: "%", label: "Idle CPU, window open" },
-  { value: "57", unit: "MiB", label: "Memory", note: "physical footprint, settled offline demo" },
-  { value: "16", unit: "MiB", label: "Binary / app bundle", note: "about" },
+// docs/performance.md, native release builds on macOS 27 with 16 GiB RAM.
+const stats = [
+  { from: 101, to: 120, unit: "ms", label: "Launch to first frame", note: "six demo launches, Mac mini" },
+  { to: 0, decimals: 1, unit: "%", label: "Idle CPU, window open", note: "settled, on both Macs" },
+  { to: 16, prefix: "about ", unit: "MiB", label: "Binary / app bundle", note: "one small binary" },
+];
+
+const memScale = 320; // MiB at the right edge of the chart
+const memory: { label: string; mini?: number; air?: number; peak?: number }[] = [
+  { label: "App, offline demo, settled", mini: 57 },
+  { label: "App signed in, after restart", air: 130 },
+  { label: "Performance fixture, idle", mini: 57, air: 122 },
+  { label: "After 20 full HD image previews, viewer closed", mini: 88, air: 161 },
+  { label: "After 100 full HD image previews", mini: 92 },
+  { label: "After five 4K image previews", mini: 159, peak: 317 },
 ];
 
 type Status = "ok" | "exp" | "no";
@@ -35,11 +45,11 @@ const features: { name: string; status: Status; label: string; note?: string }[]
 ];
 
 const hosts = [
-  { host: "login.microsoftonline.com", what: "Sign-in. You enter your password on Microsoft's page in your browser, never in Wren." },
-  { host: "graph.microsoft.com", what: "Your chats, channels, meetings, presence and photos. The only place the access token is sent." },
-  { host: "Your organisation's OneDrive host", what: "Files larger than 4 MiB, sent to the one-time upload URL Graph returns, without the Graph token." },
-  { host: "github.com", what: "App update checks, at most daily, and downloads. Can be turned off. No Microsoft credentials or account data." },
-  { host: "Your own wren-relay", what: "Optional push. It forwards Graph's change notifications, which carry no message content.", optional: true },
+  { host: "login.microsoftonline.com", tag: "Sign-in", what: "You enter your password on Microsoft's page in your browser, never in Wren." },
+  { host: "graph.microsoft.com", tag: "Your data", what: "Your chats, channels, meetings, presence and photos. The only place the access token is sent." },
+  { host: "Your organisation's OneDrive host", tag: "Large files", what: "Files larger than 4 MiB, sent to the one-time upload URL Graph returns, without the Graph token." },
+  { host: "github.com", tag: "Updates", what: "Update checks, at most daily, and downloads. Can be turned off. No Microsoft credentials or account data." },
+  { host: "Your own wren-relay", tag: "Push, optional", what: "It forwards Graph's change notifications, which carry no message content.", optional: true },
 ];
 
 const keys = [
@@ -84,16 +94,16 @@ const keys = [
   <main id="main">
     <section class="hero">
       <div class="hero-copy">
-        <img class="hero-icon" src="/wren-256.png" width="72" height="72" alt="Wren icon" />
-        <h1>A fast, native client for Microsoft&nbsp;Teams chats, channels and meetings.</h1>
-        <p class="lede">
+        <img class="hero-icon ld" style="--d:0ms" src="/wren-256.png" width="72" height="72" alt="Wren icon" />
+        <h1 class="ld" style="--d:80ms">A fast, native client for Microsoft&nbsp;Teams chats, channels and meetings.</h1>
+        <p class="lede ld" style="--d:180ms">
           Rust and egui. No browser engine. Works with Microsoft Teams through Microsoft's official APIs.
         </p>
-        <div class="actions">
+        <div class="actions ld" style="--d:260ms">
           <a class="btn primary" href={repo}>View on GitHub</a>
           <a class="btn" href="#start">Run the demo</a>
         </div>
-        <p class="meta">
+        <p class="meta ld" style="--d:340ms">
           <span>v0.1 early preview</span><span>MIT</span><span>macOS</span><span>Linux</span><span>Windows</span>
         </p>
       </div>
@@ -114,34 +124,94 @@ const keys = [
       </div>
     </section>
 
-    <section class="numbers" aria-labelledby="numbers-h">
-      <div class="wrap">
-        <h2 id="numbers-h" class="sr">Measurements</h2>
-        <dl>
-          {
-            numbers.map((n) => (
-              <div>
-                <dt>{n.label}</dt>
-                <dd class="val">
-                  {n.note === "about" && <span class="approx">about </span>}
-                  {n.value}
-                  <span class="unit">{n.unit}</span>
-                </dd>
-                {n.note && n.note !== "about" && <dd class="note">{n.note}</dd>}
+    <section id="performance" class="sec perf">
+      <div class="wrap sec-grid">
+        <header class="sec-head rv">
+          <h2>Performance</h2>
+          <p>
+            Release builds on macOS 27 with 16 GiB RAM: an M4 Mac mini with a 1× display and an M3 MacBook Air with a
+            2× Retina display.
+          </p>
+          <p><a href={`${blob}/docs/performance.md`}>Method and raw results</a></p>
+        </header>
+        <div class="sec-body">
+          <dl class="stats">
+            {
+              stats.map((s, i) => (
+                <div class="stat rv" style={`--d:${i * 90}ms`}>
+                  <dt>{s.label}</dt>
+                  <dd class="val">
+                    {s.prefix && <span class="approx">{s.prefix}</span>}
+                    {s.from !== undefined && (
+                      <>
+                        <span data-count={s.from}>{s.from}</span>–
+                      </>
+                    )}
+                    <span data-count={s.to} data-decimals={s.decimals ?? 0}>
+                      {s.to.toFixed(s.decimals ?? 0)}
+                    </span>
+                    <span class="unit">{s.unit}</span>
+                  </dd>
+                  <dd class="note">{s.note}</dd>
+                </div>
+              ))
+            }
+          </dl>
+
+          <figure class="mem rv">
+            <figcaption>
+              <h3>Memory, physical footprint</h3>
+              <ul class="legend">
+                <li><i class="k mini" />Mac mini</li>
+                <li><i class="k air" />MacBook Air</li>
+                <li><i class="k peak" />Peak during the run</li>
+              </ul>
+            </figcaption>
+            <div class="mem-rows" style={`--scale:${memScale}`}>
+              {
+                memory.map((m, i) => (
+                  <div class="mem-row" style={`--i:${i}`}>
+                    <span class="mem-label">{m.label}</span>
+                    <div class="mem-bars">
+                      {m.mini !== undefined && (
+                        <div class="mem-bar mini" style={`--v:${m.mini}`}>
+                          {m.peak !== undefined && <span class="peak" style={`--p:${m.peak}`} title={`Peaked at ${m.peak} MiB`} />}
+                          <b />
+                          <span class="mem-val">
+                            <span data-count={m.mini}>{m.mini}</span> MiB
+                            {m.peak !== undefined && <em> · peak {m.peak}</em>}
+                          </span>
+                        </div>
+                      )}
+                      {m.air !== undefined && (
+                        <div class="mem-bar air" style={`--v:${m.air}`}>
+                          <b />
+                          <span class="mem-val"><span data-count={m.air}>{m.air}</span> MiB</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              }
+              <div class="axis" aria-hidden="true">
+                <span style="--t:0">0</span>
+                <span style="--t:100">100</span>
+                <span style="--t:200">200</span>
+                <span style="--t:300">300 MiB</span>
               </div>
-            ))
-          }
-        </dl>
-        <p class="source">
-          Wren 0.1 on a Mac mini (Apple Silicon, macOS 27), release build with demo data.{" "}
-          <a href={`${blob}/docs/performance.md`}>Details and method</a>
-        </p>
+            </div>
+            <p class="mem-note">
+              Short measurements; they do not establish a long-session footprint. Microsoft Teams was not measured side
+              by side.
+            </p>
+          </figure>
+        </div>
       </div>
     </section>
 
     <section id="features" class="sec">
       <div class="wrap sec-grid">
-        <header class="sec-head">
+        <header class="sec-head rv">
           <h2>Features</h2>
           <p>
             Microsoft's Teams client is a large web application. Wren is one small binary, a window that draws only
@@ -150,14 +220,14 @@ const keys = [
           <p><a href={`${blob}/docs/features.md`}>What was verified, and how</a></p>
         </header>
         <div class="sec-body">
-          <table class="ftable">
+          <table class="ftable rv">
             <thead>
               <tr><th scope="col">Feature</th><th scope="col">Status</th><th scope="col">Notes</th></tr>
             </thead>
             <tbody>
               {
-                features.map((f) => (
-                  <tr>
+                features.map((f, i) => (
+                  <tr style={`--i:${i}`}>
                     <th scope="row">{f.name}</th>
                     <td><span class={`st ${f.status}`}><i aria-hidden="true" />{f.label}</span></td>
                     <td class="fnote">{f.note === "wren --demo" ? <code>wren --demo</code> : f.note}</td>
@@ -167,7 +237,7 @@ const keys = [
             </tbody>
           </table>
 
-          <div class="pair">
+          <div class="pair rv">
             <figure>
               <img src="/shots/channel-dark.png" width="1280" height="800" loading="lazy" alt="A channel with threaded replies, dark theme" />
               <figcaption>A channel with threaded replies</figcaption>
@@ -183,29 +253,39 @@ const keys = [
 
     <section id="connections" class="sec">
       <div class="wrap sec-grid">
-        <header class="sec-head">
+        <header class="sec-head rv">
           <h2>Connections</h2>
           <p>There is no telemetry and no Wren server. This is every host Wren talks to.</p>
           <p><a href={`${blob}/docs/privacy.md`}>Privacy and security</a></p>
         </header>
         <div class="sec-body">
-          <div class="net">
+          <div class="net rv" data-net>
+            <svg class="net-svg" aria-hidden="true"></svg>
             <div class="net-node">
-              <img src="/wren-256.png" width="40" height="40" alt="" />
+              <img src="/wren-256.png" width="44" height="44" alt="" />
               <span>Wren<small>on your computer</small></span>
             </div>
             <ul class="net-hosts">
               {
-                hosts.map((h) => (
-                  <li class={h.optional ? "opt" : ""}>
+                hosts.map((h, i) => (
+                  <li class={`host${h.optional ? " opt" : ""}`} style={`--d:${200 + i * 110}ms`}>
+                    <span class="tag">{h.tag}</span>
                     <code>{h.host}</code>
-                    <span>{h.what}</span>
+                    <p>{h.what}</p>
                   </li>
                 ))
               }
             </ul>
           </div>
-          <div class="facts">
+          <div class="never rv">
+            <h3>Not on the list</h3>
+            <ul>
+              <li><s>A Wren server</s> There isn't one.</li>
+              <li><s>Telemetry</s> None, of any kind.</li>
+              <li><s>Images hosted elsewhere</s> Not loaded, so senders can't track when you read a message.</li>
+            </ul>
+          </div>
+          <div class="facts rv">
             <div>
               <h3>Tokens</h3>
               <p>
@@ -218,8 +298,8 @@ const keys = [
               <p>Cached only on your computer, in a folder only your user can read. Signing out deletes them.</p>
             </div>
             <div>
-              <h3>Images</h3>
-              <p>Loaded only from Graph's own hosted content, so senders can't track when you read a message.</p>
+              <h3>Logs</h3>
+              <p>Never contain message text, tokens, authorization codes or URLs with query strings.</p>
             </div>
           </div>
         </div>
@@ -228,11 +308,11 @@ const keys = [
 
     <section id="limits" class="sec">
       <div class="wrap sec-grid">
-        <header class="sec-head">
+        <header class="sec-head rv">
           <h2>Known limitations</h2>
           <p>Set by Microsoft's APIs and terms, not by Wren.</p>
         </header>
-        <div class="sec-body limits">
+        <div class="sec-body limits rv">
           <div>
             <h3>Calling</h3>
             <p>
@@ -265,12 +345,12 @@ const keys = [
 
     <section id="start" class="sec">
       <div class="wrap sec-grid">
-        <header class="sec-head">
+        <header class="sec-head rv">
           <h2>Get started</h2>
           <p>Nothing is published as a release yet. Build from source.</p>
         </header>
         <div class="sec-body steps">
-          <div class="step">
+          <div class="step rv">
             <h3><span>1</span>Try the demo, no account needed</h3>
             <div class="term">
               <pre><code><b>$</b> git clone https://github.com/MaxTheTurtle0/wren && cd wren
@@ -284,7 +364,7 @@ cargo run --release -- --demo">Copy</button>
             </p>
           </div>
 
-          <div class="step">
+          <div class="step rv">
             <h3><span>2</span>Use it with your Microsoft 365 account</h3>
             <ol>
               <li>
@@ -303,7 +383,7 @@ cargo run --release -- --demo">Copy</button>
             </ol>
           </div>
 
-          <div class="step">
+          <div class="step rv">
             <h3><span>3</span>Build packages</h3>
             <table class="ptable">
               <tbody>
@@ -341,11 +421,11 @@ cargo run --release -- --demo">Copy</button>
 
     <section class="sec">
       <div class="wrap sec-grid">
-        <header class="sec-head">
+        <header class="sec-head rv">
           <h2>Keyboard</h2>
           <p><kbd>⌘</kbd> is Ctrl on Windows and Linux.</p>
         </header>
-        <ul class="sec-body keys">
+        <ul class="sec-body keys rv">
           {keys.map(([k, v]) => (<li><kbd>{k}</kbd>{v}</li>))}
         </ul>
       </div>
@@ -374,6 +454,7 @@ cargo run --release -- --demo">Copy</button>
     const shot = document.querySelector<HTMLImageElement>("img.shot");
     const source = document.querySelector<HTMLSourceElement>("source[data-dark]");
     const buttons = document.querySelectorAll<HTMLButtonElement>(".seg button");
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     function apply(mode: string) {
       if (mode === "light" || mode === "dark") root.dataset.theme = mode;
@@ -413,7 +494,111 @@ cargo run --release -- --demo">Copy</button>
         setTimeout(() => (b.textContent = "Copy"), 1500);
       });
     });
+
+    // Count numbers up from zero when they scroll into view.
+    function countUp(el: HTMLElement) {
+      const to = Number(el.dataset.count);
+      const decimals = Number(el.dataset.decimals ?? 0);
+      if (still || to === 0) return;
+      const start = performance.now();
+      const duration = 1100;
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        el.textContent = (to * eased).toFixed(decimals);
+        if (t < 1) requestAnimationFrame(step);
+      };
+      el.textContent = (0).toFixed(decimals);
+      requestAnimationFrame(step);
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add("in");
+          e.target.querySelectorAll<HTMLElement>("[data-count]").forEach(countUp);
+          io.unobserve(e.target);
+        }
+      },
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.15 },
+    );
+    document.querySelectorAll(".rv").forEach((el) => io.observe(el));
+
+    // Connection wires: curves from the Wren node to each host card, with
+    // small packets travelling along them.
+    const net = document.querySelector<HTMLElement>("[data-net]");
+    const svg = net?.querySelector<SVGSVGElement>(".net-svg");
+    const node = net?.querySelector<HTMLElement>(".net-node");
+    const hostEls = net ? [...net.querySelectorAll<HTMLElement>(".host")] : [];
+    const NS = "http://www.w3.org/2000/svg";
+
+    function drawWires() {
+      if (!net || !svg || !node) return;
+      const box = net.getBoundingClientRect();
+      const n = node.getBoundingClientRect();
+      svg.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
+      svg.replaceChildren();
+      const stacked = n.bottom <= hostEls[0].getBoundingClientRect().top + 1;
+      hostEls.forEach((el, i) => {
+        const c = el.getBoundingClientRect();
+        const y1 = c.top - box.top + Math.min(c.height / 2, 26);
+        const x1 = c.left - box.left;
+        let d: string;
+        if (stacked) {
+          const x0 = n.left - box.left + 22;
+          const y0 = n.bottom - box.top;
+          d = `M${x0} ${y0} V${y1 - 12} Q${x0} ${y1} ${x0 + 12} ${y1} H${x1}`;
+        } else {
+          const x0 = n.right - box.left;
+          const y0 = n.top - box.top + n.height / 2;
+          const mid = x0 + (x1 - x0) / 2;
+          d = `M${x0} ${y0} C${mid} ${y0} ${mid} ${y1} ${x1} ${y1}`;
+        }
+        const wire = document.createElementNS(NS, "path");
+        wire.setAttribute("d", d);
+        wire.setAttribute("pathLength", "1");
+        wire.setAttribute("class", `wire${el.classList.contains("opt") ? " opt" : ""}`);
+        wire.style.setProperty("--d", `${i * 110}ms`);
+        wire.dataset.i = String(i);
+        svg.append(wire);
+        if (!still) {
+          const dot = document.createElementNS(NS, "circle");
+          dot.setAttribute("r", "3");
+          dot.setAttribute("class", "packet");
+          const move = document.createElementNS(NS, "animateMotion");
+          move.setAttribute("path", d);
+          move.setAttribute("dur", `${2.2 + (i % 3) * 0.5}s`);
+          move.setAttribute("begin", `${(svg.getCurrentTime?.() ?? 0) + 0.9 + i * 0.35}s`);
+          move.setAttribute("repeatCount", "indefinite");
+          move.setAttribute("calcMode", "linear");
+          // Requests go out; replies come back.
+          move.setAttribute("keyPoints", i % 2 ? "1;0" : "0;1");
+          move.setAttribute("keyTimes", "0;1");
+          // Hidden until its motion starts, or it would sit at the origin.
+          dot.setAttribute("visibility", "hidden");
+          const show = document.createElementNS(NS, "set");
+          show.setAttribute("attributeName", "visibility");
+          show.setAttribute("to", "visible");
+          show.setAttribute("begin", move.getAttribute("begin")!);
+          dot.append(move, show);
+          svg.append(dot);
+        }
+      });
+    }
+
+    if (net) {
+      drawWires();
+      new ResizeObserver(drawWires).observe(net);
+      document.fonts?.ready.then(drawWires);
+      hostEls.forEach((el, i) => {
+        const on = (v: boolean) => svg?.querySelector(`.wire[data-i="${i}"]`)?.classList.toggle("hot", v);
+        el.addEventListener("pointerenter", () => on(true));
+        el.addEventListener("pointerleave", () => on(false));
+      });
+    }
   </script>
+
 </Base>
 
 <style>
@@ -584,58 +769,6 @@ cargo run --release -- --demo">Copy</button>
     }
   }
 
-  /* Numbers */
-  .numbers {
-    border-bottom: 1px solid var(--outline);
-    padding: 36px 0 28px;
-  }
-  .numbers dl {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin: 0;
-  }
-  .numbers dl > div {
-    padding: 0 24px;
-    border-left: 1px solid var(--outline);
-  }
-  .numbers dl > div:first-child {
-    padding-left: 0;
-    border-left: 0;
-  }
-  .numbers dt {
-    font-size: 13px;
-    color: var(--secondary);
-  }
-  .numbers dd {
-    margin: 0;
-  }
-  .val {
-    font-variant-numeric: tabular-nums;
-    font-size: clamp(30px, 3.4vw, 40px);
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
-  }
-  .approx,
-  .unit {
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: 0;
-    color: var(--dim);
-  }
-  .unit {
-    margin-left: 4px;
-  }
-  .numbers .note {
-    font-size: 13px;
-    color: var(--dim);
-  }
-  .source {
-    margin: 22px 0 0;
-    font-size: 13px;
-    color: var(--dim);
-  }
-
   /* Sections: label column, content column */
   .sec {
     padding: clamp(56px, 8vw, 96px) 0;
@@ -744,100 +877,11 @@ cargo run --release -- --demo">Copy</button>
     margin-top: 8px;
   }
 
-  /* Connections */
-  .net {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-  }
-  .net-node {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    border: 1px solid var(--outline);
-    border-radius: 10px;
-    background: var(--panel);
-    position: relative;
-    z-index: 1;
-  }
-  .net-node img {
-    border-radius: 9px;
-  }
-  .net-node span {
-    font-weight: 650;
-    font-size: 15px;
-    display: flex;
-    flex-direction: column;
-    line-height: 1.25;
-  }
-  .net-node small {
-    font-weight: 400;
-    font-size: 12px;
-    color: var(--dim);
-  }
-  .net-hosts {
-    list-style: none;
-    margin: 0 0 0 40px;
-    padding: 0;
-    position: relative;
-  }
-  /* trunk from the Wren node, with one branch per host */
-  .net-hosts::before {
-    content: "";
-    position: absolute;
-    left: -40px;
-    top: 50%;
-    width: 20px;
-    border-top: 1.5px solid var(--accent);
-  }
-  .net-hosts li {
-    position: relative;
-    padding: 10px 0 10px 22px;
-    display: grid;
-    grid-template-columns: minmax(0, 15em) minmax(0, 1fr);
-    gap: 4px 20px;
-    font-size: 14px;
-  }
-  .net-hosts li::before {
-    content: "";
-    position: absolute;
-    left: -20px;
-    top: 0;
-    bottom: 0;
-    border-left: 1.5px solid var(--accent);
-  }
-  .net-hosts li:first-child::before {
-    top: 50%;
-  }
-  .net-hosts li:last-child::before {
-    bottom: 50%;
-  }
-  .net-hosts li::after {
-    content: "";
-    position: absolute;
-    left: -20px;
-    top: 50%;
-    width: 34px;
-    border-top: 1.5px solid var(--accent);
-  }
-  .net-hosts li.opt::after {
-    border-top-style: dashed;
-  }
-  .net-hosts code {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    align-self: center;
-  }
-  .net-hosts span {
-    color: var(--secondary);
-  }
   .facts {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
-    margin-top: 40px;
+    margin-top: 32px;
     padding-top: 24px;
     border-top: 1px solid var(--outline);
   }
@@ -1043,6 +1087,429 @@ cargo run --release -- --demo">Copy</button>
     font-weight: 600;
   }
 
+  /* Entrance and scroll reveals. Hidden only when JS runs (html.js). */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+  .ld {
+    animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: var(--d, 0ms);
+  }
+  :global(html.js) .rv {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+      transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: var(--d, 0ms);
+  }
+  :global(html.js) .rv.in {
+    opacity: 1;
+    transform: none;
+  }
+  :global(html.js) .ftable tbody tr {
+    opacity: 0;
+    transform: translateX(-10px);
+    transition:
+      opacity 0.5s ease,
+      transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
+      background-color 0.2s;
+    transition-delay: calc(var(--i) * 35ms);
+  }
+  :global(html.js) .ftable.in tbody tr {
+    opacity: 1;
+    transform: none;
+  }
+  .st i {
+    transition: transform 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
+    transition-delay: calc(var(--i) * 35ms + 250ms);
+  }
+  :global(html.js) .ftable:not(.in) .st i {
+    transform: scale(0);
+  }
+
+  /* Performance */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 0 48px;
+    border-top: 1px solid var(--outline);
+  }
+  .stat {
+    padding: 18px 24px 0;
+    border-left: 1px solid var(--outline);
+  }
+  .stat:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .stat dt {
+    font-size: 13px;
+    color: var(--secondary);
+  }
+  .stat dd {
+    margin: 0;
+  }
+  .val {
+    font-size: clamp(34px, 4vw, 48px);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
+  }
+  .approx,
+  .unit {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--dim);
+  }
+  .unit {
+    margin-left: 5px;
+  }
+  .stat .note {
+    font-size: 13px;
+    color: var(--dim);
+  }
+
+  .mem {
+    margin: 0;
+    padding: 24px 24px 20px;
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    background: var(--panel);
+  }
+  .mem figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 24px;
+    margin-bottom: 20px;
+  }
+  .mem h3 {
+    margin: 0;
+  }
+  .legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 12.5px;
+    color: var(--secondary);
+  }
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .k {
+    width: 14px;
+    height: 8px;
+    border-radius: 2px;
+  }
+  .k.mini {
+    background: var(--accent);
+  }
+  .k.air {
+    background: var(--link);
+  }
+  .k.peak {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border: 1px dashed var(--accent);
+  }
+  .mem-rows {
+    position: relative;
+    padding-bottom: 26px;
+  }
+  .mem-row {
+    display: grid;
+    grid-template-columns: minmax(0, 15em) minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    padding: 9px 0;
+    position: relative;
+    z-index: 1;
+  }
+  .mem-label {
+    font-size: 13.5px;
+    color: var(--secondary);
+    line-height: 1.3;
+  }
+  .mem-bars {
+    display: grid;
+    gap: 5px;
+  }
+  .mem-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 18px;
+  }
+  .mem-bar b {
+    display: block;
+    height: 100%;
+    width: calc(var(--v) / var(--scale) * 100%);
+    border-radius: 3px;
+    background: var(--accent);
+    transform-origin: left;
+    transition: transform 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: calc(var(--i) * 110ms + 150ms);
+    flex: none;
+  }
+  .mem-bar.air b {
+    background: var(--link);
+  }
+  .mem-bar .peak {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: calc(var(--p) / var(--scale) * 100%);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--accent) 70%, transparent);
+    transform-origin: left;
+    transition: transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: calc(var(--i) * 110ms + 700ms);
+  }
+  .mem-val {
+    position: relative;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    transition: opacity 0.4s;
+    transition-delay: calc(var(--i) * 110ms + 500ms);
+  }
+  .mem-val em {
+    font-style: normal;
+    font-weight: 500;
+    color: var(--dim);
+  }
+  .peak + b + .mem-val {
+    padding-left: 2px;
+  }
+  :global(html.js) .mem:not(.in) .mem-bar b,
+  :global(html.js) .mem:not(.in) .peak {
+    transform: scaleX(0);
+  }
+  :global(html.js) .mem:not(.in) .mem-val {
+    opacity: 0;
+  }
+  .axis {
+    position: absolute;
+    inset: 0 0 0 calc(15em + 16px);
+    pointer-events: none;
+  }
+  .axis span {
+    position: absolute;
+    left: calc(var(--t) / 320 * 100%);
+    top: 0;
+    bottom: 0;
+    border-left: 1px dashed var(--outline);
+    font-size: 11px;
+    color: var(--dim);
+    display: flex;
+    align-items: flex-end;
+    padding-left: 5px;
+    white-space: nowrap;
+  }
+  .mem-note {
+    margin: 14px 0 0;
+    font-size: 12.5px;
+    color: var(--dim);
+  }
+
+  /* Connections */
+  .net {
+    position: relative;
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    column-gap: clamp(64px, 9vw, 120px);
+    align-items: center;
+  }
+  .net-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .net-svg :global(.wire) {
+    fill: none;
+    stroke: color-mix(in srgb, var(--accent) 70%, var(--outline));
+    stroke-width: 1.5;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition:
+      stroke-dashoffset 1s cubic-bezier(0.6, 0, 0.2, 1),
+      stroke 0.2s,
+      stroke-width 0.2s;
+    transition-delay: var(--d), 0s, 0s;
+  }
+  .net.in .net-svg :global(.wire) {
+    stroke-dashoffset: 0;
+  }
+  .net-svg :global(.wire.opt) {
+    stroke-dasharray: 0.012 0.012;
+    stroke-dashoffset: 0;
+    opacity: 0;
+    transition: opacity 0.8s var(--d);
+  }
+  .net.in .net-svg :global(.wire.opt) {
+    opacity: 1;
+  }
+  .net-svg :global(.wire.hot) {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
+  .net-svg :global(.packet) {
+    fill: var(--accent);
+    opacity: 0;
+    transition: opacity 0.6s 1.2s;
+  }
+  .net.in .net-svg :global(.packet) {
+    opacity: 1;
+  }
+  .net-node {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--outline);
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: var(--shot-shadow);
+  }
+  .net-node::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 14px;
+    border: 1px solid var(--accent);
+    opacity: 0;
+  }
+  .net.in .net-node::after {
+    animation: ping 2.6s 1s ease-out infinite;
+  }
+  @keyframes ping {
+    0% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    70%,
+    100% {
+      opacity: 0;
+      transform: scale(1.12);
+    }
+  }
+  .net-node img {
+    border-radius: 10px;
+  }
+  .net-node span {
+    font-weight: 650;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+  .net-node small {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--dim);
+  }
+  .net-hosts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .host {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 4px 12px;
+    padding: 13px 16px;
+    border: 1px solid var(--outline);
+    border-radius: 10px;
+    background: var(--window);
+    transition:
+      border-color 0.2s,
+      transform 0.2s,
+      opacity 0.6s var(--d),
+      translate 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d);
+  }
+  :global(html.js) .net:not(.in) .host {
+    opacity: 0;
+    translate: 16px 0;
+  }
+  .host:hover {
+    border-color: var(--accent);
+  }
+  .host.opt {
+    border-style: dashed;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+    background: var(--highlight);
+    padding: 2px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  .host code {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .host p {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--secondary);
+  }
+  .never {
+    margin-top: 28px;
+    padding: 18px 20px;
+    border: 1px dashed var(--outline);
+    border-radius: 12px;
+  }
+  .never h3 {
+    font-size: 13px;
+    color: var(--dim);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .never ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 24px;
+    font-size: 13.5px;
+    color: var(--secondary);
+  }
+  .never s {
+    display: block;
+    color: var(--text);
+    font-weight: 600;
+    text-decoration-color: var(--danger);
+    text-decoration-thickness: 2px;
+  }
+
   /* Narrower screens */
   @media (max-width: 1060px) {
     .hero {
@@ -1064,14 +1531,6 @@ cargo run --release -- --demo">Copy</button>
   @media (max-width: 760px) {
     .bar nav {
       display: none;
-    }
-    .numbers dl {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      row-gap: 22px;
-    }
-    .numbers dl > div:nth-child(3) {
-      padding-left: 0;
-      border-left: 0;
     }
     .ftable thead {
       display: none;
@@ -1102,49 +1561,68 @@ cargo run --release -- --demo">Copy</button>
     .keys {
       grid-template-columns: minmax(0, 1fr);
     }
+    .stats {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .stat {
+      padding: 16px 0;
+      border-left: 0;
+      border-bottom: 1px solid var(--outline);
+    }
+    .mem {
+      padding: 18px 16px 16px;
+    }
+    .mem-row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 6px;
+    }
+    .axis {
+      display: none;
+    }
+    .mem-rows {
+      padding-bottom: 0;
+    }
     .net {
       grid-template-columns: minmax(0, 1fr);
+      row-gap: 26px;
     }
     .net-node {
       justify-self: start;
     }
     .net-hosts {
-      margin: 0 0 0 28px;
+      padding-left: 46px;
     }
-    .net-hosts::before {
-      left: -28px;
-      top: -1px;
-      height: 20px;
-      width: 0;
-      border-top: 0;
-      border-left: 1.5px solid var(--accent);
-    }
-    .net-hosts li {
+    .host {
       grid-template-columns: minmax(0, 1fr);
-      padding-left: 16px;
+      justify-items: start;
     }
-    .net-hosts li::before {
-      left: -28px;
-    }
-    .net-hosts li:first-child::before {
-      top: 0;
-    }
-    .net-hosts li::after {
-      left: -28px;
-      width: 36px;
-      top: 21px;
-    }
-    .net-hosts li:last-child::before {
-      bottom: auto;
-      height: 21px;
+    .never ul {
+      grid-template-columns: minmax(0, 1fr);
     }
     .foot-in {
       flex-direction: column;
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .hero-shot img {
+    .hero-shot img,
+    .ld,
+    .net.in .net-node::after {
       animation: none;
+    }
+    :global(html.js) .rv,
+    :global(html.js) .ftable tbody tr,
+    :global(html.js) .net .host {
+      opacity: 1 !important;
+      transform: none !important;
+      translate: none !important;
+      transition: none;
+    }
+    .mem-bar b,
+    .peak,
+    .mem-val,
+    .st i,
+    .net-svg :global(.wire) {
+      transition: none !important;
     }
   }
 </style>
