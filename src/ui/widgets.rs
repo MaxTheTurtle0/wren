@@ -488,10 +488,10 @@ pub fn pane_header(
             ui.add_space(inset);
             ui.vertical(|ui| {
                 ui.spacing_mut().item_spacing.y = 0.0;
-                ui.add_space(8.0);
+                ui.add_space(5.0);
                 ui.label(
                     egui::RichText::new(title)
-                        .font(theme::semibold(15.0))
+                        .font(theme::semibold(18.0))
                         .color(palette.text),
                 );
                 if !subtitle.is_empty() {
@@ -558,13 +558,16 @@ pub fn segmented(ui: &mut Ui, palette: &Palette, value: &mut bool, first: &str, 
             let button = egui::Button::new(
                 egui::RichText::new(label)
                     .font(theme::semibold(13.0))
-                    .color(if on { palette.on_accent } else { palette.text }),
+                    .color(if on { palette.text } else { palette.secondary }),
             )
-            .fill(if on { palette.accent } else { palette.surface })
-            .stroke(Stroke::new(
-                1.0,
-                if on { palette.accent } else { palette.control },
-            ))
+            // A view toggle, not an action: neutral, with the chosen
+            // segment filled.
+            .fill(if on {
+                palette.surface_active
+            } else {
+                palette.surface
+            })
+            .stroke(Stroke::new(1.0, palette.control))
             .corner_radius(corner)
             .min_size(vec2(56.0, 28.0));
             if ui

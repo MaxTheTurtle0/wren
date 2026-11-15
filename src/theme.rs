@@ -76,8 +76,10 @@ pub struct Palette {
     pub surface: Color32,
     pub surface_hover: Color32,
     pub surface_active: Color32,
-    /// Hairlines between areas and around cards.
+    /// Hairlines between areas.
     pub outline: Color32,
+    /// The edge of a card (a channel post), firmer than a hairline.
+    pub card_edge: Color32,
     /// The edge of controls a person acts on (text fields, checkboxes,
     /// secondary buttons): at least 3:1 against what they sit on.
     pub control: Color32,
@@ -104,12 +106,13 @@ impl Palette {
         Self {
             dark: true,
             window: Color32::from_rgb(0x17, 0x18, 0x1b),
-            panel: Color32::from_rgb(0x1d, 0x1e, 0x22),
-            rail: Color32::from_rgb(0x13, 0x14, 0x17),
+            panel: Color32::from_rgb(0x13, 0x14, 0x17),
+            rail: Color32::from_rgb(0x0e, 0x0f, 0x11),
             surface: Color32::from_rgb(0x25, 0x26, 0x2b),
             surface_hover: Color32::from_rgb(0x2c, 0x2d, 0x33),
             surface_active: Color32::from_rgb(0x34, 0x35, 0x3c),
             outline: Color32::from_rgb(0x30, 0x31, 0x37),
+            card_edge: Color32::from_rgb(0x3a, 0x3b, 0x42),
             control: Color32::from_rgb(0x82, 0x85, 0x8e),
             text: Color32::from_rgb(0xe9, 0xe9, 0xec),
             secondary: Color32::from_rgb(0xb4, 0xb6, 0xbf),
@@ -137,6 +140,7 @@ impl Palette {
             surface_hover: Color32::from_rgb(0xee, 0xee, 0xf0),
             surface_active: Color32::from_rgb(0xe4, 0xe4, 0xe8),
             outline: Color32::from_rgb(0xdf, 0xdf, 0xe3),
+            card_edge: Color32::from_rgb(0xd0, 0xd1, 0xd6),
             control: Color32::from_rgb(0x7c, 0x7f, 0x87),
             text: Color32::from_rgb(0x1b, 0x1c, 0x1f),
             secondary: Color32::from_rgb(0x4a, 0x4d, 0x55),

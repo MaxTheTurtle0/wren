@@ -28,87 +28,89 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
 fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
     let palette = app.palette;
     let viewport = ctx.content_rect();
-    let width = (viewport.width() - 96.0).clamp(240.0, 1200.0);
-    let height = (viewport.height() - 152.0).max(120.0);
+    // A viewer, not a dialog: the window less a 32 pt inset all round.
+    let width = (viewport.width() - 64.0).max(240.0);
+    let height = (viewport.height() - 64.0 - 104.0).max(120.0);
     let zoom_id = egui::Id::new("image-preview-actual-size").with(uri);
     // Both draft and message images are already in egui's local byte cache.
     // Use decoded dimensions, not the message HTML's thumbnail dimensions.
     let loaded = egui::Image::new(crate::images::original(uri))
         .load_for_size(ctx, vec2(width - 32.0, height));
     let mut actual_size = ctx.data(|d| d.get_temp::<bool>(zoom_id)).unwrap_or(false);
-    // Fitted, the canvas is only as tall as the image needs, not the window.
-    let height = match &loaded {
-        Ok(egui::load::TexturePoll::Ready { texture }) if !actual_size => {
-            let scale = ((width - 32.0) / texture.size.x)
-                .min(height / texture.size.y)
-                .min(1.0);
-            (texture.size.y * scale).clamp(160.0, height)
-        }
-        _ => height,
-    };
     let mut actions = Vec::new();
-    let close = modal(palette, ctx, "image-preview", width, Some(48.0), |ui| {
-        ui.set_height(height + 96.0);
-        Frame::new().inner_margin(Margin::same(16)).show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new("Image preview")
-                        .font(theme::bold(20.0))
-                        .color(palette.text),
-                );
-            });
-            ui.horizontal(|ui| {
-                widgets::segmented(ui, &palette, &mut actual_size, "Fit", "100%");
-                ui.add_space(8.0);
-                if let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded {
+    // Media sits on a darker scrim than dialogs do.
+    let scrim = egui::Color32::from_black_alpha(if palette.dark { 204 } else { 184 });
+    let close = modal_with(
+        palette,
+        ctx,
+        "image-preview",
+        width,
+        Some(32.0),
+        scrim,
+        |ui| {
+            ui.set_height(height + 96.0);
+            Frame::new().inner_margin(Margin::same(16)).show(ui, |ui| {
+                ui.horizontal(|ui| {
                     ui.label(
-                        egui::RichText::new(format!(
-                            "{} × {}",
-                            texture.size.x as u32, texture.size.y as u32
-                        ))
-                        .font(theme::regular(12.0))
-                        .color(palette.dim),
+                        egui::RichText::new("Image preview")
+                            .font(theme::bold(20.0))
+                            .color(palette.text),
                     );
-                }
-            });
-            ui.add_space(8.0);
-            egui::ScrollArea::both()
-                .id_salt(("image-preview-scroll", uri, actual_size))
-                .max_height(height)
-                .auto_shrink([false, false])
-                .show_viewport(ui, |ui, viewport| {
-                    let available = viewport.size();
-                    let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded else {
-                        let (canvas, _) = ui.allocate_exact_size(available, Sense::hover());
-                        ui.painter().text(
-                            canvas.center(),
-                            egui::Align2::CENTER_CENTER,
-                            if loaded.is_err() {
-                                "Image unavailable"
-                            } else {
-                                "Loading image…"
-                            },
-                            theme::regular(14.0),
-                            palette.dim,
-                        );
-                        return;
-                    };
-                    let natural = texture.size;
-                    let scale = if actual_size {
-                        1.0
-                    } else {
-                        (available.x / natural.x)
-                            .min(available.y / natural.y)
-                            .min(1.0)
-                    };
-                    let size = natural * scale;
-                    let (canvas, _) = ui.allocate_exact_size(size.max(available), Sense::hover());
-                    ui.painter().rect_filled(canvas, 6, palette.surface_hover);
-                    egui::Image::from_texture(*texture)
-                        .paint_at(ui, egui::Rect::from_center_size(canvas.center(), size));
                 });
-        });
-    });
+                ui.horizontal(|ui| {
+                    widgets::segmented(ui, &palette, &mut actual_size, "Fit", "100%");
+                    ui.add_space(8.0);
+                    if let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded {
+                        ui.label(
+                            egui::RichText::new(format!(
+                                "{} × {}",
+                                texture.size.x as u32, texture.size.y as u32
+                            ))
+                            .font(theme::regular(12.0))
+                            .color(palette.dim),
+                        );
+                    }
+                });
+                ui.add_space(8.0);
+                egui::ScrollArea::both()
+                    .id_salt(("image-preview-scroll", uri, actual_size))
+                    .max_height(height)
+                    .auto_shrink([false, false])
+                    .show_viewport(ui, |ui, viewport| {
+                        let available = viewport.size();
+                        let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded else {
+                            let (canvas, _) = ui.allocate_exact_size(available, Sense::hover());
+                            ui.painter().text(
+                                canvas.center(),
+                                egui::Align2::CENTER_CENTER,
+                                if loaded.is_err() {
+                                    "Image unavailable"
+                                } else {
+                                    "Loading image…"
+                                },
+                                theme::regular(14.0),
+                                palette.dim,
+                            );
+                            return;
+                        };
+                        let natural = texture.size;
+                        let scale = if actual_size {
+                            1.0
+                        } else {
+                            (available.x / natural.x)
+                                .min(available.y / natural.y)
+                                .min(1.0)
+                        };
+                        let size = natural * scale;
+                        let (canvas, _) =
+                            ui.allocate_exact_size(size.max(available), Sense::hover());
+                        ui.painter().rect_filled(canvas, 6, palette.surface_hover);
+                        egui::Image::from_texture(*texture)
+                            .paint_at(ui, egui::Rect::from_center_size(canvas.center(), size));
+                    });
+            });
+        },
+    );
     ctx.data_mut(|d| d.insert_temp(zoom_id, actual_size));
     if close {
         actions.push(Action::CloseOverlay);
@@ -124,6 +126,18 @@ fn modal(
     top: Option<f32>,
     content: impl FnOnce(&mut egui::Ui),
 ) -> bool {
+    modal_with(palette, ctx, id, width, top, palette.overlay, content)
+}
+
+fn modal_with(
+    palette: theme::Palette,
+    ctx: &egui::Context,
+    id: &str,
+    width: f32,
+    top: Option<f32>,
+    backdrop: egui::Color32,
+    content: impl FnOnce(&mut egui::Ui),
+) -> bool {
     // A dialog sits a little above the middle of the window, by its height
     // last frame. Dialogs whose height follows what is typed (search, people,
     // zoom) keep a fixed top instead, so their fields never move.
@@ -132,7 +146,7 @@ fn modal(
     let window = ctx.content_rect();
     let top = top.unwrap_or_else(|| (window.height() * 0.4 - height / 2.0).max(48.0));
     let response = egui::Modal::new(egui::Id::new(id))
-        .backdrop_color(palette.overlay)
+        .backdrop_color(backdrop)
         .frame(
             Frame::new()
                 .fill(palette.surface)
@@ -288,107 +302,72 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
             chosen = true;
         }
     });
-    let close = modal(palette, ctx, "switcher", 600.0, Some(90.0), |ui| {
-        Frame::new()
-            .inner_margin(Margin::symmetric(14, 12))
-            .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    theme::icon(ui, Icon::Search, 18.0, palette.dim);
-                    let response = ui.add(
-                        widgets::text_field(
-                            &mut query,
-                            "Jump to a chat, channel or person, or search messages",
-                            theme::regular(15.0),
-                        )
-                        .frame(egui::Frame::NONE),
-                    );
-                    response.request_focus();
+    let close = modal(
+        palette,
+        ctx,
+        "switcher",
+        600.0,
+        Some((ctx.content_rect().height() * 0.12).max(48.0)),
+        |ui| {
+            Frame::new()
+                .inner_margin(Margin::symmetric(14, 12))
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        theme::icon(ui, Icon::Search, 18.0, palette.dim);
+                        let response = ui.add(
+                            widgets::text_field(
+                                &mut query,
+                                "Jump to a chat, channel or person, or search messages",
+                                theme::regular(15.0),
+                            )
+                            .frame(egui::Frame::NONE),
+                        );
+                        response.request_focus();
+                    });
                 });
-            });
-        ui.painter().hline(
-            ui.max_rect().x_range(),
-            ui.cursor().top(),
-            Stroke::new(1.0, palette.outline),
-        );
-        egui::ScrollArea::vertical()
-            .max_height(440.0)
-            .auto_shrink([false, true])
-            .show(ui, |ui| {
-                Frame::new()
-                    .inner_margin(Margin::symmetric(8, 8))
-                    .show(ui, |ui| {
-                        ui.set_width(ui.available_width());
-                        if !found.is_empty() {
-                            group(
-                                ui,
-                                &palette,
-                                if query.trim().is_empty() {
-                                    "Recent"
-                                } else {
-                                    "Conversations"
-                                },
-                            );
-                        }
-                        for (index, target) in found.iter().enumerate() {
-                            let response = result_row(
-                                ui,
-                                app,
-                                &target.label,
-                                &target.detail,
-                                if target.channel {
-                                    Icon::Hash
-                                } else {
-                                    Icon::Chat
-                                },
-                                Some(&target.conversation),
-                                index == selected,
-                            );
-                            if response.clicked() || (chosen && index == selected) {
-                                actions.push(Action::OpenConversation(target.conversation.clone()));
-                                actions.push(Action::CloseOverlay);
-                            }
-                            if response.hovered()
-                                && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO)
-                            {
-                                selected = index;
-                            }
-                        }
-                        if query.trim().chars().count() >= 2 {
-                            group(ui, &palette, "Messages");
-                            if hits.is_empty() {
-                                ui.horizontal(|ui| {
-                                    ui.add_space(10.0);
-                                    let text = if app.switcher.searched == query {
-                                        "No messages found."
+            ui.painter().hline(
+                ui.max_rect().x_range(),
+                ui.cursor().top(),
+                Stroke::new(1.0, palette.outline),
+            );
+            egui::ScrollArea::vertical()
+                .max_height(440.0)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    Frame::new()
+                        .inner_margin(Margin::symmetric(8, 8))
+                        .show(ui, |ui| {
+                            ui.set_width(ui.available_width());
+                            if !found.is_empty() {
+                                group(
+                                    ui,
+                                    &palette,
+                                    if query.trim().is_empty() {
+                                        "Recent"
                                     } else {
-                                        "Searching…"
-                                    };
-                                    ui.label(egui::RichText::new(text).color(palette.dim));
-                                });
-                            }
-                            for (offset, hit) in hits.iter().enumerate() {
-                                let index = found.len() + offset;
-                                let title = app.title_of(&hit.conversation);
-                                let detail = format!(
-                                    "{} · {} · {}",
-                                    hit.author,
-                                    crate::time::short_label(hit.at, crate::time::now()),
-                                    title
+                                        "Conversations"
+                                    },
                                 );
+                            }
+                            for (index, target) in found.iter().enumerate() {
                                 let response = result_row(
                                     ui,
                                     app,
-                                    &hit.snippet,
-                                    &detail,
-                                    Icon::Search,
-                                    None,
+                                    &target.label,
+                                    &target.detail,
+                                    if target.channel {
+                                        Icon::Hash
+                                    } else {
+                                        Icon::Chat
+                                    },
+                                    Some(&target.conversation),
                                     index == selected,
                                 );
                                 if response.clicked() || (chosen && index == selected) {
-                                    actions.push(Action::OpenMessage {
-                                        conversation: hit.conversation.clone(),
-                                        message: hit.message_id.clone(),
-                                    });
+                                    actions.push(Action::OpenConversation(
+                                        target.conversation.clone(),
+                                    ));
+                                    actions.push(Action::CloseOverlay);
                                 }
                                 if response.hovered()
                                     && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO)
@@ -396,38 +375,83 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
                                     selected = index;
                                 }
                             }
+                            if query.trim().chars().count() >= 2 {
+                                group(ui, &palette, "Messages");
+                                if hits.is_empty() {
+                                    ui.horizontal(|ui| {
+                                        ui.add_space(10.0);
+                                        let text = if app.switcher.searched == query {
+                                            "No messages found."
+                                        } else {
+                                            "Searching…"
+                                        };
+                                        ui.label(egui::RichText::new(text).color(palette.dim));
+                                    });
+                                }
+                                for (offset, hit) in hits.iter().enumerate() {
+                                    let index = found.len() + offset;
+                                    let title = app.title_of(&hit.conversation);
+                                    let detail = format!(
+                                        "{} · {} · {}",
+                                        hit.author,
+                                        crate::time::short_label(hit.at, crate::time::now()),
+                                        title
+                                    );
+                                    let response = result_row(
+                                        ui,
+                                        app,
+                                        &hit.snippet,
+                                        &detail,
+                                        Icon::Search,
+                                        None,
+                                        index == selected,
+                                    );
+                                    if response.clicked() || (chosen && index == selected) {
+                                        actions.push(Action::OpenMessage {
+                                            conversation: hit.conversation.clone(),
+                                            message: hit.message_id.clone(),
+                                        });
+                                    }
+                                    if response.hovered()
+                                        && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO)
+                                    {
+                                        selected = index;
+                                    }
+                                }
+                            }
+                        });
+                });
+            Frame::new()
+                .inner_margin(Margin {
+                    left: 14,
+                    right: 14,
+                    top: 8,
+                    bottom: 12,
+                })
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 6.0;
+                        for (keys, what) in [("↑↓", "move"), ("Enter", "open"), ("Esc", "close")]
+                        {
+                            widgets::keycaps(ui, &palette, keys);
+                            ui.label(
+                                egui::RichText::new(what)
+                                    .font(theme::regular(12.0))
+                                    .color(palette.secondary),
+                            );
+                            ui.add_space(6.0);
                         }
                     });
-            });
-        Frame::new()
-            .inner_margin(Margin {
-                left: 14,
-                right: 14,
-                top: 8,
-                bottom: 12,
-            })
-            .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 6.0;
-                    for (keys, what) in [("↑↓", "move"), ("Enter", "open"), ("Esc", "close")] {
-                        widgets::keycaps(ui, &palette, keys);
-                        ui.label(
-                            egui::RichText::new(what)
-                                .font(theme::regular(12.0))
-                                .color(palette.secondary),
-                        );
-                        ui.add_space(6.0);
-                    }
-                });
-                ui.label(
+                    ui.label(
                     egui::RichText::new(
                         "Messages are searched on this computer first, then with Microsoft Search.",
                     )
                     .font(theme::regular(12.0))
                     .color(palette.dim),
                 );
-            });
-    });
+                });
+        },
+    );
     if query != app.switcher.query {
         app.switcher.query = query.clone();
         selected = 0;
@@ -547,10 +571,11 @@ fn settings(app: &mut App, ctx: &egui::Context) {
             });
             ui.add_space(10.0);
             let height = (ui.ctx().content_rect().height() - 220.0).clamp(240.0, 640.0);
-            // A solid scroll bar keeps its own lane, clear of the content.
-            ui.spacing_mut().scroll = egui::style::ScrollStyle::solid();
-            ui.spacing_mut().scroll.bar_outer_margin = 4.0;
-            ui.spacing_mut().scroll.bar_width = 8.0;
+            // A slim floating bar in a reserved 14 pt gutter: clear of the
+            // content, present without being heavy.
+            ui.spacing_mut().scroll.floating_allocated_width = 14.0;
+            ui.spacing_mut().scroll.floating_width = 4.0;
+            ui.spacing_mut().scroll.dormant_handle_opacity = 0.6;
             // The bar paints with these; the content gets the usual ones back.
             let widgets_style = ui.visuals().widgets.clone();
             let bars = &mut ui.visuals_mut().widgets;
@@ -913,189 +938,200 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
             start = true;
         }
     });
-    let close = modal(palette, ctx, "new-chat", 520.0, Some(90.0), |ui| {
-        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new("New chat")
-                        .font(theme::bold(20.0))
-                        .color(palette.text),
-                );
-            });
-            ui.add_space(10.0);
-            // The people picked so far.
-            if !picked.is_empty() {
-                let mut remove = None;
-                ui.horizontal_wrapped(|ui| {
-                    ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
-                    for (index, person) in picked.iter().enumerate() {
-                        Frame::new()
-                            .fill(palette.surface_hover)
-                            .corner_radius(CornerRadius::same(14))
-                            .inner_margin(Margin {
-                                left: 4,
-                                right: 2,
-                                top: 2,
-                                bottom: 2,
-                            })
-                            .show(ui, |ui| {
-                                ui.horizontal(|ui| {
-                                    ui.spacing_mut().item_spacing.x = 4.0;
-                                    widgets::avatar(
-                                        ui,
-                                        app,
-                                        Some(&person.user_id),
-                                        &person.display_name,
-                                        22.0,
-                                        false,
-                                    );
-                                    ui.label(
-                                        egui::RichText::new(&person.display_name)
-                                            .font(theme::medium(13.0))
-                                            .color(palette.text),
-                                    );
-                                    let close = widgets::icon_button_sized(
-                                        ui,
-                                        &palette,
-                                        Icon::Close,
-                                        "Remove",
-                                        20.0,
-                                        12.0,
-                                        palette.dim,
-                                    );
-                                    if close.clicked() {
-                                        remove = Some(index);
-                                    }
-                                });
-                            });
-                    }
-                });
-                if let Some(index) = remove {
-                    picked.remove(index);
-                }
-                ui.add_space(8.0);
-            }
-            widgets::field_label(
-                ui,
-                &palette,
-                if picked.is_empty() {
-                    "To"
-                } else {
-                    "Add someone else"
-                },
-            );
-            let response = ui.add(
-                egui::TextEdit::singleline(&mut query)
-                    .hint_text("Type a name or email address")
-                    .desired_width(f32::INFINITY)
-                    .margin(Margin::symmetric(10, 8))
-                    .font(theme::regular(14.0)),
-            );
-            response.request_focus();
-            ui.add_space(6.0);
-            for (index, person) in found.iter().enumerate() {
-                let (rect, row) =
-                    ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::click());
-                // The keyboard's choice: a marker and an Enter hint, so it
-                // reads as "about to add", not as already added.
-                if index == selected || row.hovered() {
-                    ui.painter().rect_filled(
-                        rect,
-                        CornerRadius::same(8),
-                        if index == selected {
-                            palette.surface_active
-                        } else {
-                            palette.surface_hover
-                        },
-                    );
-                }
-                if index == selected {
-                    widgets::selection_marker(ui, &palette, rect);
-                    ui.painter().text(
-                        egui::pos2(rect.right() - 12.0, rect.center().y),
-                        egui::Align2::RIGHT_CENTER,
-                        "Enter to add",
-                        theme::regular(12.0),
-                        palette.secondary,
-                    );
-                }
-                let mut child = ui.new_child(
-                    egui::UiBuilder::new()
-                        .max_rect(rect.shrink2(vec2(10.0, 0.0)))
-                        .layout(egui::Layout::left_to_right(egui::Align::Center)),
-                );
-                widgets::avatar(
-                    &mut child,
-                    app,
-                    Some(&person.user_id),
-                    &person.display_name,
-                    30.0,
-                    true,
-                );
-                child.add_space(8.0);
-                child.vertical(|ui| {
-                    ui.spacing_mut().item_spacing.y = 0.0;
+    let close = modal(
+        palette,
+        ctx,
+        "new-chat",
+        520.0,
+        // Centred for its usual height, and fixed there so results that come
+        // and go never move the field.
+        Some((ctx.content_rect().height() * 0.4 - 220.0).max(48.0)),
+        |ui| {
+            Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
+                ui.horizontal(|ui| {
                     ui.label(
-                        egui::RichText::new(&person.display_name)
-                            .font(theme::medium(14.0))
+                        egui::RichText::new("New chat")
+                            .font(theme::bold(20.0))
                             .color(palette.text),
                     );
-                    if let Some(email) = &person.email {
-                        ui.label(
-                            egui::RichText::new(email)
-                                .font(theme::regular(12.0))
-                                .color(palette.secondary),
+                });
+                ui.add_space(10.0);
+                // The people picked so far.
+                if !picked.is_empty() {
+                    let mut remove = None;
+                    ui.horizontal_wrapped(|ui| {
+                        ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
+                        for (index, person) in picked.iter().enumerate() {
+                            Frame::new()
+                                .fill(palette.surface_hover)
+                                .corner_radius(CornerRadius::same(14))
+                                .inner_margin(Margin {
+                                    left: 4,
+                                    right: 2,
+                                    top: 2,
+                                    bottom: 2,
+                                })
+                                .show(ui, |ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.spacing_mut().item_spacing.x = 4.0;
+                                        widgets::avatar(
+                                            ui,
+                                            app,
+                                            Some(&person.user_id),
+                                            &person.display_name,
+                                            22.0,
+                                            false,
+                                        );
+                                        ui.label(
+                                            egui::RichText::new(&person.display_name)
+                                                .font(theme::medium(13.0))
+                                                .color(palette.text),
+                                        );
+                                        let close = widgets::icon_button_sized(
+                                            ui,
+                                            &palette,
+                                            Icon::Close,
+                                            "Remove",
+                                            20.0,
+                                            12.0,
+                                            palette.dim,
+                                        );
+                                        if close.clicked() {
+                                            remove = Some(index);
+                                        }
+                                    });
+                                });
+                        }
+                    });
+                    if let Some(index) = remove {
+                        picked.remove(index);
+                    }
+                    ui.add_space(8.0);
+                }
+                widgets::field_label(
+                    ui,
+                    &palette,
+                    if picked.is_empty() {
+                        "To"
+                    } else {
+                        "Add someone else"
+                    },
+                );
+                let response = ui.add(
+                    egui::TextEdit::singleline(&mut query)
+                        .hint_text("Type a name or email address")
+                        .desired_width(f32::INFINITY)
+                        .margin(Margin::symmetric(10, 8))
+                        .font(theme::regular(14.0)),
+                );
+                response.request_focus();
+                ui.add_space(6.0);
+                for (index, person) in found.iter().enumerate() {
+                    let (rect, row) =
+                        ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::click());
+                    // The keyboard's choice: a marker and an Enter hint, so it
+                    // reads as "about to add", not as already added.
+                    if index == selected || row.hovered() {
+                        ui.painter().rect_filled(
+                            rect,
+                            CornerRadius::same(8),
+                            if index == selected {
+                                palette.surface_active
+                            } else {
+                                palette.surface_hover
+                            },
                         );
                     }
+                    if index == selected {
+                        widgets::selection_marker(ui, &palette, rect);
+                        ui.painter().text(
+                            egui::pos2(rect.right() - 12.0, rect.center().y),
+                            egui::Align2::RIGHT_CENTER,
+                            "Enter to add",
+                            theme::regular(12.0),
+                            palette.secondary,
+                        );
+                    }
+                    let mut child = ui.new_child(
+                        egui::UiBuilder::new()
+                            .max_rect(rect.shrink2(vec2(10.0, 0.0)))
+                            .layout(egui::Layout::left_to_right(egui::Align::Center)),
+                    );
+                    widgets::avatar(
+                        &mut child,
+                        app,
+                        Some(&person.user_id),
+                        &person.display_name,
+                        30.0,
+                        true,
+                    );
+                    child.add_space(8.0);
+                    child.vertical(|ui| {
+                        ui.spacing_mut().item_spacing.y = 0.0;
+                        ui.label(
+                            egui::RichText::new(&person.display_name)
+                                .font(theme::medium(14.0))
+                                .color(palette.text),
+                        );
+                        if let Some(email) = &person.email {
+                            ui.label(
+                                egui::RichText::new(email)
+                                    .font(theme::regular(12.0))
+                                    .color(palette.secondary),
+                            );
+                        }
+                    });
+                    if row.clicked() {
+                        choose = Some(person.clone());
+                    }
+                }
+                if found.is_empty() && query.trim().chars().count() >= 2 {
+                    ui.label(
+                        egui::RichText::new("Searching your organisation…").color(palette.dim),
+                    );
+                }
+                if picked.len() > 1 {
+                    ui.add_space(10.0);
+                    ui.label(
+                        egui::RichText::new("Group name (optional)")
+                            .font(theme::medium(12.0))
+                            .color(palette.secondary),
+                    );
+                    ui.add(
+                        egui::TextEdit::singleline(&mut topic)
+                            .hint_text("Launch crew")
+                            .desired_width(f32::INFINITY)
+                            .margin(Margin::symmetric(10, 6)),
+                    );
+                }
+                ui.add_space(16.0);
+                // The dialog footer: a note above, the action on the right.
+                if picked.len() == 1 {
+                    ui.label(
+                        egui::RichText::new("An existing chat with this person opens instead.")
+                            .font(theme::regular(12.0))
+                            .color(palette.secondary),
+                    );
+                    ui.add_space(8.0);
+                }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let label = match picked.len() {
+                        0 => "Pick someone to chat with".to_owned(),
+                        1 => format!("Chat with {}", picked[0].display_name),
+                        n => format!("Start a group chat with {n} people"),
+                    };
+                    let button = ui
+                        .add_enabled_ui(!picked.is_empty(), |ui| {
+                            widgets::primary_button(ui, &palette, &label)
+                        })
+                        .inner;
+                    if button.clicked() {
+                        start = true;
+                    }
                 });
-                if row.clicked() {
-                    choose = Some(person.clone());
-                }
-            }
-            if found.is_empty() && query.trim().chars().count() >= 2 {
-                ui.label(egui::RichText::new("Searching your organisation…").color(palette.dim));
-            }
-            if picked.len() > 1 {
-                ui.add_space(10.0);
-                ui.label(
-                    egui::RichText::new("Group name (optional)")
-                        .font(theme::medium(12.0))
-                        .color(palette.secondary),
-                );
-                ui.add(
-                    egui::TextEdit::singleline(&mut topic)
-                        .hint_text("Launch crew")
-                        .desired_width(f32::INFINITY)
-                        .margin(Margin::symmetric(10, 6)),
-                );
-            }
-            ui.add_space(16.0);
-            // The dialog footer: a note above, the action on the right.
-            if picked.len() == 1 {
-                ui.label(
-                    egui::RichText::new("An existing chat with this person opens instead.")
-                        .font(theme::regular(12.0))
-                        .color(palette.secondary),
-                );
-                ui.add_space(8.0);
-            }
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let label = match picked.len() {
-                    0 => "Pick someone to chat with".to_owned(),
-                    1 => format!("Chat with {}", picked[0].display_name),
-                    n => format!("Start a group chat with {n} people"),
-                };
-                let button = ui
-                    .add_enabled_ui(!picked.is_empty(), |ui| {
-                        widgets::primary_button(ui, &palette, &label)
-                    })
-                    .inner;
-                if button.clicked() {
-                    start = true;
-                }
             });
-        });
-    });
+        },
+    );
     if let Some(person) = choose {
         picked.push(person);
         query.clear();

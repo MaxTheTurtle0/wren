@@ -1,0 +1,521 @@
+{
+ "overall": 8,
+ "dimensions": {
+  "contrast": 9,
+  "typography": 8,
+  "colour": 8,
+  "spacing": 7.5,
+  "hierarchy": 8
+ },
+ "blocks_9": [
+  "Overlays use inconsistent geometry: the image preview is a short 260 px strip pinned to the top (not a full-window viewer), and dialog tops jump between y=48, 90, 193 and 207 depending on the dialog",
+  "Narrow layouts (760 wide) keep the list pane at 300 px, so names truncate after about 10 characters ('Katherine Jo...', 'Grace Hop...') while the main pane keeps generous margins",
+  "Calendar detail is underdesigned: a two-row card (Organizer/Online), a 15 pt title that matches the list items, an irrelevant join note for an offline event, and about 75% of the pane empty",
+  "Scroll affordances are rough: always-visible 6 px grey bars (#727376) on the right edge (setup page overflows at 1280x800 and pushes the logo to y=20), a heavy black thumb plus a hairline track inside the long-draft composer, and settings content cut through a checkbox with no fade",
+  "Surface layering in dark mode is inverted: the list pane (#1d1e22) is lighter than the main pane (#17181b), and in light mode the list and main panes are separated only by a 1.08:1 tint with no divider",
+  "The accent is overloaded: one orange marks selection, focus rings, unread, the person's own reactions, mentions, primary buttons and the active rail icon, so nothing stands out on busy screens",
+  "Small rhythm inconsistencies: shortcuts section label-to-row gaps of 33 vs 20 px, a meeting-ended system line 8 px under a message vs 16 px elsewhere, and the loading skeleton starting at y=68 vs the real list at y=104",
+  "The sign-in tooltip overflows the card edge by 26 px, covers the divider, uses 14 pt text above the card's 13 pt body, and in dark mode has nearly the same fill as the card"
+ ],
+ "screens": {
+  "chats": {
+   "score": 8.5,
+   "issues": [
+    "initial scroll leaves a hard-clipped text line under the header (y=44-51) with no fade, while other screens fade",
+    "the list/main split relies on a 1.08:1 tint with no divider",
+    "the selected heart in the hover toolbar uses the same orange ring as focus and own reactions"
+   ]
+  },
+  "chats-wide": {
+   "score": 8.5,
+   "issues": [
+    "list pane stays 300 px at 1920 wide while the centred column leaves about 340 px of empty margin each side",
+    "'This is the beginning of the conversation' floats in empty space with about 80 px above it",
+    "header is centred to the column while the list header is left-aligned at the pane edge, giving two different alignment axes"
+   ]
+  },
+  "chats-narrow": {
+   "score": 7.5,
+   "issues": [
+    "list keeps a 300 px pane at 760 wide: names truncate to 'Katherine Jo...', 'Grace Hop...', 'Margaret Hamil...'",
+    "previews cut after 2-3 words, so they lose their value",
+    "hover toolbar covers the right end of the sender row in a 464 px pane"
+   ]
+  },
+  "chat-no-selection": {
+   "score": 8.5,
+   "issues": [
+    "empty state is generic: a 56 px grey circle plus two lines, with no 'New chat' button unlike first-sync-empty",
+    "the empty main pane has no header band, so the top edge differs from every other main-pane state"
+   ]
+  },
+  "chat-filter-no-match": {
+   "score": 8.5,
+   "issues": [
+    "filter field shows no focus ring or clear (x) button while text is typed, and the 'Clear filter' button repeats the same action",
+    "the empty state is vertically centred in the pane, far below the field that caused it"
+   ]
+  },
+  "group-chat": {
+   "score": 8.5,
+   "issues": [
+    "mention highlight (#fdf1e5 plus an orange bar) uses the same accent as selection and own reactions, so it does not read as 'about you' distinctly",
+    "composer focus ring in orange at 2 px competes with the mention highlight"
+   ]
+  },
+  "channel": {
+   "score": 8,
+   "issues": [
+    "every thread repeats an outlined 'Reply' button: three heavy outlines draw more attention than post titles",
+    "post card borders measure 1.33:1 (light #dfdfe3 on #fff) and 1.19:1 (dark), so the cards barely separate",
+    "reply rows use 26 px avatars and 13 pt names, a third avatar size",
+    "the top post is hard-clipped under the header (a reaction pill is visible at y=48)"
+   ]
+  },
+  "channel-narrow": {
+   "score": 7.5,
+   "issues": [
+    "list pane keeps 300 px at 760 wide",
+    "the post header and avatar are cut by the header line at y=52",
+    "hover toolbar overlaps the post title row",
+    "the composer placeholder truncates the channel path"
+   ]
+  },
+  "teams": {
+   "score": 8,
+   "issues": [
+    "Engineering and Contoso team tiles share the same magenta (#c03f6c-ish), so the hue gives no identity",
+    "the empty state offers no action and no 'browse' hint",
+    "channel rows have no unread or activity indicators, unlike the chat list"
+   ]
+  },
+  "calendar": {
+   "score": 7,
+   "issues": [
+    "the detail pane is about 75% empty: two key-value rows only",
+    "title 'Focus time' is 15 pt in the header, the same weight as the list items, so it has no emphasis",
+    "'Online: No' plus a note about joining online meetings is irrelevant for this event",
+    "list events use bold 13 pt titles while every other list uses regular 14 pt names"
+   ]
+  },
+  "calls": {
+   "score": 8,
+   "issues": [
+    "recent-people avatars are 32 px vs 38 px in the chat list",
+    "repeated phone/video icon pairs on all 7 rows add noise; showing them on hover would be calmer",
+    "the 'How calls work' body is 14 pt in secondary grey, a different paragraph style from other explanatory notes (12 pt)"
+   ]
+  },
+  "calls-narrow": {
+   "score": 7.5,
+   "issues": [
+    "names truncate ('Katherine Jo...', 'Dorothy Vaug...') because two icon buttons take 80 px of a 232 px pane",
+    "the 'Not possible' line wraps with a hanging indent that matches the icon, not the label"
+   ]
+  },
+  "composer-mention": {
+   "score": 8,
+   "issues": [
+    "the popup covers the last message ('g > Incidents channel' is visible beside it)",
+    "the '@Mar' query is not highlighted in the composer",
+    "popup elevation is weak in light mode (a 1px #dfdfe3 border with a faint shadow)"
+   ]
+  },
+  "composer-long-draft": {
+   "score": 7.5,
+   "issues": [
+    "the inner scrollbar shows as a full-height hairline track plus a heavy black thumb next to the attach icon",
+    "the first visible line is clipped (descender fragments at y=555)",
+    "the composer grows to 210 px and hides the conversation; there is no max-height cue"
+   ]
+  },
+  "composer-images": {
+   "score": 8,
+   "issues": [
+    "extreme-aspect images show as slivers in 144x96 tiles, which reads as broken",
+    "dimension captions are the only metadata; there is no file name",
+    "the remove (x) buttons are dark grey discs on light tiles, heavier than needed"
+   ]
+  },
+  "image-preview": {
+   "score": 7,
+   "issues": [
+    "the 'full-window preview' is a 1185x258 dialog pinned to the top, and the rest of the window is scrim",
+    "the Fit/100% segmented control uses the orange primary fill for a view toggle",
+    "the image well (#ececee) and the dialog have little padding difference, so the well reads as a placeholder"
+   ]
+  },
+  "search-switcher": {
+   "score": 8.5,
+   "issues": [
+    "the footer keycaps sit 20 px under the last result with no divider",
+    "the scrim lets list unread times show through at full saturation beside the dialog edge (x=340)"
+   ]
+  },
+  "new-chat": {
+   "score": 8.5,
+   "issues": [
+    "the dialog is top-anchored at y=90 while other dialogs centre",
+    "the primary button label 'Chat with Grace Hopper' ignores the highlighted Barbara Liskov, which is confusing"
+   ]
+  },
+  "settings": {
+   "score": 7.5,
+   "issues": [
+    "content is cut through a checkbox at the bottom (y=697) with no fade or shadow",
+    "the right gutter between the text end (x=875) and the scrollbar (x=885) is 10 px",
+    "a 30 px gap separates the account email from the '2 accounts' hint, inconsistent with other sections",
+    "the scroll thumb is a heavy 6 px grey bar"
+   ]
+  },
+  "shortcuts": {
+   "score": 8.5,
+   "issues": [
+    "label-to-first-row gaps differ: NAVIGATION 33 px vs APP 20 px",
+    "the key column is 190 px wide on the left and 92 px on the right, so the description columns do not share a rhythm",
+    "the dialog is wide (928 px) with an empty lower-right quadrant"
+   ]
+  },
+  "status-message": {
+   "score": 8.5,
+   "issues": [
+    "no clear-after or preset options; the dialog is functional but bare",
+    "the disabled Save button (4.6:1 text) is close to the Cancel button in weight"
+   ]
+  },
+  "account-menu": {
+   "score": 8,
+   "issues": [
+    "'Be right back' and 'Appear away' use the same amber (#8f6a00) and differ only by a tiny glyph",
+    "the menu overlaps the list and rail and has no anchoring caret",
+    "both accounts show the same name, so only the 12 pt email tells them apart"
+   ]
+  },
+  "permission-consent": {
+   "score": 8.5,
+   "issues": [
+    "four text tiers in a small dialog (20 bold, 14 semibold, 13, 12 grey)",
+    "the lock icon is 20 px beside a 20 pt title, slightly heavy"
+   ]
+  },
+  "error-toast": {
+   "score": 8.5,
+   "issues": [
+    "the failed message's body turns secondary grey (#4a4d55) while the error line is red bold 12 pt; the hierarchy could be calmer",
+    "the Retry button sits on the tinted row with a #7c7f87 outline, fine but small (24 px tall)"
+   ]
+  },
+  "first-sync-loading": {
+   "score": 8,
+   "issues": [
+    "skeleton rows start at y=68 while the real list starts at y=104 (no filter field), so the layout jumps",
+    "compose, search and refresh stay enabled while nothing has loaded"
+   ]
+  },
+  "first-sync-empty": {
+   "score": 8,
+   "issues": [
+    "the list pane is completely blank, with no hint or filter",
+    "the CTA is fine, but the empty pane makes the window feel unfinished"
+   ]
+  },
+  "call-bar": {
+   "score": 8,
+   "issues": [
+    "about 100 px of empty space above 'This is the beginning of the conversation'",
+    "the 'Meeting ended' system line sits 8 px under a message vs 16 px for other system lines",
+    "the call-bar buttons (Phone, Expand, Hide) give no leave or mute status, only a 'just joined' text"
+   ]
+  },
+  "call-docked": {
+   "score": 8,
+   "issues": [
+    "about 150 px of empty space at the top of the transcript",
+    "the call-bar band (#f6f6f7) and the meeting header have no clear boundary in light mode"
+   ]
+  },
+  "join-on-phone": {
+   "score": 8.5,
+   "issues": [
+    "the dialog is near full width (340 of 380 px) with only a 20 px gutter",
+    "the light dialog has a weak scrim edge: the call bar buttons behind it stay legible beside the dialog"
+   ]
+  },
+  "setup": {
+   "score": 7.5,
+   "issues": [
+    "the page overflows at 1280x800: an always-visible scrollbar (#727376) and the logo crammed to y=20",
+    "the title-to-body gap (8 px) is tighter than the body-to-button gap",
+    "the tenant help text wraps under the label with a two-line stack before the field"
+   ]
+  },
+  "signin": {
+   "score": 8,
+   "issues": [
+    "the tooltip overflows the card's right edge by 26 px and covers the divider",
+    "tooltip text is 14 pt, larger than the 13 pt card body",
+    "the dark tooltip fill (#25262b) equals the card fill"
+   ]
+  },
+  "signin-browser": {
+   "score": 8.5,
+   "issues": [
+    "the footer position jumps between sign-in states (y=562/634/642) because the stack is top-anchored",
+    "three buttons with equal outline weight beside the primary"
+   ]
+  },
+  "signin-device-code": {
+   "score": 8,
+   "issues": [
+    "the URL is shown in body colour, not styled as a link like chat links",
+    "paragraph leading is 24 px vs 20 px in other cards",
+    "the code letter-spacing makes 'F4KQ - 9TZW' read as three tokens"
+   ]
+  },
+  "signin-finishing": {
+   "score": 8.5,
+   "issues": [
+    "the stack sits high (visual centre at about y=310 of 800)",
+    "the spinner is in the title row, while the other states put status in a separate row"
+   ]
+  },
+  "signin-expired": {
+   "score": 8,
+   "issues": [
+    "the tooltip overflows the card edge, as on signin",
+    "the 'Account' key-value row uses a 12 pt label and a 13 pt semibold value, a one-off style"
+   ]
+  },
+  "signin-failed": {
+   "score": 8.5,
+   "issues": [
+    "the error message is plain red text with no tinted container; it is fine but less prominent than the error row in chat",
+    "'Sign-in' hyphen spacing reads as 'Sign - in'"
+   ]
+  }
+ },
+ "top_issues": [
+  {
+   "priority": 1,
+   "severity": "high",
+   "screens": [
+    "image-preview"
+   ],
+   "mode": "both",
+   "dimension": "hierarchy",
+   "issue": "The image preview is a short strip dialog pinned to the top, not a full-window viewer. Most of the window is scrim, and the image is small.",
+   "evidence": "Dialog spans x=47-1232, y=48-305 (258 px tall) in a 1280x800 window; the image well is 1152x148 at #ececee (light) / #2c2d33 (dark).",
+   "fix": "Make the preview fill the window minus a 32 px inset (e.g. 1216x736), centre it, put the toolbar (Fit/100%, size, close) in a 44 px top band, and use a darker scrim for media (light rgba(0,0,0,0.72), dark rgba(0,0,0,0.8))."
+  },
+  {
+   "priority": 2,
+   "severity": "high",
+   "screens": [
+    "chats-narrow",
+    "channel-narrow",
+    "calls-narrow"
+   ],
+   "mode": "both",
+   "dimension": "spacing",
+   "issue": "At 760 wide the list pane keeps its full width, so names and previews truncate heavily.",
+   "evidence": "List pane x=64-296 (232 px content) with 38 px avatars and 80 px of icon buttons in Calls; 'Katherine Jo...', 'Grace Hop...', 'Dorothy Vaug...'.",
+   "fix": "Below a 900 px window, shrink the list to 240 px total, drop avatars to 32 px, show call/video icons only on hover or selection, and let the timestamp column collapse to 40 px."
+  },
+  {
+   "priority": 3,
+   "severity": "high",
+   "screens": [
+    "calendar"
+   ],
+   "mode": "both",
+   "dimension": "hierarchy",
+   "issue": "The meeting detail is sparse and lacks a focal point. The title has no emphasis, and irrelevant help text shows for a non-online event.",
+   "evidence": "The header title is 15 pt semibold, the same as the list item titles; the card holds 2 rows (Organizer, Online: No) at 411-1113 x 78-177; the pane below y=230 is empty.",
+   "fix": "Put a 20 pt semibold title plus a 14 pt time line in the pane, followed by rows for location, attendees (avatars) and description; hide the 'Joining opens...' note when the meeting is not online; drop the 'Online: No' row."
+  },
+  {
+   "priority": 4,
+   "severity": "medium",
+   "screens": [
+    "setup",
+    "settings",
+    "composer-long-draft",
+    "chats"
+   ],
+   "mode": "both",
+   "dimension": "other",
+   "issue": "Scroll affordances are heavy or inconsistent: always-visible bars, an overflowing setup page, a black thumb in the composer, and settings content hard-cut through a checkbox.",
+   "evidence": "Setup shows a #727376 (light) / #96979a (dark) 6 px bar at x=1274-1279 and the logo at y=20; the composer thumb is near-black at x=1166 y=730-750 with a 1px full-height track; the settings checkbox is cut at y=697.",
+   "fix": "Use overlay scrollbars that appear on scroll or hover (4 px, #00000033 light / #ffffff33 dark). Fit setup in 800 px (cut the logo to 72 px, gaps to 24 px). Add a 16 px fade at clipped scroll edges in settings and the composer."
+  },
+  {
+   "priority": 5,
+   "severity": "medium",
+   "screens": [
+    "settings",
+    "new-chat",
+    "status-message",
+    "permission-consent",
+    "shortcuts",
+    "image-preview",
+    "search-switcher"
+   ],
+   "mode": "both",
+   "dimension": "spacing",
+   "issue": "Dialog vertical placement is inconsistent: some are top-anchored, some are centred.",
+   "evidence": "Dialog tops: settings y=48, image preview y=48, search y=90, new chat y=90, shortcuts y=89, permission y=193, status y=207.",
+   "fix": "Centre modal dialogs vertically (clamped to a 48 px minimum top). Keep only the search switcher at a fixed 12% top so its results grow downward."
+  },
+  {
+   "priority": 6,
+   "severity": "medium",
+   "screens": [
+    "chats",
+    "chats-wide",
+    "group-chat",
+    "channel",
+    "calendar",
+    "calls"
+   ],
+   "mode": "dark",
+   "dimension": "colour",
+   "issue": "Surface layering in dark mode is inverted, and pane separation is too faint in both themes.",
+   "evidence": "Dark: rail #131417, list #1d1e22, main #17181b, dialogs #25262b, so the main reading pane is darker than its sidebar. Light: list #f6f6f7 vs main #ffffff = 1.08:1 with no divider (the header hairline is #dfdfe3).",
+   "fix": "Dark: make main #1b1c20 and list #17181b (sidebar recessed), or add a 1px #2a2b31 divider at x=364. Light: add a 1px #e4e4e8 divider between list and main to match the header hairline."
+  },
+  {
+   "priority": 7,
+   "severity": "medium",
+   "screens": [
+    "group-chat",
+    "chats",
+    "composer-mention",
+    "image-preview",
+    "settings"
+   ],
+   "mode": "both",
+   "dimension": "colour",
+   "issue": "One orange accent carries too many meanings: selection bar, focus ring, unread time and dot, own reactions, mention highlight, primary button, active rail icon, view toggle. Nothing stands out on busy screens.",
+   "evidence": "#a5500f (light) / #e88c3e (dark) is used for at least 8 roles; the group-chat screen shows the focus ring, mention bar and own-reaction outline at once.",
+   "fix": "Keep orange for primary actions, unread and the mention. Use a neutral #7c7f87 (dark #82858e) 1px outline for own reactions with a tinted fill only, use a neutral selected state (Fit/100%: #e4e4e8 fill, text #1b1c1f), and use a 1px accent focus ring instead of 2 px when the composer is merely focused."
+  },
+  {
+   "priority": 8,
+   "severity": "medium",
+   "screens": [
+    "channel",
+    "channel-narrow"
+   ],
+   "mode": "both",
+   "dimension": "hierarchy",
+   "issue": "Thread cards repeat outlined Reply buttons that outweigh content, while card borders are nearly invisible.",
+   "evidence": "Reply buttons are 80x28 with an 8.45:1 #4a4d55 outline; the card border is #dfdfe3 on #fff = 1.33:1 (dark 1.19:1).",
+   "fix": "Make Reply a text button (13 pt, #4a4d55, no outline, reply icon) and raise the card border to #d0d1d6 (light) / #34353c (dark), or use a 4% tinted card fill."
+  },
+  {
+   "priority": 9,
+   "severity": "medium",
+   "screens": [
+    "signin",
+    "signin-expired"
+   ],
+   "mode": "both",
+   "dimension": "other",
+   "issue": "The hover tooltip overflows the card, covers the divider, and uses a larger font than the card body.",
+   "evidence": "Tooltip spans x=601-900 while the card ends at x=874; its text is 14 pt vs 13 pt body; the dark tooltip fill #25262b equals the card fill.",
+   "fix": "Constrain tooltips inside the window with a flip or shift so they stay inside the card, set text to 12 pt, max width 260 px, and use an inverse fill (light #1b1c1f with #fff text, dark #e9e9ec with #17181b text) or a raised #34353c in dark."
+  },
+  {
+   "priority": 10,
+   "severity": "medium",
+   "screens": [
+    "composer-images",
+    "composer-long-draft"
+   ],
+   "mode": "both",
+   "dimension": "other",
+   "issue": "Composer states look unpolished: extreme-aspect thumbnails become slivers, the long draft's first line is clipped, and the internal scrollbar is heavy.",
+   "evidence": "3072x256 image shown as a 140x8 strip in a 144x96 tile; descender fragments at y=555; a black 4x22 thumb at x=1166.",
+   "fix": "Cover-crop thumbnails to the tile (centre crop) and show the full image only in preview. Pad the scroll viewport 8 px with a top fade. Use the overlay scrollbar style from issue 4."
+  },
+  {
+   "priority": 11,
+   "severity": "low",
+   "screens": [
+    "first-sync-loading"
+   ],
+   "mode": "both",
+   "dimension": "spacing",
+   "issue": "The skeleton layout does not match the loaded list, so the content jumps when data arrives; actions stay enabled with no data.",
+   "evidence": "The first skeleton row is centred at y=88; the first real row is at y=134, below the filter field at y=58-90.",
+   "fix": "Render the filter field (disabled) in the skeleton and start skeleton rows at y=104 with 66 px pitch. Disable compose and refresh until the first sync ends."
+  },
+  {
+   "priority": 12,
+   "severity": "low",
+   "screens": [
+    "shortcuts",
+    "call-bar",
+    "call-docked",
+    "settings"
+   ],
+   "mode": "both",
+   "dimension": "spacing",
+   "issue": "Vertical rhythm is inconsistent within single screens.",
+   "evidence": "Shortcuts: NAVIGATION label to first row 33 px vs APP 20 px. Call-bar: the 'Meeting ended' system line is 8 px below a message vs 16 px for 'Meeting started'. Settings: 30 px between the account email and the hint vs 12 px elsewhere.",
+   "fix": "Use one section-label gap (12 px label to first row, 24 px between sections) and give system lines 16 px above and below."
+  },
+  {
+   "priority": 13,
+   "severity": "low",
+   "screens": [
+    "teams",
+    "chats"
+   ],
+   "mode": "both",
+   "dimension": "colour",
+   "issue": "Avatar and team-tile hues repeat, so colour gives no identity.",
+   "evidence": "Engineering 'E' and Contoso 'C' are both magenta; Margaret Hamilton is the same magenta; Ada Lovelace and Alan Turing share the indigo.",
+   "fix": "Hash identities into a 10-12 hue palette with fixed L and C (e.g. OKLCH L=0.52 C=0.12 for light, L=0.62 for dark), so that adjacent teams never share a hue."
+  },
+  {
+   "priority": 14,
+   "severity": "low",
+   "screens": [
+    "signin-device-code"
+   ],
+   "mode": "both",
+   "dimension": "typography",
+   "issue": "The device-login URL is not styled as a link, and the paragraph uses different leading.",
+   "evidence": "The URL is #1b1c1f (light) with no underline, while chat links are #1f63c6 with an underline; line pitch is 24 px vs 20 px in other cards.",
+   "fix": "Render the URL with the link style (#1f63c6 / #7cb4f5, 1px underline) and use 20 px leading for 13 pt body text."
+  },
+  {
+   "priority": 15,
+   "severity": "low",
+   "screens": [
+    "chats",
+    "group-chat",
+    "calendar",
+    "signin-failed"
+   ],
+   "mode": "both",
+   "dimension": "typography",
+   "issue": "Hyphens render with visible gaps ('On - call', 'go/no - go', 'Sign - in'), making compound words look broken in titles.",
+   "evidence": "'On-call' in the chat list at x=128-181 y=125 shows about 4 px of space on each side of the hyphen at 14 pt semibold.",
+   "fix": "Enable kerning and contextual alternates for Inter (or substitute U+2010 or the platform font for titles), and check the glyph advance in the egui font atlas."
+  },
+  {
+   "priority": 16,
+   "severity": "low",
+   "screens": [
+    "account-menu"
+   ],
+   "mode": "both",
+   "dimension": "colour",
+   "issue": "'Be right back' and 'Appear away' share the same colour and differ only in a tiny glyph.",
+   "evidence": "Both icons are #8f6a00 (light) / #e3b341 (dark) at 12 px.",
+   "fix": "Keep amber for Away and use a clock glyph with the same amber but an outlined ring for Be right back (as Teams does), or shift BRB to #b07800 / #f0c060 with a distinct 1.5 px stroke."
+  }
+ ]
+}

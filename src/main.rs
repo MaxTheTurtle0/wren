@@ -237,6 +237,8 @@ fn apply_page(app: &mut App, page: &str) {
             "calendar" => {
                 app.section = Section::Calendar;
                 app.open = None;
+                // An online meeting shows every part of the detail page.
+                app.selected_meeting = Some("demo-design-review".into());
             }
             "calls" => {
                 app.section = Section::Calls;

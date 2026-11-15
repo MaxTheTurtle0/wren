@@ -24,23 +24,29 @@ pub fn matches_filter(chat: &Chat, filter: &str, me: &str) -> bool {
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     // Nothing to filter yet: the main pane explains why.
-    if app.chats.is_empty() {
-        if app.loading.contains(&crate::sync::Resource::Chats) {
-            skeleton(ui, &palette);
-        }
+    let loading_first = app.chats.is_empty() && app.loading.contains(&crate::sync::Resource::Chats);
+    if app.chats.is_empty() && !loading_first {
         return;
     }
     egui::Frame::new()
         .inner_margin(Margin::symmetric(12, 0))
         .show(ui, |ui| {
-            let field =
-                widgets::text_field(&mut app.chat_filter, "Filter chats", theme::regular(13.0));
-            let response = ui.add(field);
-            if response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                app.chat_filter.clear();
-            }
+            // While the first list loads, the field is there but disabled,
+            // so nothing moves when the chats arrive.
+            ui.add_enabled_ui(!loading_first, |ui| {
+                let field =
+                    widgets::text_field(&mut app.chat_filter, "Filter chats", theme::regular(13.0));
+                let response = ui.add(field);
+                if response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    app.chat_filter.clear();
+                }
+            });
         });
     ui.add_space(8.0);
+    if loading_first {
+        skeleton(ui, &palette);
+        return;
+    }
 
     let me = app.me().to_owned();
     let visible: Vec<usize> = app

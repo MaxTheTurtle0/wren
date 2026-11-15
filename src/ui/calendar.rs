@@ -225,7 +225,9 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
                     }) {
                         fact(ui, "Location", location);
                     }
-                    fact(ui, "Online", if meeting.join_url.is_some() { "Microsoft Teams meeting" } else { "No" });
+                    if meeting.join_url.is_some() {
+                        fact(ui, "Online", "Microsoft Teams meeting");
+                    }
                 });
             });
         // The invitation's own text, under its own label.
@@ -239,12 +241,15 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
                     .color(palette.text),
             );
         }
-        ui.add_space(14.0);
-        ui.label(
-            egui::RichText::new("Joining opens the meeting in Teams on the web beside Wren, with its chat here. Wren reminds you five minutes before online meetings start.").line_height(Some(theme::leading(12.0)))
-                .font(theme::regular(12.0))
-                .color(palette.dim),
-        );
+        // How joining works, only where there is something to join.
+        if meeting.join_url.is_some() {
+            ui.add_space(14.0);
+            ui.label(
+                egui::RichText::new("Joining opens the meeting in Teams on the web beside Wren, with its chat here. Wren reminds you five minutes before online meetings start.").line_height(Some(theme::leading(13.0)))
+                    .font(theme::regular(13.0))
+                    .color(palette.secondary),
+            );
+        }
     });
 });
 }

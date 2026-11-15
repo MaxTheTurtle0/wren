@@ -29,7 +29,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         560.0
                     };
                     ui.add_space(((ui.available_height() - group) / 2.0).max(16.0));
-                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(160.0, 121.0)).tint(palette.text).alt_text("Wren"));
+                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(128.0, 97.0)).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
                     ui.label(
                         egui::RichText::new("A fast, native client for Microsoft Teams chats, channels and meetings.").line_height(Some(theme::leading(14.0)))
@@ -157,7 +157,11 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                         .color(palette.secondary),
                 );
                 if ui
-                    .link(egui::RichText::new(&url).line_height(Some(theme::leading(14.0))))
+                    .link(
+                        egui::RichText::new(&url)
+                            .line_height(Some(theme::leading(14.0)))
+                            .underline(),
+                    )
                     .clicked()
                 {
                     app.actions.push(Action::OpenUrl(url.clone()));

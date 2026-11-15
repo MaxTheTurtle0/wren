@@ -227,8 +227,9 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
     }
     // The line between the sidebar and the content.
     let rect = response.response.rect;
+    // Half a point inside the sidebar: the main pane paints over its edge.
     ui.painter().vline(
-        rect.right(),
+        rect.right() - 0.5,
         rect.y_range(),
         Stroke::new(1.0, palette.outline),
     );

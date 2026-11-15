@@ -914,22 +914,20 @@ fn reactions(
             let button = egui::Button::new(
                 egui::RichText::new(text)
                     .font(theme::medium(12.0))
-                    .color(if mine { palette.accent } else { palette.text }),
+                    .color(palette.text),
             )
+            // Reactions are toggles with a 3:1 edge. Your own is marked by a
+            // warm tint and a firmer edge rather than more orange.
             .fill(if mine {
                 palette.highlight
             } else {
                 palette.surface_hover
             })
-            .stroke(Stroke::new(
-                1.0,
-                // Reactions are toggles: a 3:1 edge like other controls.
-                if mine {
-                    palette.accent
-                } else {
-                    palette.control
-                },
-            ))
+            .stroke(if mine {
+                Stroke::new(1.5, palette.secondary)
+            } else {
+                Stroke::new(1.0, palette.control)
+            })
             .corner_radius(CornerRadius::same(12))
             .min_size(vec2(0.0, 24.0));
             let names: Vec<String> = reaction
@@ -1150,7 +1148,8 @@ fn thread_card(
             if root.importance_high {
                 palette.danger.gamma_multiply(0.6)
             } else {
-                palette.outline
+                // A card edge you can see; posts are not controls.
+                palette.card_edge
             },
         ))
         .corner_radius(CornerRadius::same(10))
@@ -1306,8 +1305,9 @@ fn thread_card(
                             .font(theme::medium(13.0))
                             .color(palette.secondary),
                     )
-                    .fill(palette.surface)
-                    .stroke(Stroke::new(1.0, palette.control))
+                    // A quiet text action: it shows a fill on hover, so it
+                    // does not outweigh the post on every card.
+                    .frame_when_inactive(false)
                     .corner_radius(CornerRadius::same(6))
                     .min_size(vec2(0.0, 28.0)),
                 );
