@@ -1,10 +1,8 @@
 //! Colours, type, spacing and icons.
 //!
 //! [`Palette`] holds every colour the interface uses, in a dark and a light
-//! variant. It implements fastframe's palette trait, so the shared palettes
-//! (Catppuccin, Nord, Rosé Pine, Tokyo Night, ...) restyle Wren too.
-
-use std::collections::BTreeSet;
+//! variant. Wren has no other themes: [`ThemeChoice`] picks light, dark, or
+//! the desktop's preference.
 
 use egui::{Color32, CornerRadius, FontFamily, FontId, Stroke, TextStyle, Vec2};
 use fastframe_fonts::Weight;
@@ -65,7 +63,7 @@ fastframe_icons::icons! {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Palette {
     pub dark: bool,
     /// The conversation's background.
@@ -158,89 +156,17 @@ impl Palette {
     }
 }
 
-impl fastframe_theme::Palette for Palette {
-    fn base(base: fastframe_theme::Base) -> Self {
-        match base {
-            fastframe_theme::Base::Dark => Self::dark(),
-            fastframe_theme::Base::Light => Self::light(),
-        }
-    }
-
-    fn set(&mut self, name: &str, color: Color32) -> bool {
-        let slot = match name {
-            "window" => &mut self.window,
-            "panel" => &mut self.panel,
-            "rail" => &mut self.rail,
-            "surface" => &mut self.surface,
-            "surface_hover" => &mut self.surface_hover,
-            "surface_active" => &mut self.surface_active,
-            "outline" => &mut self.outline,
-            "text" => &mut self.text,
-            "secondary" => &mut self.secondary,
-            "dim" => &mut self.dim,
-            "accent" => &mut self.accent,
-            "accent_hover" => &mut self.accent_hover,
-            "on_accent" => &mut self.on_accent,
-            "danger" => &mut self.danger,
-            "warning" => &mut self.warning,
-            "success" => &mut self.success,
-            "overlay" => &mut self.overlay,
-            "shadow" => &mut self.shadow,
-            "highlight" => &mut self.highlight,
-            "link" => &mut self.link,
-            _ => return false,
-        };
-        *slot = color;
-        true
-    }
-
-    fn derive(&mut self, given: &BTreeSet<&str>) {
-        if given.contains("panel") && !given.contains("rail") {
-            self.rail = self
-                .panel
-                .gamma_multiply(if self.dark { 0.85 } else { 0.97 });
-            self.rail = Color32::from_rgb(self.rail.r(), self.rail.g(), self.rail.b());
-        }
-        if given.contains("accent") && !given.contains("highlight") {
-            self.highlight = self
-                .accent
-                .gamma_multiply(if self.dark { 0.18 } else { 0.10 });
-        }
-        if given.contains("accent") && !given.contains("link") {
-            self.link = self.accent;
-        }
-        if !given.contains("success") {
-            self.success = if self.dark {
-                Palette::dark().success
-            } else {
-                Palette::light().success
-            };
-        }
-    }
-}
-
-/// The shared palettes, by file name.
-pub fn presets() -> Vec<fastframe_theme::CustomTheme<Palette>> {
-    fastframe_theme::presets::themes::<Palette>().collect()
-}
-
 /// The palette a choice resolves to; `System` follows the desktop.
-pub fn resolve(choice: &ThemeChoice, system_dark: bool) -> Palette {
-    match choice {
-        ThemeChoice::System => {
-            if system_dark {
-                Palette::dark()
-            } else {
-                Palette::light()
-            }
-        }
-        ThemeChoice::Light => Palette::light(),
-        ThemeChoice::Dark => Palette::dark(),
-        ThemeChoice::Palette(name) => presets()
-            .into_iter()
-            .find(|theme| &theme.filename == name)
-            .map(|theme| theme.palette)
-            .unwrap_or_else(|| resolve(&ThemeChoice::System, system_dark)),
+pub fn resolve(choice: ThemeChoice, system_dark: bool) -> Palette {
+    let dark = match choice {
+        ThemeChoice::System => system_dark,
+        ThemeChoice::Light => false,
+        ThemeChoice::Dark => true,
+    };
+    if dark {
+        Palette::dark()
+    } else {
+        Palette::light()
     }
 }
 
@@ -449,15 +375,14 @@ mod tests {
     }
 
     #[test]
-    fn every_shared_palette_resolves() {
-        let presets = presets();
-        assert!(!presets.is_empty());
-        for preset in presets {
-            let palette = resolve(&ThemeChoice::Palette(preset.filename.clone()), true);
-            assert_eq!(palette, preset.palette);
+    fn choices_resolve_to_light_or_dark() {
+        assert_eq!(resolve(ThemeChoice::System, true), Palette::dark());
+        assert_eq!(resolve(ThemeChoice::System, false), Palette::light());
+        for system_dark in [true, false] {
+            assert_eq!(resolve(ThemeChoice::Light, system_dark), Palette::light());
+            assert_eq!(resolve(ThemeChoice::Dark, system_dark), Palette::dark());
         }
-        assert!(resolve(&ThemeChoice::Palette("missing.json".into()), true).dark);
-        assert!(!resolve(&ThemeChoice::System, false).dark);
+        assert_eq!(Palette::light().window, Color32::WHITE);
     }
 
     #[test]

@@ -231,13 +231,6 @@ path = "../../LICENSE"
 license = "MIT"
 checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
 
-[fastframe-theme.clarify]
-license = "MIT"
-[[fastframe-theme.clarify.files]]
-path = "../../LICENSE"
-license = "MIT"
-checksum = "bb88b08f452b933a9e7cd83abc7f009a8e298e41dfc9bca9d6e50f0435b2fa43"
-
 [fastframe-tray.clarify]
 license = "MIT"
 [[fastframe-tray.clarify.files]]

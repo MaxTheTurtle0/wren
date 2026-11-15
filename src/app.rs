@@ -566,7 +566,7 @@ impl App {
     }
 
     fn empty(dirs: AppDirs, settings: Settings, waker: Waker, demo: bool) -> Self {
-        let palette = crate::theme::resolve(&settings.theme, true);
+        let palette = crate::theme::resolve(settings.theme, true);
         Self {
             form_client_id: settings.client_id.clone(),
             service: Backend::detached().0,
@@ -869,7 +869,7 @@ impl App {
             self.last_input = Some(now);
         }
         let system_dark = ctx.input(|i| i.raw.system_theme) != Some(egui::Theme::Light);
-        self.palette = crate::theme::resolve(&self.settings.theme, system_dark);
+        self.palette = crate::theme::resolve(self.settings.theme, system_dark);
         if self.applied_palette != Some(self.palette) {
             crate::theme::apply(ctx, &self.palette);
             self.applied_palette = Some(self.palette);

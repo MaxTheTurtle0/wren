@@ -54,8 +54,6 @@ fastframe-text = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 fastframe-icons = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Colour emoji in the platform's own style, drawn off the interface thread.
 fastframe-emoji = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
-# Palette files and the shared presets (Catppuccin, Nord, Tokyo Night, ...).
-fastframe-theme = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Logs to stderr and a per-run file, records panics without their payload.
 fastframe-log = { git = "https://github.com/crmne/fastframe", tag = "v0.6.0" }
 # Tray item: StatusNotifier on Linux, notification area on Windows, menu bar

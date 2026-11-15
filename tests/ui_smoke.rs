@@ -207,7 +207,7 @@ fn search_fields_keep_their_layout_when_typing_and_clearing() {
             for switcher in [false, true] {
                 let mut h = Harness::new();
                 h.size.x = width;
-                h.app.settings.theme = theme.clone();
+                h.app.settings.theme = theme;
                 let me = h.app.me().to_owned();
                 h.app.chats.retain(|chat| {
                     chat.peer(&me)
@@ -406,7 +406,7 @@ fn large_pasted_text_stays_scrollable_and_sendable_inside_the_composer() {
                 for separator in ["\n", " "] {
                     let mut h = Harness::new();
                     h.size = egui::vec2(width, height);
-                    h.app.settings.theme = theme.clone();
+                    h.app.settings.theme = theme;
                     h.app.focus_composer = separator == " ";
                     h.frames(4);
                     let chat = h.app.open.clone().unwrap();
@@ -578,7 +578,7 @@ fn clicking_received_images_opens_the_shared_viewer_at_their_original_size() {
             for format in [image::ImageFormat::Png, image::ImageFormat::Jpeg] {
                 let mut h = Harness::new();
                 h.size.x = width;
-                h.app.settings.theme = theme.clone();
+                h.app.settings.theme = theme;
                 h.frames(3);
                 let chat = h.app.open.clone().unwrap();
                 let url = "https://graph.microsoft.com/v1.0/chats/fixture/messages/1/hostedContents/1/$value";
@@ -723,7 +723,7 @@ fn composer_images_have_usable_thumbnails_and_open_full_previews() {
             for (w, height) in [(2000, 20), (20, 2000), (320, 240)] {
                 let mut h = Harness::new();
                 h.size.x = width;
-                h.app.settings.theme = theme.clone();
+                h.app.settings.theme = theme;
                 h.frames(3);
                 let chat = h.app.open.clone().unwrap();
                 let image =
@@ -886,7 +886,7 @@ fn mention_completion_keeps_space_and_typing_in_the_composer() {
                 for (query, name) in [("@", "Ada Lovelace"), ("@Gra", "Grace Hopper")] {
                     let mut h = Harness::new();
                     h.size.x = width;
-                    h.app.settings.theme = theme.clone();
+                    h.app.settings.theme = theme;
                     h.act(Action::OpenConversation(ConversationId::Chat(
                         "19:demo-launch@thread.v2".into(),
                     )));
@@ -1147,11 +1147,7 @@ fn every_screen_draws() {
         assert!(h.app.overlay.is_some());
         h.act(Action::CloseOverlay);
     }
-    for theme in [
-        ThemeChoice::Light,
-        ThemeChoice::Dark,
-        ThemeChoice::Palette("Nord.json".into()),
-    ] {
+    for theme in [ThemeChoice::Light, ThemeChoice::Dark, ThemeChoice::System] {
         h.act(Action::SetTheme(theme));
     }
 }

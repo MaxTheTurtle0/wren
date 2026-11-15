@@ -9,15 +9,33 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+/// Light, dark, or whatever the desktop uses.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
 pub enum ThemeChoice {
     /// Follow the desktop's light or dark preference.
     #[default]
     System,
     Light,
     Dark,
-    /// A shared fastframe palette by file name (`Nord.json`, ...).
-    Palette(String),
+}
+
+/// Anything other than `"Light"` or `"Dark"` reads as `System`, so settings
+/// files that name a theme Wren no longer has (the shared palettes of 0.1,
+/// stored as `{"Palette": "Nord.json"}`) keep loading.
+impl<'de> Deserialize<'de> for ThemeChoice {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Stored {
+            Name(String),
+            Other(serde::de::IgnoredAny),
+        }
+        Ok(match Stored::deserialize(deserializer)? {
+            Stored::Name(name) if name == "Light" => Self::Light,
+            Stored::Name(name) if name == "Dark" => Self::Dark,
+            Stored::Name(_) | Stored::Other(_) => Self::System,
+        })
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -204,13 +222,36 @@ mod tests {
         let path = dir.path().join("settings.json");
         let settings = Settings {
             client_id: "00000000-0000-0000-0000-000000000000".into(),
-            theme: ThemeChoice::Palette("Nord.json".into()),
+            theme: ThemeChoice::Dark,
             ..Default::default()
         };
         settings.save(&path).unwrap();
         // Environment overrides would make this flaky if set in CI.
         if std::env::var("WREN_CLIENT_ID").is_err() && std::env::var("WREN_TENANT").is_err() {
             assert_eq!(Settings::load(&path), settings);
+        }
+    }
+
+    #[test]
+    fn removed_themes_fall_back_to_system() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        for (stored, expected) in [
+            (r#""Light""#, ThemeChoice::Light),
+            (r#""Dark""#, ThemeChoice::Dark),
+            (r#""System""#, ThemeChoice::System),
+            (r#"{"Palette": "Nord.json"}"#, ThemeChoice::System),
+            (r#""Solarized""#, ThemeChoice::System),
+            ("42", ThemeChoice::System),
+            ("null", ThemeChoice::System),
+        ] {
+            let json = format!(r#"{{"theme": {stored}, "notifications": false}}"#);
+            std::fs::write(&path, json).unwrap();
+            let settings = Settings::load(&path);
+            assert_eq!(settings.theme, expected, "{stored}");
+            // The rest of the file still counts.
+            assert!(!settings.notifications, "{stored}");
+            assert!(!path.with_extension("json.damaged").exists(), "{stored}");
         }
     }
 

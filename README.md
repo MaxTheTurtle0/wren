@@ -47,7 +47,7 @@ Measured on a Mac mini (Apple Silicon, macOS 27), release build with demo data
 | Calendar, meeting reminders, Join | ✅ Implemented |
 | Calls and meetings | ✅ In Teams on the web, in its own Edge or Chrome window beside Wren, with the meeting chat and a call bar in Wren; free, since the call runs in Microsoft's client ([how](docs/calling.md)) |
 | Presence, photos | ✅ Implemented |
-| Light, dark and system themes, 8 palettes, keyboard shortcuts, tray, notifications | ✅ Implemented |
+| Light, dark and system themes, keyboard shortcuts, tray, notifications | ✅ Implemented |
 | Offline demo mode | ✅ `wren --demo` |
 | App updates | ✅ Daily checks and verified downloads from GitHub releases; restart when ready ([details](docs/updates.md)) |
 | Real-time updates | ✅ On open, focus and refresh. 🧪 Push through a self-hostable `wren-relay` (experimental), since Microsoft forbids polling ([why](docs/realtime.md)) |
@@ -134,7 +134,7 @@ tokio runtime on its own thread does all network and disk work. Details are in
 [docs/architecture.md](docs/architecture.md).
 
 Built on [fastframe](https://github.com/crmne/fastframe) (fonts, colour emoji,
-icons, palettes, tray, window shell, title bar, single instance, scrolling,
+icons, tray, window shell, title bar, single instance, scrolling,
 logging) and the egui and winit forks shared with Spotifast and ZapFast.
 
 ## Known Microsoft API limitations

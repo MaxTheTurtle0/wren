@@ -72,7 +72,7 @@ account already open is retired.
 | `calling/` | Calls in Teams on the web: finding Edge and Chrome and starting their app windows (`browser.rs`), docking geometry (`dock.rs`), the call session behind the call bar (`session.rs`); the app side is in `app/calls.rs` ([calling.md](calling.md)) |
 | `realtime.rs` | Push updates: relay WebSocket, Graph subscription lifecycle, notification parsing (experimental) |
 | `relay/` (crate `wren-relay`) | The self-hostable relay: validation handshake and forwarding of Graph notifications |
-| `theme.rs` | Palettes (fastframe-theme compatible), visuals, type scale, Lucide icon table |
+| `theme.rs` | Light and dark palettes, visuals, type scale, Lucide icon table |
 | `platform.rs` | App icon rasterization, tray item, single-instance slot |
 | `notify.rs` | Desktop notifications |
 | `demo.rs` | Offline sample data |

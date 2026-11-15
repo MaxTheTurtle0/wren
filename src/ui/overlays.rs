@@ -544,23 +544,6 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         widgets::on_click(&response, &mut actions, Action::SetTheme(choice));
                     }
                 });
-                let current = match &app.settings.theme {
-                    ThemeChoice::Palette(name) => fastframe_theme::display_name(name).to_owned(),
-                    _ => "Wren".to_owned(),
-                };
-                egui::ComboBox::from_label(egui::RichText::new("Palette").color(palette.secondary))
-                    .selected_text(current)
-                    .show_ui(ui, |ui| {
-                        if ui.selectable_label(!matches!(app.settings.theme, ThemeChoice::Palette(_)), "Wren").clicked() {
-                            actions.push(Action::SetTheme(ThemeChoice::System));
-                        }
-                        for preset in theme::presets() {
-                            let on = app.settings.theme == ThemeChoice::Palette(preset.filename.clone());
-                            if ui.selectable_label(on, fastframe_theme::display_name(&preset.filename)).clicked() {
-                                actions.push(Action::SetTheme(ThemeChoice::Palette(preset.filename.clone())));
-                            }
-                        }
-                    });
                 ui.label(egui::RichText::new(format!("Zoom {:.0}% (⌘+ / ⌘− / ⌘0)", app.settings.zoom * 100.0)).color(palette.secondary));
                 ui.add_space(8.0);
 
