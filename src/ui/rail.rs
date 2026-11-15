@@ -222,7 +222,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                     };
                     ui.label(
                         egui::RichText::new(detail)
-                            .font(theme::regular(12.0))
+                            .font(theme::regular(13.0))
                             .color(palette.secondary),
                     );
                 });

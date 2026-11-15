@@ -141,8 +141,9 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
             } else {
                 theme::regular(12.0)
             },
+            // Unread reads as weight; the dot alone carries the accent.
             if unread {
-                palette.accent
+                palette.text
             } else if selected {
                 // More headroom on the selected row's fill.
                 palette.secondary

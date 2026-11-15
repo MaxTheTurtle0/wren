@@ -489,7 +489,7 @@ fn result_row(
 ) -> egui::Response {
     let palette = &app.palette;
     let width = ui.available_width();
-    let (rect, response) = ui.allocate_exact_size(vec2(width, 44.0), Sense::click());
+    let (rect, response) = ui.allocate_exact_size(vec2(width, 52.0), Sense::click());
     if selected || response.hovered() {
         ui.painter().rect_filled(
             rect,
@@ -544,16 +544,16 @@ fn result_row(
         rect.right() - left - 12.0,
     );
     ui.painter()
-        .galley(egui::pos2(left, rect.top() + 5.0), title, palette.text);
+        .galley(egui::pos2(left, rect.top() + 7.0), title, palette.text);
     let detail = super::chat_list::elided(
         ui,
         detail,
-        theme::regular(12.0),
+        theme::regular(13.0),
         palette.secondary,
         rect.right() - left - 12.0,
     );
     ui.painter().galley(
-        egui::pos2(left, rect.top() + 24.0),
+        egui::pos2(left, rect.top() + 28.0),
         detail,
         palette.secondary,
     );
@@ -845,7 +845,8 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
             });
             ui.add_space(10.0);
             // Two columns keep the sheet short: Messages on the right, the
-            // other groups on the left, in one grid so rows line up.
+            // other groups on the left. Each column is its own grid, so a
+            // heading in one never stretches a row in the other.
             enum Row {
                 Heading(&'static str),
                 Key(&'static str, &'static str),
@@ -862,8 +863,8 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
                 .iter()
                 .partition(|(group, _)| *group == "Messages");
             let (left, right) = (rows(left), rows(right));
-            let cell = |ui: &mut egui::Ui, row: Option<&Row>, first: bool| match row {
-                Some(Row::Heading(group)) => {
+            let cell = |ui: &mut egui::Ui, row: &Row, first: bool| match row {
+                Row::Heading(group) => {
                     ui.vertical(|ui| {
                         // Groups after the first get room above their heading.
                         ui.add_space(if first { 0.0 } else { 14.0 });
@@ -871,27 +872,35 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
                     });
                     ui.label("");
                 }
-                Some(Row::Key(keys, what)) => {
+                Row::Key(keys, what) => {
                     widgets::keycaps(ui, &palette, &super::keys::shortcut(keys));
                     ui.label(egui::RichText::new(*what).color(palette.text));
                 }
-                None => {
-                    ui.label("");
-                    ui.label("");
-                }
             };
-            egui::Grid::new("shortcuts")
-                .num_columns(5)
-                .spacing(vec2(14.0, 6.0))
-                .show(ui, |ui| {
-                    for index in 0..left.len().max(right.len()) {
-                        cell(ui, left.get(index), index == 0);
-                        // The gap between the two halves, as its own cell.
-                        ui.allocate_exact_size(vec2(12.0, 0.0), Sense::hover());
-                        cell(ui, right.get(index), index == 0);
-                        ui.end_row();
+            let column = ((ui.available_width() - 32.0) / 2.0).floor();
+            ui.horizontal_top(|ui| {
+                for (side, rows) in [&left, &right].into_iter().enumerate() {
+                    if side > 0 {
+                        ui.add_space(32.0);
                     }
-                });
+                    ui.allocate_ui_with_layout(
+                        vec2(column, 0.0),
+                        egui::Layout::top_down(egui::Align::Min),
+                        |ui| {
+                            ui.set_width(column);
+                            egui::Grid::new(("shortcuts", side))
+                                .num_columns(2)
+                                .spacing(vec2(16.0, 6.0))
+                                .show(ui, |ui| {
+                                    for (index, row) in rows.iter().enumerate() {
+                                        cell(ui, row, index == 0);
+                                        ui.end_row();
+                                    }
+                                });
+                        },
+                    );
+                }
+            });
         });
     });
     if close {
@@ -964,8 +973,10 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                     );
                 });
                 ui.add_space(10.0);
-                // The people picked so far.
+                // The people picked so far, under their own label, apart
+                // from the search below.
                 if !picked.is_empty() {
+                    widgets::field_label(ui, &palette, "Recipients");
                     let mut remove = None;
                     ui.horizontal_wrapped(|ui| {
                         ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
@@ -1022,7 +1033,7 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                     if picked.is_empty() {
                         "To"
                     } else {
-                        "Add someone else"
+                        "Add another person"
                     },
                 );
                 let response = ui.add(

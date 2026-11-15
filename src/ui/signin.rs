@@ -334,7 +334,7 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
         theme::regular(13.0),
     ));
     // Field groups stand apart; a label stays close to its field.
-    ui.add_space(10.0);
+    ui.add_space(16.0);
     ui.label(
         egui::RichText::new("Tenant")
             .font(theme::medium(12.0))

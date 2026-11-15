@@ -729,7 +729,8 @@ fn message_row(
             CornerRadius::same(6),
             fill,
         )];
-        if highlighted || mentioned {
+        let failed = message.delivery == Delivery::Failed;
+        if highlighted || mentioned || failed {
             // A bar along the edge, so the tint is not the only cue.
             shapes.push(egui::Shape::rect_filled(
                 egui::Rect::from_min_size(tinted.min, vec2(3.0, tinted.height())),
@@ -739,7 +740,11 @@ fn message_row(
                     ne: 0,
                     se: 0,
                 },
-                palette.accent,
+                if failed {
+                    palette.danger
+                } else {
+                    palette.accent
+                },
             ));
         }
         ui.painter().set(where_, egui::Shape::Vec(shapes));
@@ -842,7 +847,7 @@ fn body(
                 .fill(palette.surface)
                 .stroke(Stroke::new(1.0, palette.control))
                 .corner_radius(CornerRadius::same(6))
-                .min_size(vec2(0.0, 24.0));
+                .min_size(vec2(0.0, 28.0));
                 if ui
                     .add(retry)
                     .on_hover_cursor(egui::CursorIcon::PointingHand)
@@ -1012,13 +1017,19 @@ fn hover_toolbar(
     let can_edit =
         mine && (!conversation.is_channel() || app.has_scope("ChannelMessage.ReadWrite"));
     ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
+        // Its own surface above the hovered row: raised in dark mode, where
+        // the row tint and the plain surface are the same colour.
         Frame::new()
-            .fill(palette.surface)
-            .stroke(Stroke::new(1.0, palette.outline))
+            .fill(if palette.dark {
+                palette.surface_active
+            } else {
+                palette.surface
+            })
+            .stroke(Stroke::new(1.0, palette.card_edge))
             .corner_radius(CornerRadius::same(8))
             .shadow(egui::Shadow {
-                offset: [0, 1],
-                blur: 4,
+                offset: [0, 2],
+                blur: 8,
                 spread: 0,
                 color: palette.shadow,
             })
@@ -1863,7 +1874,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                         // scroll bars.
                                         ui.spacing_mut().scroll.dormant_handle_opacity = 0.5;
                                         ui.spacing_mut().scroll.floating_width = 4.0;
-                                        ui.spacing_mut().scroll.handle_min_length = 24.0;
+                                        ui.spacing_mut().scroll.handle_min_length = 40.0;
                                         let editor_widgets = ui.visuals().widgets.clone();
                                         let bars = &mut ui.visuals_mut().widgets;
                                         bars.inactive.bg_fill = palette.control;
@@ -1895,6 +1906,19 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                                 })
                                                 .inner
                                             });
+                                        // Scrolled down, the line above shows only its
+                                        // descenders at the edge: cover them with the
+                                        // field's own colour (opaque, no faded text).
+                                        if scrolled.state.offset.y > 0.5 {
+                                            ui.painter().rect_filled(
+                                                egui::Rect::from_min_size(
+                                                    scrolled.inner_rect.min,
+                                                    vec2(scrolled.inner_rect.width(), 5.0),
+                                                ),
+                                                0.0,
+                                                palette.surface,
+                                            );
+                                        }
                                         scrolled.inner
                                     },
                                 )
@@ -1992,7 +2016,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
         && !candidates.is_empty()
         && let Some(top) = composer_top
     {
-        let height = candidates.len() as f32 * 40.0 + 12.0 + 26.0;
+        let height = candidates.len() as f32 * 46.0 + 12.0 + 26.0;
         egui::Area::new(id.with("mentions"))
             .order(egui::Order::Foreground)
             // 8 pt clear of the composer.
@@ -2035,7 +2059,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         ui.add_space(4.0);
                         for (index, person) in candidates.iter().enumerate() {
                             let (rect, response) =
-                                ui.allocate_exact_size(vec2(300.0, 38.0), Sense::click());
+                                ui.allocate_exact_size(vec2(300.0, 44.0), Sense::click());
                             if index == selected || response.hovered() {
                                 ui.painter().rect_filled(
                                     rect,
@@ -2053,7 +2077,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 app,
                                 Some(&person.user_id),
                                 &person.display_name,
-                                26.0,
+                                28.0,
                                 true,
                             );
                             child.add_space(8.0);
