@@ -96,11 +96,11 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     ui.add_space(theme::HEADER_HEIGHT + 12.0);
     egui::ScrollArea::vertical().id_salt("calls-page").auto_shrink([false, false]).show(ui, |ui| {
         Frame::new().inner_margin(Margin::symmetric(32, 0)).show(ui, |ui| {
-            ui.set_max_width(680.0);
+            ui.set_max_width(680.0f32.min(ui.available_width()));
             ui.label(egui::RichText::new("Calls and meetings").font(theme::bold(24.0)).color(palette.text));
             ui.add_space(6.0);
             let place = match app.opener() {
-                crate::calling::Opener::AppWindow(browser) => format!("Teams on the web, in a {} window beside Wren", browser.kind.short()),
+                crate::calling::Opener::AppWindow(browser) => format!("Teams on the web, in its own {} window beside Wren", browser.kind.short()),
                 crate::calling::Opener::Browser => "Teams on the web, in your default browser".to_owned(),
                 crate::calling::Opener::TeamsApp => "the Microsoft Teams app".to_owned(),
             };
@@ -126,7 +126,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                             .margin(Margin::symmetric(8, 6));
                         let response = ui.add(field);
                         let valid = crate::calling::is_teams_link(link.trim());
-                        let join = ui.add_enabled(valid, egui::Button::new("Join").min_size(vec2(72.0, 30.0)));
+                        let join = ui.add_enabled_ui(valid, |ui| widgets::primary_button(ui, &palette, "Join")).inner;
                         let enter = response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
                         if valid && (join.clicked() || enter) {
                             app.actions.push(Action::JoinMeeting(link.trim().to_owned()));
@@ -139,19 +139,24 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
 
             ui.label(egui::RichText::new("What works today").font(theme::semibold(15.0)).color(palette.text));
             ui.add_space(6.0);
-            egui::Grid::new("call-capabilities").num_columns(3).spacing(vec2(16.0, 10.0)).striped(false).show(ui, |ui| {
-                for capability in CAPABILITIES {
-                    ui.label(egui::RichText::new(capability.name).font(theme::medium(13.0)).color(palette.text));
-                    let color = match capability.status {
-                        "Works" => palette.success,
-                        "Not possible" => palette.danger,
-                        _ => palette.warning,
-                    };
-                    ui.label(egui::RichText::new(capability.status).font(theme::semibold(12.0)).color(color));
-                    ui.add(egui::Label::new(egui::RichText::new(capability.detail).font(theme::regular(12.0)).color(palette.secondary)).wrap());
-                    ui.end_row();
-                }
-            });
+            for capability in CAPABILITIES {
+                let (color, icon) = match capability.status {
+                    "Works" => (palette.success, Icon::Check),
+                    "Not possible" => (palette.danger, Icon::Close),
+                    _ => (palette.warning, Icon::Info),
+                };
+                Frame::new()
+                    .inner_margin(Margin::symmetric(0, 6))
+                    .show(ui, |ui| {
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label(egui::RichText::new(capability.name).font(theme::semibold(13.0)).color(palette.text));
+                            ui.add_space(4.0);
+                            theme::icon(ui, icon, 14.0, color);
+                            ui.label(egui::RichText::new(capability.status).font(theme::semibold(12.0)).color(color));
+                        });
+                        ui.add(egui::Label::new(egui::RichText::new(capability.detail).font(theme::regular(13.0)).color(palette.secondary)).wrap());
+                    });
+            }
             ui.add_space(14.0);
             ui.label(
                 egui::RichText::new("Calls open in Teams. Use the Teams window for audio, video and call controls.")

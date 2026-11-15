@@ -70,7 +70,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui,
                     &palette,
                     Icon::Settings,
-                    "Settings (⌘,)",
+                    &format!("Settings ({})", super::keys::shortcut("⌘,")),
                     36.0,
                     20.0,
                     palette.secondary,
@@ -151,7 +151,11 @@ fn item(ui: &mut egui::Ui, app: &App, section: Section, badge: usize) -> egui::R
         Section::Calls => "⌘4",
     };
     response
-        .on_hover_text(format!("{} ({shortcut})", section.label()))
+        .on_hover_text(format!(
+            "{} ({})",
+            section.label(),
+            super::keys::shortcut(shortcut)
+        ))
         .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 

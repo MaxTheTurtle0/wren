@@ -43,7 +43,7 @@ fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
             ui.horizontal(|ui| {
                 ui.label(
                     egui::RichText::new("Image preview")
-                        .font(theme::semibold(15.0))
+                        .font(theme::bold(20.0))
                         .color(palette.text),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -98,7 +98,7 @@ fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
                     };
                     let size = natural * scale;
                     let (canvas, _) = ui.allocate_exact_size(size.max(available), Sense::hover());
-                    ui.painter().rect_filled(canvas, 6, palette.window);
+                    ui.painter().rect_filled(canvas, 6, palette.surface_hover);
                     egui::Image::from_texture(*texture)
                         .paint_at(ui, egui::Rect::from_center_size(canvas.center(), size));
                 });
@@ -470,6 +470,9 @@ fn settings(app: &mut App, ctx: &egui::Context) {
             });
             ui.add_space(10.0);
             let height = (ui.ctx().content_rect().height() - 220.0).clamp(240.0, 640.0);
+            // A solid scroll bar keeps its own lane, clear of the content.
+            ui.spacing_mut().scroll = egui::style::ScrollStyle::solid();
+            ui.spacing_mut().scroll.bar_outer_margin = 4.0;
             egui::ScrollArea::vertical()
                 .max_height(height)
                 .min_scrolled_height(height)
@@ -508,7 +511,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         egui::RichText::new(if accounts == 1 {
                             "1 account in Wren".to_owned()
                         } else {
-                            format!("{accounts} accounts in Wren · switch from your picture or with ⌘⇧A")
+                            format!("{accounts} accounts in Wren · switch from your picture or with {}", super::keys::shortcut("⌘⇧A"))
                         })
                         .font(theme::regular(12.0))
                         .color(palette.dim),
@@ -544,7 +547,15 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         widgets::on_click(&response, &mut actions, Action::SetTheme(choice));
                     }
                 });
-                ui.label(egui::RichText::new(format!("Zoom {:.0}% (⌘+ / ⌘− / ⌘0)", app.settings.zoom * 100.0)).color(palette.secondary));
+                ui.label(
+                    egui::RichText::new(format!(
+                        "Zoom {:.0}% · {}",
+                        app.settings.zoom * 100.0,
+                        super::keys::shortcut("⌘+ / ⌘− / ⌘0")
+                    ))
+                    .font(theme::regular(12.0))
+                    .color(palette.dim),
+                );
                 ui.add_space(8.0);
 
                 widgets::section_label(ui, &palette, "Behaviour");
@@ -557,7 +568,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     actions.push(Action::SetKeepRunning(keep));
                 }
                 ui.label(
-                    egui::RichText::new("New messages are fetched when you open a chat, come back to the window or press ⌘R. Microsoft's rules for Teams forbid background polling; for instant alerts, connect a push relay below (docs/realtime.md).")
+                    egui::RichText::new(format!("New messages are fetched when you open a chat, come back to the window or press {}. Microsoft's rules for Teams forbid background polling; for instant alerts, connect a push relay below (docs/realtime.md).", super::keys::shortcut("⌘R")))
                         .font(theme::regular(12.0))
                         .color(palette.dim),
                 );
@@ -570,7 +581,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     actions.push(Action::SetPresenceSession(session));
                 }
                 let mut perf = app.settings.perf_overlay;
-                if ui.checkbox(&mut perf, "Show the performance overlay (⌘⇧P)").changed() {
+                if ui.checkbox(&mut perf, format!("Show the performance overlay ({})", super::keys::shortcut("⌘⇧P"))).changed() {
                     actions.push(Action::TogglePerfOverlay);
                 }
                 ui.add_space(8.0);
@@ -705,27 +716,26 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
     let close = modal(palette, ctx, "shortcuts", 480.0, 90.0, |ui| {
         Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
-            ui.label(
-                egui::RichText::new("Keyboard shortcuts")
-                    .font(theme::bold(20.0))
-                    .color(palette.text),
-            );
+            ui.horizontal(|ui| {
+                ui.label(
+                    egui::RichText::new("Keyboard shortcuts")
+                        .font(theme::bold(20.0))
+                        .color(palette.text),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
+                    if close.clicked() {
+                        app.actions.push(Action::CloseOverlay);
+                    }
+                });
+            });
             ui.add_space(10.0);
             egui::Grid::new("shortcuts")
                 .num_columns(2)
                 .spacing(vec2(24.0, 8.0))
                 .show(ui, |ui| {
                     for (keys, what) in super::keys::SHORTCUTS {
-                        let keys = if cfg!(target_os = "macos") {
-                            (*keys).to_owned()
-                        } else {
-                            keys.replace('⌘', "Ctrl ")
-                        };
-                        ui.label(
-                            egui::RichText::new(keys)
-                                .font(theme::mono(12.0))
-                                .color(palette.accent),
-                        );
+                        widgets::keycaps(ui, &palette, &super::keys::shortcut(keys));
                         ui.label(egui::RichText::new(*what).color(palette.text));
                         ui.end_row();
                     }
@@ -982,7 +992,7 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
         Frame::new().inner_margin(Margin::same(20)).show(ui, |ui| {
             ui.label(
                 egui::RichText::new("Status message")
-                    .font(theme::bold(18.0))
+                    .font(theme::bold(20.0))
                     .color(palette.text),
             );
             ui.add_space(4.0);
@@ -993,7 +1003,7 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
             ui.add_space(10.0);
             let response = ui.add(
                 egui::TextEdit::multiline(&mut text)
-                    .hint_text("Back at 3 pm")
+                    .hint_text("For example: Back at 3 pm")
                     .desired_rows(2)
                     .desired_width(f32::INFINITY)
                     .margin(Margin::symmetric(10, 8)),
@@ -1031,7 +1041,8 @@ fn call_settings(
     let palette = app.palette;
     widgets::section_label(ui, &palette, "Calls and meetings");
     let mut calls = app.settings.calls.clone();
-    egui::ComboBox::from_label(egui::RichText::new("Open in").color(palette.secondary))
+    widgets::field_label(ui, &palette, "Open calls and meetings in");
+    egui::ComboBox::from_id_salt("calls-open-in")
         .selected_text(calls.open_in.label())
         .width(300.0)
         .show_ui(ui, |ui| {
@@ -1053,7 +1064,9 @@ fn call_settings(
                     .browser
                     .filter(|b| found.contains(b))
                     .unwrap_or(found[0]);
-                egui::ComboBox::from_label(egui::RichText::new("Browser").color(palette.secondary))
+                widgets::field_label(ui, &palette, "Browser");
+                egui::ComboBox::from_id_salt("calls-browser")
+                    .width(300.0)
                     .selected_text(current.name())
                     .show_ui(ui, |ui| {
                         for kind in found {
@@ -1109,7 +1122,7 @@ fn join_on_phone(app: &mut App, ctx: &egui::Context, url: &str) {
             ui.horizontal(|ui| {
                 ui.label(
                     egui::RichText::new("Join on your phone")
-                        .font(theme::bold(18.0))
+                        .font(theme::bold(20.0))
                         .color(palette.text),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -1179,7 +1192,7 @@ fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
         Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 theme::icon(ui, Icon::Lock, 20.0, palette.accent);
-                ui.label(egui::RichText::new("One more permission").font(theme::bold(18.0)).color(palette.text));
+                ui.label(egui::RichText::new("One more permission").font(theme::bold(20.0)).color(palette.text));
             });
             ui.add_space(8.0);
             ui.label(egui::RichText::new(crate::auth::scope_reason(scope)).color(palette.text));

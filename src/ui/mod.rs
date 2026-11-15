@@ -160,22 +160,26 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                                 .color(palette.text),
                         );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            let refresh =
-                                widgets::icon_button(ui, &palette, Icon::Refresh, "Refresh (⌘R)");
+                            let refresh = widgets::icon_button(
+                                ui,
+                                &palette,
+                                Icon::Refresh,
+                                &format!("Refresh ({})", keys::shortcut("⌘R")),
+                            );
                             widgets::on_click(&refresh, &mut app.actions, Action::Refresh);
                             if app.section == Section::Chats {
                                 let search = widgets::icon_button(
                                     ui,
                                     &palette,
                                     Icon::Search,
-                                    "Search and jump (⌘K)",
+                                    &format!("Search and jump ({})", keys::shortcut("⌘K")),
                                 );
                                 widgets::on_click(&search, &mut app.actions, Action::OpenSwitcher);
                                 let new_chat = widgets::icon_button(
                                     ui,
                                     &palette,
                                     Icon::Compose,
-                                    "New chat (⌘N)",
+                                    &format!("New chat ({})", keys::shortcut("⌘N")),
                                 );
                                 widgets::on_click(&new_chat, &mut app.actions, Action::OpenNewChat);
                             }
@@ -223,20 +227,69 @@ fn main(app: &mut App, ui: &mut egui::Ui) {
                         vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
                     );
                     widgets::window_drag(ui, header, "main-drag");
-                    let (title, text) = if app.section == Section::Chats {
-                        (
-                            "No chat open",
-                            "Pick a chat on the left, or press ⌘K to jump to anyone.",
-                        )
-                    } else {
-                        ("No channel open", "Pick a channel on the left.")
-                    };
-                    widgets::empty_state(ui, &palette, Icon::Chat, title, text);
+                    empty_main(app, ui);
                 }
             },
             Section::Calendar => calendar::detail(app, ui),
             Section::Calls => calls::show(app, ui),
         });
+}
+
+/// The main pane when nothing is open: what to do next, or why there is
+/// nothing yet.
+fn empty_main(app: &mut App, ui: &mut egui::Ui) {
+    use crate::sync::Resource;
+    let palette = app.palette;
+    let chats = app.section == Section::Chats;
+    let (items_empty, resource) = if chats {
+        (app.chats.is_empty(), Resource::Chats)
+    } else {
+        (app.teams.is_empty(), Resource::Teams)
+    };
+    let loading = items_empty && app.loading.contains(&resource);
+    let jump = format!(
+        "Pick a chat on the left, or press {} to jump to anyone.",
+        keys::shortcut("⌘K")
+    );
+    let (icon, title, text, action) = match (chats, items_empty, loading) {
+        (true, _, true) => (
+            Icon::Loader,
+            "Loading your chats…",
+            "This takes a moment the first time.",
+            None,
+        ),
+        (true, true, false) => (
+            Icon::Compose,
+            "Start your first chat",
+            "Message anyone in your organisation.",
+            Some(("New chat", Action::OpenNewChat)),
+        ),
+        (true, false, false) => (Icon::Chat, "No chat open", jump.as_str(), None),
+        (false, _, true) => (Icon::Loader, "Loading your teams…", "", None),
+        (false, true, false) => (
+            Icon::Teams,
+            "No teams yet",
+            "Teams you join in Microsoft Teams show up here.",
+            None,
+        ),
+        (false, false, false) => (
+            Icon::Hash,
+            "No channel open",
+            "Pick a channel on the left.",
+            None,
+        ),
+    };
+    let clicked = widgets::empty_state_with_action(
+        ui,
+        &palette,
+        icon,
+        title,
+        text,
+        action.as_ref().map(|(label, _)| *label),
+    );
+    if clicked && let Some((_, action)) = action {
+        app.actions.push(action);
+    }
 }
 
 fn toasts(app: &mut App, ctx: &egui::Context) {
@@ -280,7 +333,7 @@ fn toasts(app: &mut App, ctx: &egui::Context) {
                     .stroke(Stroke::new(
                         1.0,
                         if toast.kind == ToastKind::Error {
-                            palette.danger.gamma_multiply(0.6)
+                            palette.danger
                         } else {
                             palette.outline
                         },

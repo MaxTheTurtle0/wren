@@ -24,6 +24,19 @@ pub const SHORTCUTS: &[(&str, &str)] = &[
     ("⌘/", "This list"),
 ];
 
+/// A shortcut as written in [`SHORTCUTS`] (⌘ for the command key), in the
+/// platform's notation: unchanged on macOS, `Ctrl+Shift+A` elsewhere.
+pub fn shortcut(keys: &str) -> std::borrow::Cow<'_, str> {
+    if cfg!(target_os = "macos") || !keys.contains(['⌘', '⇧']) {
+        return keys.into();
+    }
+    keys.replace("⌘⇧", "Ctrl+Shift+")
+        .replace('⌘', "Ctrl+")
+        .replace('⇧', "Shift+")
+        .replace("Ctrl+ ", "Ctrl+")
+        .into()
+}
+
 pub fn handle(app: &mut App, ctx: &egui::Context) {
     let mut actions = Vec::new();
     ctx.input_mut(|input| {
@@ -90,4 +103,21 @@ pub fn handle(app: &mut App, ctx: &egui::Context) {
     // egui's own zoom keys would fight the setting.
     ctx.options_mut(|options| options.zoom_with_keyboard = false);
     app.actions.extend(actions);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::shortcut;
+
+    #[test]
+    fn shortcuts_use_the_platform_notation() {
+        if cfg!(target_os = "macos") {
+            assert_eq!(shortcut("⌘⇧A"), "⌘⇧A");
+        } else {
+            assert_eq!(shortcut("⌘⇧A"), "Ctrl+Shift+A");
+            assert_eq!(shortcut("⌘K"), "Ctrl+K");
+            assert_eq!(shortcut("⌘ + / ⌘ − / ⌘0"), "Ctrl++ / Ctrl+− / Ctrl+0");
+        }
+        assert_eq!(shortcut("Shift Enter"), "Shift Enter");
+    }
 }

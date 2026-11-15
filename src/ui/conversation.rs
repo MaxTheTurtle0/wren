@@ -4,7 +4,9 @@
 //! takes the height it had when last measured (or an estimate), so a
 //! conversation with thousands of messages costs what its visible rows cost.
 
-use egui::{Align, CornerRadius, Frame, Key, Layout, Margin, Modifiers, Sense, Stroke, vec2};
+use egui::{
+    Align, Color32, CornerRadius, Frame, Key, Layout, Margin, Modifiers, Sense, Stroke, Vec2, vec2,
+};
 
 use super::{rich, widgets};
 use crate::app::{App, Draft};
@@ -335,6 +337,8 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                             |message, grouped| estimate(message, width, grouped),
                         );
                         let origin = ui.cursor().top();
+                        // Behind the hovered message, set once it is known.
+                        let hover_tint = ui.painter().add(egui::Shape::Noop);
                         let visible = layout.visible(
                             clip.top() - origin - margin,
                             clip.bottom() - origin + margin,
@@ -446,6 +450,16 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                             );
                         }
                         if let Some((index, rect, mine)) = &hovered {
+                            if !channel {
+                                ui.painter().set(
+                                    hover_tint,
+                                    egui::Shape::rect_filled(
+                                        rect.expand2(vec2(8.0, 0.0)),
+                                        CornerRadius::same(6),
+                                        palette.panel,
+                                    ),
+                                );
+                            }
                             let message = &messages[*index];
                             let id = &message.id;
                             let toolbar = hover_toolbar(
@@ -632,10 +646,26 @@ fn message_row(
         egui::pos2(start.x + width, response.response.rect.bottom()),
     );
     if let Some(fill) = background {
-        ui.painter().set(
-            where_,
-            egui::Shape::rect_filled(rect.expand2(vec2(8.0, 0.0)), CornerRadius::same(6), fill),
-        );
+        let tinted = rect.expand2(vec2(8.0, 0.0));
+        let mut shapes = vec![egui::Shape::rect_filled(
+            tinted,
+            CornerRadius::same(6),
+            fill,
+        )];
+        if highlighted || mentioned {
+            // A bar along the edge, so the tint is not the only cue.
+            shapes.push(egui::Shape::rect_filled(
+                egui::Rect::from_min_size(tinted.min, vec2(3.0, tinted.height())),
+                CornerRadius {
+                    nw: 6,
+                    sw: 6,
+                    ne: 0,
+                    se: 0,
+                },
+                palette.accent,
+            ));
+        }
+        ui.painter().set(where_, egui::Shape::Vec(shapes));
     }
     rect
 }
@@ -1382,35 +1412,53 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                     }
                     if !draft.images.is_empty() {
                         let mut remove = None;
+                        ui.add_space(4.0);
                         ui.horizontal_wrapped(|ui| {
+                            ui.spacing_mut().item_spacing = vec2(8.0, 8.0);
                             for (index, image) in draft.images.iter().enumerate() {
-                                let group_size = vec2(144.0 + ui.spacing().item_spacing.x + 22.0, 96.0);
-                                ui.allocate_ui_with_layout(group_size, Layout::left_to_right(Align::Center), |ui| {
-                                        // Crop a fixed-size thumbnail instead of shrinking a
-                                        // wide screenshot into a line. The preview keeps
-                                        // the full image and its original proportions.
-                                        let size = vec2(144.0, 96.0);
-                                        let natural = vec2(image.width as f32, image.height as f32);
-                                        let scale = (size.x / natural.x).max(size.y / natural.y);
-                                        let uv = egui::Rect::from_center_size(
-                                            egui::pos2(0.5, 0.5), size / (natural * scale),
-                                        );
-                                        let response = ui.add(
-                                            egui::Image::new(crate::images::cropped(&image.uri()))
-                                                .fit_to_exact_size(size)
-                                                .maintain_aspect_ratio(false)
-                                                .uv(uv)
-                                                .corner_radius(6)
-                                                .sense(Sense::click())
-                                                .alt_text("Preview pasted image"),
-                                        ).on_hover_cursor(egui::CursorIcon::PointingHand).on_hover_text("Preview image");
-                                        if response.clicked() {
-                                            actions.push(Action::PreviewImage(image.uri()));
-                                        }
-                                        if widgets::icon_button_sized(ui, &palette, Icon::Close, "Remove image", 22.0, 14.0, palette.dim).clicked() {
-                                            remove = Some(index);
-                                        }
-                                });
+                                // Crop a fixed-size thumbnail instead of shrinking a
+                                // wide screenshot into a line. The preview keeps the
+                                // full image and its original proportions.
+                                let size = vec2(144.0, 96.0);
+                                let natural = vec2(image.width.max(1) as f32, image.height.max(1) as f32);
+                                let scale = (size.x / natural.x).max(size.y / natural.y);
+                                let uv = egui::Rect::from_center_size(egui::pos2(0.5, 0.5), size / (natural * scale));
+                                let (rect, _) = ui.allocate_exact_size(size, Sense::hover());
+                                ui.painter().rect_filled(rect, CornerRadius::same(8), palette.surface_hover);
+                                let response = ui
+                                    .put(
+                                        rect,
+                                        egui::Image::new(crate::images::cropped(&image.uri()))
+                                            .fit_to_exact_size(size)
+                                            .maintain_aspect_ratio(false)
+                                            .uv(uv)
+                                            .corner_radius(8)
+                                            .sense(Sense::click())
+                                            .alt_text("Preview pasted image"),
+                                    )
+                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                    .on_hover_text("Preview image");
+                                ui.painter().rect_stroke(
+                                    rect,
+                                    CornerRadius::same(8),
+                                    Stroke::new(1.0, if response.hovered() { palette.control } else { palette.outline }),
+                                    egui::StrokeKind::Inside,
+                                );
+                                if response.clicked() {
+                                    actions.push(Action::PreviewImage(image.uri()));
+                                }
+                                // Remove, on the thumbnail's own corner.
+                                let close_rect = egui::Rect::from_center_size(rect.right_top() + vec2(-14.0, 14.0), Vec2::splat(22.0));
+                                let close = ui
+                                    .interact(close_rect, id.with(("remove-image", index)), Sense::click())
+                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                    .on_hover_text("Remove image");
+                                let fill = Color32::from_black_alpha(if close.hovered() { 210 } else { 160 });
+                                ui.painter().circle_filled(close_rect.center(), 11.0, fill);
+                                Icon::Close.image(Color32::WHITE, 13.0).paint_at(ui, egui::Rect::from_center_size(close_rect.center(), Vec2::splat(13.0)));
+                                if close.clicked() {
+                                    remove = Some(index);
+                                }
                             }
                         });
                         if let Some(index) = remove { draft.images.remove(index); }

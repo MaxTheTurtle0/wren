@@ -2,7 +2,6 @@
 
 use egui::{CornerRadius, Sense, vec2};
 
-use super::widgets;
 use crate::app::App;
 use crate::model::{Action, ChannelKind, ConversationId};
 use crate::theme::{self, Icon};
@@ -10,15 +9,19 @@ use crate::theme::{self, Icon};
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     if app.teams.is_empty() {
-        let (title, text) = if app.loading.contains(&crate::sync::Resource::Teams) {
-            (
-                "Loading teams…",
-                "Your teams appear here as soon as Microsoft answers.",
-            )
+        // The main pane explains; the list stays quiet.
+        if app.loading.contains(&crate::sync::Resource::Teams) {
+            super::chat_list::skeleton(ui, &palette);
         } else {
-            ("No teams", "Teams you're a member of show up here.")
-        };
-        widgets::empty_state(ui, &palette, Icon::Teams, title, text);
+            ui.add_space(8.0);
+            ui.vertical_centered(|ui| {
+                ui.label(
+                    egui::RichText::new("No teams yet")
+                        .font(theme::regular(13.0))
+                        .color(palette.secondary),
+                );
+            });
+        }
         return;
     }
     let mut actions = Vec::new();

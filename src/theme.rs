@@ -75,9 +75,15 @@ pub struct Palette {
     pub surface: Color32,
     pub surface_hover: Color32,
     pub surface_active: Color32,
+    /// Hairlines between areas and around cards.
     pub outline: Color32,
+    /// The edge of controls a person acts on (text fields, checkboxes,
+    /// secondary buttons): at least 3:1 against what they sit on.
+    pub control: Color32,
     pub text: Color32,
+    /// Supporting text. At least 4.5:1 on every surface, selected rows too.
     pub secondary: Color32,
+    /// Quiet text (times, hints). Still at least 4.5:1 on every surface.
     pub dim: Color32,
     pub accent: Color32,
     pub accent_hover: Color32,
@@ -103,18 +109,19 @@ impl Palette {
             surface_hover: Color32::from_rgb(0x2c, 0x2d, 0x33),
             surface_active: Color32::from_rgb(0x34, 0x35, 0x3c),
             outline: Color32::from_rgb(0x30, 0x31, 0x37),
+            control: Color32::from_rgb(0x6e, 0x71, 0x79),
             text: Color32::from_rgb(0xe9, 0xe9, 0xec),
-            secondary: Color32::from_rgb(0xa3, 0xa5, 0xad),
-            dim: Color32::from_rgb(0x6d, 0x6f, 0x78),
+            secondary: Color32::from_rgb(0xb4, 0xb6, 0xbf),
+            dim: Color32::from_rgb(0x9c, 0x9e, 0xa8),
             accent: Color32::from_rgb(0xe8, 0x8c, 0x3e),
             accent_hover: Color32::from_rgb(0xf2, 0x9e, 0x55),
             on_accent: Color32::from_rgb(0x1c, 0x12, 0x08),
-            danger: Color32::from_rgb(0xef, 0x5b, 0x5b),
+            danger: Color32::from_rgb(0xf2, 0x74, 0x74),
             warning: Color32::from_rgb(0xe3, 0xb3, 0x41),
             success: Color32::from_rgb(0x4c, 0xc3, 0x6e),
             overlay: Color32::from_rgba_premultiplied(0, 0, 0, 150),
             shadow: Color32::from_rgba_premultiplied(0, 0, 0, 110),
-            highlight: Color32::from_rgba_premultiplied(0x3a, 0x25, 0x10, 0x60),
+            highlight: Color32::from_rgb(0x2b, 0x22, 0x19),
             link: Color32::from_rgb(0x7c, 0xb4, 0xf5),
         }
     }
@@ -129,15 +136,16 @@ impl Palette {
             surface_hover: Color32::from_rgb(0xee, 0xee, 0xf0),
             surface_active: Color32::from_rgb(0xe4, 0xe4, 0xe8),
             outline: Color32::from_rgb(0xdf, 0xdf, 0xe3),
+            control: Color32::from_rgb(0x8a, 0x8d, 0x95),
             text: Color32::from_rgb(0x1b, 0x1c, 0x1f),
-            secondary: Color32::from_rgb(0x58, 0x5b, 0x63),
-            dim: Color32::from_rgb(0x8c, 0x8e, 0x96),
-            accent: Color32::from_rgb(0xc2, 0x63, 0x18),
-            accent_hover: Color32::from_rgb(0xa8, 0x53, 0x0f),
+            secondary: Color32::from_rgb(0x4a, 0x4d, 0x55),
+            dim: Color32::from_rgb(0x62, 0x65, 0x6d),
+            accent: Color32::from_rgb(0xa9, 0x53, 0x0f),
+            accent_hover: Color32::from_rgb(0x8f, 0x45, 0x0b),
             on_accent: Color32::from_rgb(0xff, 0xff, 0xff),
-            danger: Color32::from_rgb(0xd3, 0x34, 0x34),
-            warning: Color32::from_rgb(0xa8, 0x6f, 0x12),
-            success: Color32::from_rgb(0x1f, 0x8f, 0x4c),
+            danger: Color32::from_rgb(0xc4, 0x2b, 0x2b),
+            warning: Color32::from_rgb(0x8a, 0x5a, 0x00),
+            success: Color32::from_rgb(0x1b, 0x7a, 0x42),
             overlay: Color32::from_rgba_premultiplied(0, 0, 0, 90),
             shadow: Color32::from_rgba_premultiplied(0, 0, 0, 40),
             highlight: Color32::from_rgb(0xfd, 0xf1, 0xe5),
@@ -266,7 +274,8 @@ pub fn apply(ctx: &egui::Context, palette: &Palette) {
         visuals.code_bg_color = palette.surface_hover;
         visuals.hyperlink_color = palette.link;
         visuals.selection.bg_fill = palette.accent.gamma_multiply(0.35);
-        visuals.selection.stroke = Stroke::new(1.0, palette.accent);
+        // Also the focus ring of text fields.
+        visuals.selection.stroke = Stroke::new(2.0, palette.accent);
         visuals.override_text_color = Some(palette.text);
         visuals.warn_fg_color = palette.warning;
         visuals.error_fg_color = palette.danger;
@@ -285,8 +294,9 @@ pub fn apply(ctx: &egui::Context, palette: &Palette) {
         }
         widgets.noninteractive.bg_stroke = Stroke::new(1.0, palette.outline);
         widgets.noninteractive.fg_stroke = Stroke::new(1.0, palette.secondary);
-        widgets.inactive.bg_stroke = Stroke::new(1.0, palette.outline);
-        widgets.hovered.bg_stroke = Stroke::new(1.0, palette.outline);
+        // Fields, checkboxes and buttons keep a visible edge (WCAG 1.4.11).
+        widgets.inactive.bg_stroke = Stroke::new(1.0, palette.control);
+        widgets.hovered.bg_stroke = Stroke::new(1.0, palette.secondary);
         widgets.active.bg_stroke = Stroke::new(1.0, palette.accent);
         rendering.apply_to_visuals(&mut visuals);
         style.visuals = visuals;
@@ -337,17 +347,18 @@ pub fn initials(name: &str) -> String {
 
 /// A stable colour for a person's avatar, from their id.
 pub fn avatar_color(seed: &str, dark: bool) -> Color32 {
+    // Each keeps white initials at 4.5:1 or more.
     const HUES: [(u8, u8, u8); 10] = [
-        (0xd9, 0x7a, 0x34),
-        (0x3f, 0x8f, 0xd2),
-        (0x8e, 0x6b, 0xd6),
-        (0x2e, 0xa6, 0x7f),
-        (0xd2, 0x5b, 0x8a),
-        (0xc9, 0xa2, 0x27),
-        (0x5b, 0x8a, 0x3a),
-        (0x4f, 0x6d, 0xd1),
-        (0xc0, 0x4f, 0x45),
-        (0x2b, 0x9a, 0xb0),
+        (0xb4, 0x58, 0x1c),
+        (0x2a, 0x73, 0xb5),
+        (0x7a, 0x5c, 0xc4),
+        (0x1f, 0x7a, 0x5c),
+        (0xc2, 0x41, 0x6f),
+        (0x8f, 0x6d, 0x0f),
+        (0x4a, 0x7a, 0x2e),
+        (0x45, 0x60, 0xc4),
+        (0xb0, 0x44, 0x3a),
+        (0x1e, 0x7c, 0x8e),
     ];
     let hash = seed.bytes().fold(0xcbf29ce484222325u64, |h, b| {
         (h ^ u64::from(b)).wrapping_mul(0x100000001b3)
@@ -388,5 +399,61 @@ mod tests {
     #[test]
     fn avatar_colours_are_stable() {
         assert_eq!(avatar_color("u-ada", true), avatar_color("u-ada", true));
+    }
+
+    /// WCAG 2 contrast ratio between two opaque colours.
+    fn contrast(a: Color32, b: Color32) -> f32 {
+        fn luminance(c: Color32) -> f32 {
+            let channel = |v: u8| {
+                let v = f32::from(v) / 255.0;
+                if v <= 0.039_28 {
+                    v / 12.92
+                } else {
+                    ((v + 0.055) / 1.055).powf(2.4)
+                }
+            };
+            0.2126 * channel(c.r()) + 0.7152 * channel(c.g()) + 0.0722 * channel(c.b())
+        }
+        let (a, b) = (luminance(a), luminance(b));
+        (a.max(b) + 0.05) / (a.min(b) + 0.05)
+    }
+
+    #[test]
+    fn text_and_controls_meet_wcag_contrast() {
+        for palette in [Palette::light(), Palette::dark()] {
+            let surfaces = [
+                palette.window,
+                palette.panel,
+                palette.surface,
+                palette.surface_hover,
+                palette.surface_active,
+            ];
+            for surface in surfaces {
+                for text in [palette.text, palette.secondary, palette.dim] {
+                    assert!(
+                        contrast(text, surface) >= 4.5,
+                        "{text:?} on {surface:?} in {}",
+                        if palette.dark { "dark" } else { "light" }
+                    );
+                }
+            }
+            for surface in [palette.window, palette.panel, palette.surface] {
+                for text in [
+                    palette.accent,
+                    palette.danger,
+                    palette.success,
+                    palette.link,
+                ] {
+                    assert!(contrast(text, surface) >= 4.5, "{text:?} on {surface:?}");
+                }
+                assert!(contrast(palette.control, surface) >= 3.0);
+            }
+            assert!(contrast(palette.on_accent, palette.accent) >= 4.5);
+            assert!(contrast(palette.accent, palette.highlight) >= 4.5);
+            for seed in 0..64 {
+                let color = avatar_color(&format!("seed-{seed}"), palette.dark);
+                assert!(contrast(Color32::WHITE, color) >= 4.5, "{color:?}");
+            }
+        }
     }
 }

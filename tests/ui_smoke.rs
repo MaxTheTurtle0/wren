@@ -807,10 +807,8 @@ fn composer_images_have_usable_thumbnails_and_open_full_previews() {
                 assert!(h.app.overlay.is_none());
                 assert_eq!(h.app.drafts[&chat].images, vec![image.clone()]);
                 let thumbnail = image_shapes(&h, &image)[0].rect;
-                let remove = egui::pos2(
-                    thumbnail.right() + h.ctx.global_style().spacing.item_spacing.x + 11.0,
-                    thumbnail.center().y,
-                );
+                // The remove control sits on the thumbnail's top-right corner.
+                let remove = thumbnail.right_top() + egui::vec2(-14.0, 14.0);
                 h.click(remove);
                 assert!(
                     h.app
@@ -861,10 +859,7 @@ fn multiple_pasted_images_wrap_without_clipping() {
                     clip.contains_rect(rect),
                     "all thumbnails must remain visible at width {width}"
                 );
-                assert!(
-                    rect.right() + 30.0 <= width,
-                    "the remove control must fit too"
-                );
+                assert!(rect.right() <= width, "the remove control must fit too");
                 rects.push(rect);
             }
             for (index, rect) in rects.iter().enumerate() {

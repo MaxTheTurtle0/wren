@@ -44,19 +44,29 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         .map(|(index, _)| index)
         .collect();
     if visible.is_empty() {
-        let (title, text) = if app.chats.is_empty() {
+        if app.chats.is_empty() {
             if app.loading.contains(&crate::sync::Resource::Chats) {
-                (
-                    "Loading chats…",
-                    "Your chats appear here as soon as Microsoft answers.",
-                )
+                skeleton(ui, &palette);
             } else {
-                ("No chats yet", "Chats you start in Teams show up here.")
+                ui.add_space(8.0);
+                ui.vertical_centered(|ui| {
+                    ui.label(
+                        egui::RichText::new("No chats yet")
+                            .font(theme::regular(13.0))
+                            .color(palette.secondary),
+                    );
+                });
             }
-        } else {
-            ("No matches", "No chat or person matches the filter.")
-        };
-        widgets::empty_state(ui, &palette, Icon::Chat, title, text);
+        } else if widgets::empty_state_with_action(
+            ui,
+            &palette,
+            Icon::Search,
+            "No matches",
+            "No chat or person matches the filter.",
+            Some("Clear filter"),
+        ) {
+            app.chat_filter.clear();
+        }
         return;
     }
     let now = crate::time::now();
@@ -233,6 +243,39 @@ pub fn elided(
     );
     job.wrap = egui::text::TextWrapping::truncate_at_width(width);
     ui.ctx().fonts_mut(|f| f.layout_job(job))
+}
+
+/// Placeholder rows while the first chat list loads.
+pub fn skeleton(ui: &mut egui::Ui, palette: &crate::theme::Palette) {
+    let fill = palette.surface_active;
+    for index in 0..7 {
+        let (rect, _) = ui.allocate_exact_size(
+            vec2(ui.available_width(), theme::ROW_HEIGHT),
+            egui::Sense::hover(),
+        );
+        let painter = ui.painter();
+        let left = rect.left() + 16.0;
+        painter.circle_filled(egui::pos2(left + 20.0, rect.center().y), 20.0, fill);
+        let text_left = left + 52.0;
+        let width = rect.right() - 16.0 - text_left;
+        let widths = [0.55, 0.8, 0.45, 0.7, 0.6, 0.5, 0.75];
+        painter.rect_filled(
+            egui::Rect::from_min_size(
+                egui::pos2(text_left, rect.center().y - 12.0),
+                vec2(width * widths[index], 10.0),
+            ),
+            CornerRadius::same(5),
+            fill,
+        );
+        painter.rect_filled(
+            egui::Rect::from_min_size(
+                egui::pos2(text_left, rect.center().y + 4.0),
+                vec2(width * 0.9, 9.0),
+            ),
+            CornerRadius::same(5),
+            fill,
+        );
+    }
 }
 
 #[cfg(test)]

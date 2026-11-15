@@ -234,24 +234,88 @@ pub fn line(ui: &mut Ui, text: &str, font: egui::FontId, color: Color32) -> Resp
 
 /// A quiet message in an empty pane.
 pub fn empty_state(ui: &mut Ui, palette: &Palette, icon: Icon, title: &str, text: &str) {
+    empty_state_with_action(ui, palette, icon, title, text, None);
+}
+
+/// [`empty_state`] with a primary button under the text; returns whether
+/// it was clicked.
+pub fn empty_state_with_action(
+    ui: &mut Ui,
+    palette: &Palette,
+    icon: Icon,
+    title: &str,
+    text: &str,
+    action: Option<&str>,
+) -> bool {
+    let mut clicked = false;
     ui.vertical_centered(|ui| {
-        ui.add_space((ui.available_height() * 0.30).max(24.0));
-        icon.image(palette.dim, 40.0).paint_at(
+        // Stay inside narrow panes instead of widening them.
+        ui.set_max_width((ui.available_width() - 48.0).clamp(120.0, 360.0));
+        ui.add_space((ui.available_height() * 0.32 - 40.0).max(24.0));
+        let size = 32.0;
+        let (rect, _) = ui.allocate_exact_size(Vec2::splat(56.0), Sense::hover());
+        ui.painter()
+            .circle_filled(rect.center(), 28.0, palette.surface_hover);
+        icon.image(palette.secondary, size).paint_at(
             ui,
-            egui::Rect::from_center_size(
-                ui.cursor().center_top() + vec2(0.0, 20.0),
-                Vec2::splat(40.0),
-            ),
+            egui::Rect::from_center_size(rect.center(), Vec2::splat(size * 0.75)),
         );
-        ui.add_space(52.0);
+        ui.add_space(12.0);
         ui.label(
             egui::RichText::new(title)
                 .font(theme::semibold(15.0))
                 .color(palette.text),
         );
-        ui.add_space(4.0);
-        ui.set_max_width(360.0);
-        ui.label(egui::RichText::new(text).color(palette.secondary));
+        if !text.is_empty() {
+            ui.add_space(4.0);
+            ui.label(
+                egui::RichText::new(text)
+                    .font(theme::regular(13.0))
+                    .color(palette.secondary),
+            );
+        }
+        if let Some(action) = action {
+            ui.add_space(14.0);
+            clicked = primary_button(ui, palette, action).clicked();
+        }
+    });
+    clicked
+}
+
+/// A label above a field or drop-down.
+pub fn field_label(ui: &mut Ui, palette: &Palette, text: &str) {
+    ui.label(
+        egui::RichText::new(text)
+            .font(theme::medium(12.0))
+            .color(palette.secondary),
+    );
+}
+
+/// A shortcut such as `Ctrl+Shift+A` drawn as key caps.
+pub fn keycaps(ui: &mut Ui, palette: &Palette, keys: &str) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 4.0;
+        for (index, part) in keys.split(" / ").enumerate() {
+            if index > 0 {
+                ui.label(
+                    egui::RichText::new("/")
+                        .font(theme::regular(12.0))
+                        .color(palette.dim),
+                );
+            }
+            egui::Frame::new()
+                .fill(palette.surface_hover)
+                .stroke(Stroke::new(1.0, palette.outline))
+                .corner_radius(CornerRadius::same(4))
+                .inner_margin(egui::Margin::symmetric(6, 2))
+                .show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new(part)
+                            .font(theme::medium(12.0))
+                            .color(palette.text),
+                    );
+                });
+        }
     });
 }
 
