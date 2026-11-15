@@ -39,9 +39,10 @@ struct Cli {
     /// Window size as WxH points, for screenshots.
     #[arg(long, value_name = "WxH")]
     size: Option<String>,
-    /// Demo view: `chats`, `channel`, `calendar`, `calls`, `signin`,
-    /// `settings`, `switcher`, `shortcuts`, plus `light` or `dark`, joined
-    /// with commas.
+    /// Demo view: `chats`, `channel`, `teams`, `calendar`, `calls`,
+    /// `signin`, `settings`, `switcher`, `shortcuts`, states such as
+    /// `loading`, `empty` or `error`, plus `light` or `dark`, joined with
+    /// commas. `apply_page` lists them all.
     #[arg(long)]
     page: Option<String>,
     /// Print the time to the first frame and quit.
@@ -340,6 +341,52 @@ fn apply_page(app: &mut App, page: &str) {
                 app.demo = false;
                 app.chats.clear();
                 app.auth = wren::backend::AuthStatus::NotConfigured;
+            }
+            // Sign-in steps and failures.
+            "signin-browser" | "signin-code" | "signin-wait" | "signin-expired"
+            | "signin-failed" => {
+                use wren::backend::AuthStatus;
+                app.demo = false;
+                app.chats.clear();
+                let url = "https://login.microsoftonline.com/".to_owned();
+                app.auth = match part {
+                    "signin-browser" => AuthStatus::WaitingForBrowser { url },
+                    "signin-code" => AuthStatus::DeviceCode {
+                        code: "F4KQ-9TZW".into(),
+                        url: "https://microsoft.com/devicelogin".into(),
+                    },
+                    "signin-wait" => AuthStatus::Finishing,
+                    "signin-expired" => AuthStatus::Expired {
+                        username: "alex@contoso.com".into(),
+                        reason: "The session expired after 90 days without use.".into(),
+                    },
+                    _ => AuthStatus::Failed("Microsoft did not answer in time.".into()),
+                };
+            }
+            "teams" => {
+                app.section = Section::Teams;
+                app.open = None;
+            }
+            "no-chat" => app.open = None,
+            "no-match" => app.chat_filter = "zz".into(),
+            // A first start: nothing synced yet, or nothing to sync.
+            "loading" | "empty" => {
+                use wren::sync::Resource;
+                app.chats.clear();
+                app.teams.clear();
+                app.meetings.clear();
+                app.open = None;
+                if part == "loading" {
+                    app.loading
+                        .extend([Resource::Chats, Resource::Teams, Resource::Calendar]);
+                }
+            }
+            "error" => app.toast(
+                wren::model::ToastKind::Error,
+                "Could not send: Microsoft refused the message (throttled). Retry in a moment.",
+            ),
+            "consent" => {
+                app.overlay = Some(wren::app::Overlay::Consent(wren::auth::CHAT_CREATE_SCOPE));
             }
             other => eprintln!("unknown page part: {other}"),
         }
