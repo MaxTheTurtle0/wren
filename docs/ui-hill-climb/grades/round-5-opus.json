@@ -1,0 +1,502 @@
+{
+ "overall": 7.5,
+ "dimensions": {
+  "hierarchy": 8,
+  "spacing": 7.5,
+  "typography": 7,
+  "consistency": 7.5,
+  "contrast_accessibility": 8,
+  "feedback": 8,
+  "states": 8.5,
+  "navigation": 8
+ },
+ "screens": {
+  "chats": {
+   "score": 8,
+   "issues": [
+    "Top message is cut mid-avatar under the header (AR avatar sliver at y≈40-52) with no fade or snap",
+    "Non-breaking hyphens render with wide side gaps ('On - call', 'Ad - hoc')",
+    "Messages float above composer only because history fills; otherwise fine"
+   ]
+  },
+  "chats-wide": {
+   "score": 7,
+   "issues": [
+    "Conversation column capped at ~920 px and left-aligned: a ~600 px empty band on the right at 1920 wide",
+    "Header actions stop at x≈1290 while the header rule spans the full width, so the header looks broken off",
+    "Messages are top-anchored, leaving a ~150 px gap above the composer"
+   ]
+  },
+  "chats-narrow": {
+   "score": 7.5,
+   "issues": [
+    "Chat list keeps a fixed ~232 px at 760 wide, truncating names ('Katherine Jo…', 'Design rev…', 'Margaret Hamil…')",
+    "Top list item cut under the header",
+    "Hover toolbar covers the right of the post header"
+   ]
+  },
+  "chat-no-selection": {
+   "score": 8.5,
+   "issues": [
+    "Empty pane is correct but bare; could show recent or unread shortcut"
+   ]
+  },
+  "chat-filter-no-match": {
+   "score": 8.5,
+   "issues": [
+    "Filter field has no inline clear (×) button; clearing relies on the CTA below",
+    "Empty state sits mid-column, far from the field it refers to"
+   ]
+  },
+  "group-chat": {
+   "score": 8.5,
+   "issues": [
+    "Mention highlight name text #A9530F on #FDF1E5 is 4.81:1, passes but thin",
+    "'Ad - hoc', 'go/no - go' hyphen spacing glitch"
+   ]
+  },
+  "channel": {
+   "score": 8,
+   "issues": [
+    "First post cut under the header (reaction chip sliver at y≈45)",
+    "Every thread repeats a bordered Reply button, adding vertical noise",
+    "Post card borders #DFDFE3 on white are 1.33:1, so cards nearly vanish in light mode"
+   ]
+  },
+  "channel-narrow": {
+   "score": 7,
+   "issues": [
+    "Team tree keeps ~232 px of a 760 px window; posts wrap at ~400 px",
+    "Post avatar is clipped by the header",
+    "Hover toolbar overlaps the author and time row"
+   ]
+  },
+  "teams": {
+   "score": 8.5,
+   "issues": [
+    "Section header row offers only refresh; no way to browse/join teams indicated",
+    "Channel type icons (lock, people) are small and similar in weight to #"
+   ]
+  },
+  "calendar": {
+   "score": 7,
+   "issues": [
+    "Every meeting row has the same orange left bar that means 'selected' in Chat and Teams; selection here only shows as a #E4E4E8 fill (1.17:1 against the list)",
+    "Detail card is sparse and redundant (Location: Teams + Online: Microsoft Teams meeting), with no attendees or body; right half of the pane is empty",
+    "Header buttons are pills, but buttons elsewhere are 6 px rounded rectangles",
+    "Copy link pill #EEEEF0 on white is 1.16:1 (dark 1.29:1); it barely reads as a button"
+   ]
+  },
+  "calls": {
+   "score": 7.5,
+   "issues": [
+    "Join button is ~32 px tall beside a 28 px input, so their bottoms don't align",
+    "People avatars are 32 px here but 38 px in the chat list",
+    "Main pane uses ~700 px and leaves the rest empty; capability icons (✓ ×) are ~10 px"
+   ]
+  },
+  "calls-narrow": {
+   "score": 7,
+   "issues": [
+    "Names truncated to 'Katherine …', 'Ada Lovela…' because two icon buttons are always visible",
+    "Same Join/input height mismatch"
+   ]
+  },
+  "composer-mention": {
+   "score": 8,
+   "issues": [
+    "Suggestion popup overlaps the last message and has no 'People' heading or keyboard hint",
+    "Only one result; no highlighting of the matched 'Mar'"
+   ]
+  },
+  "composer-long-draft": {
+   "score": 7,
+   "issues": [
+    "A row of clipped glyph descenders shows along the composer's top edge (y≈555)",
+    "Composer scroll thumb is a tiny 4×14 px bar at x≈1180, left of the attach icon, not at the right edge",
+    "No line count or 'scroll for more' cue in a 120+ line draft"
+   ]
+  },
+  "composer-images": {
+   "score": 7.5,
+   "issues": [
+    "Panoramic thumbnails are cropped without indication (3072×256 shows two birds)",
+    "Remove (×) badges overlap the image corners",
+    "In dark mode the white image runs to square corners inside a rounded tile with no frame"
+   ]
+  },
+  "image-preview": {
+   "score": 7.5,
+   "issues": [
+    "Title is generic 'Image preview': no file name, sender, save or copy actions",
+    "Message hover toolbar stays visible through the scrim at the right edge",
+    "Fit/100% segmented control mixes a filled orange segment with a plain outlined one"
+   ]
+  },
+  "search-switcher": {
+   "score": 8.5,
+   "issues": [
+    "Rows lack timestamps or type labels (chat vs channel vs meeting)",
+    "Key hint chips (#EEEEF0) have nearly invisible edges"
+   ]
+  },
+  "new-chat": {
+   "score": 8,
+   "issues": [
+    "Results don't highlight the matched query 'ra'",
+    "Result avatars carry no presence, unlike the rest of the app"
+   ]
+  },
+  "settings": {
+   "score": 8,
+   "issues": [
+    "Unselected theme pills #EEEEF0 on white are 1.16:1 (dark #2C2D33 on #25262B 1.10:1)",
+    "Pill segmented control conflicts with the rounded-rectangle buttons ('Leave demo')",
+    "Message hover toolbar persists behind the scrim"
+   ]
+  },
+  "shortcuts": {
+   "score": 7.5,
+   "issues": [
+    "Dialog runs from y=90 to y=787, only 13 px from the window bottom",
+    "Key column fixed ~195 px, leaving a wide gap before descriptions",
+    "Keycap borders #DFDFE3 on white are 1.33:1 (dark 1.16:1)"
+   ]
+  },
+  "status-message": {
+   "score": 8,
+   "issues": [
+    "Input relies on a placeholder with no visible label",
+    "No presets, emoji or 'clear after' options, so the dialog feels thin"
+   ]
+  },
+  "account-menu": {
+   "score": 8.5,
+   "issues": [
+    "Doesn't show the current status message",
+    "'Settings...' uses three periods while elsewhere uses '…'"
+   ]
+  },
+  "permission-consent": {
+   "score": 8.5,
+   "issues": [
+    "Copy 'asked for only now that you use this' is awkward",
+    "Technical scope line at 11 pt is the least legible text in the dialog"
+   ]
+  },
+  "error-toast": {
+   "score": 7,
+   "issues": [
+    "Toast overlaps conversation text ('Can we ship the 0.2 preview on Friday?' is covered)",
+    "Toast repeats the inline 'Not sent' but has no Retry of its own",
+    "Failed bubble tint #FBEEEE is subtle; the red is carried by 13 pt text alone"
+   ]
+  },
+  "first-sync-loading": {
+   "score": 8.5,
+   "issues": [
+    "Skeleton bars #E4E4E8 on #F6F6F7 are 1.17:1, faint at a glance",
+    "Filter field disappears during loading, which shifts the layout later"
+   ]
+  },
+  "first-sync-empty": {
+   "score": 8,
+   "issues": [
+    "List column is totally blank: no 'No chats yet' line or filter",
+    "Empty state is vertically offset from the other empty states (title at y=370 vs 394)"
+   ]
+  },
+  "call-bar": {
+   "score": 7.5,
+   "issues": [
+    "Bar buttons (Join on phone, Restore, Close bar) are #EEEEF0 pills on #F6F6F7, 1.07:1 (dark 1.21:1)",
+    "'Meeting ended' line sits 8 px under the message above while 'Meeting started' has ~16 px",
+    "No elapsed time; 'Close bar' is ambiguous"
+   ]
+  },
+  "call-docked": {
+   "score": 8,
+   "issues": [
+    "Same faint bar buttons",
+    "Wide 720 px layout leaves message column very long-lined; fine otherwise"
+   ]
+  },
+  "join-on-phone": {
+   "score": 8,
+   "issues": [
+    "'Copy the link' vs 'Copy link' elsewhere",
+    "QR has a white plate in dark mode but none in light; modal title/body sizes fine"
+   ]
+  },
+  "setup": {
+   "score": 7.5,
+   "issues": [
+    "Card paragraph leading is ~17 px on ~15 pt text (≈1.15), cramped",
+    "Save button 32 px vs 28 px inputs; 'Tenant' label is only 15 px below the previous field",
+    "Disabled Save plus two helper lines below it read as clutter"
+   ]
+  },
+  "signin": {
+   "score": 8,
+   "issues": [
+    "Hover tooltip runs ~245 px past the card's right edge and covers the 'App registration' row",
+    "Body leading ≈1.15 (lines 17 px apart)",
+    "Content block is top-heavy: ~160 px empty below"
+   ]
+  },
+  "signin-browser": {
+   "score": 8,
+   "issues": [
+    "Primary emphasis on 'Open the page again' rather than the waiting state",
+    "Leading ≈1.15 in the body"
+   ]
+  },
+  "signin-device-code": {
+   "score": 8.5,
+   "issues": [
+    "Code shows 'F4KQ - 9TZW' with the spaced hyphen glitch",
+    "Body leading 23 px here vs 17 px on the other sign-in cards"
+   ]
+  },
+  "signin-finishing": {
+   "score": 8,
+   "issues": [
+    "Card sits high, leaving ~320 px of empty page below",
+    "No cancel or escape if finishing hangs"
+   ]
+  },
+  "signin-expired": {
+   "score": 8,
+   "issues": [
+    "Same tooltip overflow and tight leading as sign-in",
+    "'Account' label 12 pt next to 13 pt value, slightly mismatched baseline"
+   ]
+  },
+  "signin-failed": {
+   "score": 8.5,
+   "issues": [
+    "Error reason is one line with no hint about cause or next step beyond retry",
+    "'Sign - in' hyphen glitch in the title"
+   ]
+  }
+ },
+ "top_issues": [
+  {
+   "priority": 1,
+   "severity": "medium",
+   "screens": [
+    "chats",
+    "group-chat",
+    "signin-failed",
+    "signin-device-code",
+    "setup",
+    "search-switcher",
+    "call-bar"
+   ],
+   "mode": "both",
+   "issue": "Hyphens render with wide side gaps across the app ('On - call', 'Sign - in', 'Ad - hoc', 'go/no - go', 'Step - by - step', 'F4KQ - 9TZW', 'open - source').",
+   "evidence": "4x zoom of chats.png (125,110)-(250,150) and signin-failed.png title: about 4 px blank each side of the hyphen at 13-18 pt, vs about 1 px in normal Inter kerning.",
+   "fix": "Render U+2011 as U+002D (or map it in the font fallback), and stop text transforms from inserting non-breaking hyphens. Check the glyph advance width matches Inter's hyphen (about 0.33 em)."
+  },
+  {
+   "priority": 2,
+   "severity": "medium",
+   "screens": [
+    "chats-wide"
+   ],
+   "mode": "both",
+   "issue": "At 1920 wide the conversation column is capped at about 920 px and left-aligned, leaving a ~600 px dead band. Header actions stop at x≈1290 while the header rule runs to 1920.",
+   "evidence": "Messages, composer and header icons end at x≈1300 in chats-wide.png. x 1300-1920 is empty background.",
+   "fix": "Center the capped column in the pane (or cap at ~1040 px and center it), and align the header action cluster to the same column edge. Alternatively let the column grow to 100% with a 72-ch max line length for message text only."
+  },
+  {
+   "priority": 3,
+   "severity": "medium",
+   "screens": [
+    "error-toast"
+   ],
+   "mode": "both",
+   "issue": "Error toast is placed over the conversation's top message and covers its text. It also repeats the inline failure without its own action.",
+   "evidence": "Toast at (576,64)-(1068,111) covers 'Can we ship the 0.2 preview on Friday?' at y≈110.",
+   "fix": "Anchor toasts bottom-right above the composer (16 pt from edges), or as a full-width 32 pt banner under the header that pushes content down. Add a 'Retry' text button in the toast, or drop the toast when the inline 'Not sent · Retry' is visible."
+  },
+  {
+   "priority": 4,
+   "severity": "medium",
+   "screens": [
+    "calendar"
+   ],
+   "mode": "both",
+   "issue": "The orange left bar marks the selected row in Chat/Teams lists but appears on every Calendar row. Calendar selection is only a fill with 1.17:1 against the list.",
+   "evidence": "Light: selected fill #E4E4E8 vs list #F6F6F7 = 1.17:1. Every row has an #A9530F 3 px bar.",
+   "fix": "Use a 6 px coloured dot or a neutral category bar in Calendar rows, and reserve the 3 px accent bar for selection, as in Chat. Or keep the bars and add a 1 px #A9530F outline to the selected row."
+  },
+  {
+   "priority": 5,
+   "severity": "medium",
+   "screens": [
+    "calendar",
+    "call-bar",
+    "call-docked",
+    "settings",
+    "image-preview"
+   ],
+   "mode": "both",
+   "issue": "Mixed button language: filled pills with almost no boundary (Copy link, call bar buttons, theme segment) sit next to 6 px-radius outlined buttons (Reply, Cancel, Leave demo). Pill buttons fail 3:1 for component boundaries.",
+   "evidence": "Copy link #EEEEF0 on #FFFFFF 1.16:1 (dark #2C2D33/#17181B 1.29:1). Call bar pills #EEEEF0 on #F6F6F7 1.07:1 (dark 1.21:1). Unselected theme pills 1.16:1 / 1.10:1. Outlined buttons use #8A8D95 at 3.32:1.",
+   "fix": "Use one secondary-button style app-wide: 6 px radius, 1 px #8A8D95 border (dark #6E7179), 28 pt height. For segmented controls, add a 1 px #8A8D95 container border with the selected segment filled."
+  },
+  {
+   "priority": 6,
+   "severity": "medium",
+   "screens": [
+    "chats-narrow",
+    "channel-narrow",
+    "calls-narrow"
+   ],
+   "mode": "both",
+   "issue": "At 760 wide the list/tree pane keeps a fixed ~232 px. Names truncate heavily and the conversation wraps at ~400 px.",
+   "evidence": "'Katherine Jo…', 'Design rev…', 'Margaret Hamil…' (chats-narrow). 'Katherine …', 'Ada Lovela…' (calls-narrow).",
+   "fix": "Under ~900 px, shrink the list pane to 200 px and drop the time column to the second line. Or collapse to a 64 px avatar-only list with names on hover. In Calls, show call/video buttons only on hover or focus so names get the width."
+  },
+  {
+   "priority": 7,
+   "severity": "medium",
+   "screens": [
+    "composer-long-draft"
+   ],
+   "mode": "both",
+   "issue": "Long draft composer shows a row of clipped glyphs at its top edge, and the scroll thumb floats left of the attach icon instead of at the right edge.",
+   "evidence": "Descender fragments at y≈553-557. Thumb #767779 (4.48:1) at x≈1178-1184, y≈737-751.",
+   "fix": "Clip the text viewport 8 pt inside the composer border with a 12 pt fade at the top. Put the scrollbar against the right inner edge (x = right − 6 pt) of the text area, above the action row."
+  },
+  {
+   "priority": 8,
+   "severity": "medium",
+   "screens": [
+    "setup",
+    "signin",
+    "signin-browser",
+    "signin-expired",
+    "signin-finishing",
+    "calls"
+   ],
+   "mode": "both",
+   "issue": "Paragraph leading is inconsistent and tight: 17 px line pitch on ~14-15 pt text (≈1.15) in sign-in, setup and Calls copy, vs 23 px on the device-code card and ~20 px in messages.",
+   "evidence": "signin.png body lines at y=365, 382, 399. calls.png 'How calls work' lines at 234 and 251. signin-device-code body lines at 370 and 393.",
+   "fix": "Use one body line height of 1.4 (20 pt for 14 pt text, 21 pt for 15 pt) for all multi-line descriptive text. Keep 1.25 only for single-line labels."
+  },
+  {
+   "priority": 9,
+   "severity": "low",
+   "screens": [
+    "calls",
+    "calls-narrow",
+    "setup"
+   ],
+   "mode": "both",
+   "issue": "Inline field and button heights don't match.",
+   "evidence": "Calls: input 125-153 (28 px) vs Join 125-157 (32 px). Setup: inputs 28 px vs Save 32 px.",
+   "fix": "Use one control height of 28 pt for inputs and buttons placed side by side, and align them on the same centre line."
+  },
+  {
+   "priority": 10,
+   "severity": "low",
+   "screens": [
+    "chats",
+    "channel",
+    "channel-narrow",
+    "composer-images",
+    "chat-filter-no-match"
+   ],
+   "mode": "both",
+   "issue": "Scrolled history shows half-cut avatars and reaction chips under the header with no fade.",
+   "evidence": "chats.png 'AR' avatar visible only y≈40-52 beneath the header rule at y=52. Same in channel.png at y≈45.",
+   "fix": "Add a 16 pt gradient fade from the pane background at the top of the scroll area, or snap the initial scroll so the first visible item starts at a message boundary."
+  },
+  {
+   "priority": 11,
+   "severity": "low",
+   "screens": [
+    "calendar"
+   ],
+   "mode": "both",
+   "issue": "Meeting detail is thin and redundant. The right half of the pane is empty.",
+   "evidence": "Card 640 px wide with Location 'Teams' and Online 'Microsoft Teams meeting' both shown. Nothing from x=1028 to 1280.",
+   "fix": "Repeat the title in the card at 18 pt and add attendees (avatars plus count) and the agenda body. Merge Location and Online when they match. Let the card fill the pane to a 720 pt max width."
+  },
+  {
+   "priority": 12,
+   "severity": "low",
+   "screens": [
+    "shortcuts"
+   ],
+   "mode": "both",
+   "issue": "Shortcuts dialog nearly touches the window bottom, and keycap chips have almost invisible edges.",
+   "evidence": "Dialog spans y=90-787 in an 800 px window. Keycap border #DFDFE3 on white 1.33:1 (dark #303137/#25262B 1.16:1).",
+   "fix": "Use two columns (Navigation+App | Messages) or a scroll area with a 48 pt bottom margin. Give keycaps a 1 px #8A8D95 border (dark #6E7179) or a 1 px bottom shadow."
+  },
+  {
+   "priority": 13,
+   "severity": "low",
+   "screens": [
+    "call-bar"
+   ],
+   "mode": "both",
+   "issue": "System lines in the meeting chat have uneven spacing, and the call bar has no elapsed time.",
+   "evidence": "'Meeting ended' baseline sits 8 px below the previous message body, but 'Meeting started' has 16 px above.",
+   "fix": "Give system lines 12 pt above and below. Add an elapsed timer ('12:04') after 'In the meeting'. Rename 'Close bar' to 'Hide bar'."
+  },
+  {
+   "priority": 14,
+   "severity": "low",
+   "screens": [
+    "settings",
+    "shortcuts",
+    "image-preview",
+    "permission-consent",
+    "status-message"
+   ],
+   "mode": "both",
+   "issue": "The message hover toolbar stays drawn behind modal scrims, so a hover state shows under a dialog.",
+   "evidence": "Toolbar visible at (1020,352)-(1258,390) under the scrim in settings.png and shortcuts.png.",
+   "fix": "Clear the hovered-message state when a modal opens (no pointer hit-test through the scrim)."
+  },
+  {
+   "priority": 15,
+   "severity": "low",
+   "screens": [
+    "composer-images"
+   ],
+   "mode": "both",
+   "issue": "Pending image thumbnails crop without indication, and the remove badges overlap the image.",
+   "evidence": "3072×256 tile shows a 2-bird crop. × badges at the tile corners cover image pixels. Dark tiles have no 1 px frame.",
+   "fix": "Letterbox (fit) images in 136×96 tiles on a #EEEEF0 / #2C2D33 background with a 1 px border. Place the × badge 4 pt outside the top-right corner on a 20 pt circle with a 2 pt background-coloured ring."
+  },
+  {
+   "priority": 16,
+   "severity": "low",
+   "screens": [
+    "signin",
+    "signin-expired"
+   ],
+   "mode": "both",
+   "issue": "Device-code tooltip runs ~245 px past the card edge and covers the App registration row. The sign-in stack is top-heavy.",
+   "evidence": "Tooltip spans x=609-1118, card ends at x=874. Finishing card ends at y=421 in an 800 px window.",
+   "fix": "Cap tooltip width at 320 pt and anchor it to the card. Vertically center the logo+card+footer group (or offset it 40% from the top)."
+  },
+  {
+   "priority": 17,
+   "severity": "low",
+   "screens": [
+    "first-sync-empty",
+    "status-message",
+    "new-chat"
+   ],
+   "mode": "both",
+   "issue": "Minor state gaps: the empty list column is blank, the status input has no label, and new-chat results don't highlight matches.",
+   "evidence": "first-sync-empty list x 64-364 is blank. Status input shows only the placeholder 'For example: Back at 3 pm'.",
+   "fix": "Add a 13 pt 'No chats yet' line in the list. Add a 12 pt 'Status message' label above the input. Bold the matched substring in result names."
+  }
+ ]
+}
