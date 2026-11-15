@@ -619,11 +619,11 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                 if widgets::checkbox(ui, &palette, &mut notifications, "Desktop notifications for new messages and meeting reminders").changed() {
                     actions.push(Action::SetNotifications(notifications));
                 }
-                // Under the option it explains: when there is something to notify.
-                ui.label(
-                    egui::RichText::new(format!("New messages arrive when you open a chat, come back to Wren or press {}. Microsoft doesn't allow apps to check in the background; for instant alerts, connect a push relay.", super::keys::shortcut("⌘R")))
-                        .font(theme::regular(13.0))
-                        .color(palette.secondary),
+                // Under the option it explains, aligned with its label.
+                widgets::checkbox_note(
+                    ui,
+                    &palette,
+                    &format!("New messages arrive when you open a chat, come back to Wren or press {}. Microsoft doesn't allow apps to check in the background; for instant alerts, connect a push relay.", super::keys::shortcut("⌘R")),
                 );
                 let mut keep = app.settings.keep_running;
                 if widgets::checkbox(ui, &palette, &mut keep, "Keep running in the tray when the window closes").changed() {
@@ -713,7 +713,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                 if widgets::checkbox(ui, &palette, &mut automatic, "Automatically check for and download app updates").changed() {
                     actions.push(Action::SetAutomaticUpdates(automatic));
                 }
-                ui.label(egui::RichText::new("Checks GitHub once a day. Updates are verified before installation; you choose when to restart.").font(theme::regular(12.0)).color(palette.dim));
+                widgets::checkbox_note(ui, &palette, "Checks GitHub once a day. Updates are verified before installation; you choose when to restart.");
                 match &app.update {
                     crate::updates::Status::Idle => { ui.label("No update check yet."); }
                     crate::updates::Status::Checking => { ui.label("Checking for updates…"); }
@@ -771,7 +771,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
 
 fn shortcuts(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
-    let close = modal(palette, ctx, "shortcuts", 480.0, 90.0, |ui| {
+    let close = modal(palette, ctx, "shortcuts", 880.0, 90.0, |ui| {
         Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
@@ -787,24 +787,51 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
                 });
             });
             ui.add_space(10.0);
-            // One grid for every group, so descriptions share one column.
+            // Two columns keep the sheet short: Messages on the right, the
+            // other groups on the left, in one grid so rows line up.
+            enum Row {
+                Heading(&'static str),
+                Key(&'static str, &'static str),
+            }
+            let rows = |groups: Vec<&(&'static str, &'static [(&'static str, &'static str)])>| {
+                let mut rows = Vec::new();
+                for (group, shortcuts) in groups {
+                    rows.push(Row::Heading(group));
+                    rows.extend(shortcuts.iter().map(|(keys, what)| Row::Key(keys, what)));
+                }
+                rows
+            };
+            let (right, left): (Vec<_>, Vec<_>) = super::keys::SHORTCUTS
+                .iter()
+                .partition(|(group, _)| *group == "Messages");
+            let (left, right) = (rows(left), rows(right));
+            let cell = |ui: &mut egui::Ui, row: Option<&Row>| match row {
+                Some(Row::Heading(group)) => {
+                    ui.vertical(|ui| {
+                        ui.add_space(6.0);
+                        widgets::section_label(ui, &palette, group);
+                    });
+                    ui.label("");
+                }
+                Some(Row::Key(keys, what)) => {
+                    widgets::keycaps(ui, &palette, &super::keys::shortcut(keys));
+                    ui.label(egui::RichText::new(*what).color(palette.text));
+                }
+                None => {
+                    ui.label("");
+                    ui.label("");
+                }
+            };
             egui::Grid::new("shortcuts")
-                .num_columns(2)
-                .spacing(vec2(20.0, 6.0))
+                .num_columns(5)
+                .spacing(vec2(14.0, 6.0))
                 .show(ui, |ui| {
-                    for (index, (group, shortcuts)) in super::keys::SHORTCUTS.iter().enumerate() {
-                        ui.vertical(|ui| {
-                            if index > 0 {
-                                ui.add_space(8.0);
-                            }
-                            widgets::section_label(ui, &palette, group);
-                        });
+                    for index in 0..left.len().max(right.len()) {
+                        cell(ui, left.get(index));
+                        // The gap between the two halves, as its own cell.
+                        ui.allocate_exact_size(vec2(12.0, 0.0), Sense::hover());
+                        cell(ui, right.get(index));
                         ui.end_row();
-                        for (keys, what) in *shortcuts {
-                            widgets::keycaps(ui, &palette, &super::keys::shortcut(keys));
-                            ui.label(egui::RichText::new(*what).color(palette.text));
-                            ui.end_row();
-                        }
                     }
                 });
         });
@@ -1021,33 +1048,29 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                         .margin(Margin::symmetric(10, 6)),
                 );
             }
-            ui.add_space(12.0);
-            ui.horizontal(|ui| {
+            ui.add_space(16.0);
+            // The dialog footer: a note above, the action on the right.
+            if picked.len() == 1 {
+                ui.label(
+                    egui::RichText::new("An existing chat with this person opens instead.")
+                        .font(theme::regular(12.0))
+                        .color(palette.secondary),
+                );
+                ui.add_space(8.0);
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let label = match picked.len() {
                     0 => "Pick someone to chat with".to_owned(),
                     1 => format!("Chat with {}", picked[0].display_name),
                     n => format!("Start a group chat with {n} people"),
                 };
-                let button = ui.add_enabled(
-                    !picked.is_empty(),
-                    egui::Button::new(
-                        egui::RichText::new(label)
-                            .font(theme::semibold(13.0))
-                            .color(palette.on_accent),
-                    )
-                    .fill(palette.accent)
-                    .corner_radius(CornerRadius::same(8))
-                    .min_size(vec2(0.0, 32.0)),
-                );
+                let button = ui
+                    .add_enabled_ui(!picked.is_empty(), |ui| {
+                        widgets::primary_button(ui, &palette, &format!("  {label}  "))
+                    })
+                    .inner;
                 if button.clicked() {
                     start = true;
-                }
-                if picked.len() == 1 {
-                    ui.label(
-                        egui::RichText::new("An existing chat with this person opens instead.")
-                            .font(theme::regular(12.0))
-                            .color(palette.secondary),
-                    );
                 }
             });
         });
@@ -1174,7 +1197,7 @@ fn call_settings(
         match browsers {
             [] => {
                 ui.label(
-                    egui::RichText::new("A separate window needs Microsoft Edge or Google Chrome. Until one is installed, calls open in your default browser.")
+                    egui::RichText::new("A separate window needs Microsoft Edge or Google Chrome. Until one is installed, calls open in your default browser.").line_height(Some(theme::leading(12.0)))
                         .font(theme::regular(12.0))
                         .color(palette.warning),
                 );
@@ -1255,17 +1278,28 @@ fn join_on_phone(app: &mut App, ctx: &egui::Context, url: &str) {
                     widgets::on_click(&close, &mut actions, Action::CloseOverlay);
                 });
             });
+            // Which meeting the code joins.
+            if let Some(call) = &app.call {
+                ui.label(
+                    egui::RichText::new(call.title())
+                        .font(theme::semibold(14.0))
+                        .color(palette.text),
+                );
+            }
             ui.add_space(6.0);
             ui.label(
                 egui::RichText::new("Point your phone's camera here; Teams opens the meeting.")
+                    .line_height(Some(theme::leading(14.0)))
                     .color(palette.secondary),
             );
             ui.add_space(12.0);
             ui.vertical_centered(|ui| qr_code(ui, url, 232.0));
-            ui.add_space(12.0);
-            if widgets::secondary_button(ui, &palette, "Copy the link").clicked() {
-                actions.push(Action::CopyText(url.to_owned()));
-            }
+            ui.add_space(16.0);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if widgets::secondary_button(ui, &palette, "  Copy link  ").clicked() {
+                    actions.push(Action::CopyText(url.to_owned()));
+                }
+            });
         });
     });
     if close {
@@ -1327,22 +1361,22 @@ fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
             ui.label(egui::RichText::new(crate::auth::scope_reason(scope)).font(theme::medium(14.0)).color(palette.text));
             ui.add_space(6.0);
             ui.label(
-                egui::RichText::new("Microsoft's consent page opens in your browser. Some organisations need an administrator to approve it first.")
+                egui::RichText::new("Microsoft's consent page opens in your browser. Some organisations need an administrator to approve it first.").line_height(Some(theme::leading(13.0)))
                     .font(theme::regular(13.0))
                     .color(palette.secondary),
             );
             ui.add_space(4.0);
             ui.label(
-                egui::RichText::new(format!("Permission: {scope} (Microsoft Graph), asked for only now that you use this."))
+                egui::RichText::new(format!("Permission: {scope} (Microsoft Graph), asked for only now that you use this.")).line_height(Some(theme::leading(12.0)))
                     .font(theme::regular(12.0))
                     .color(palette.dim),
             );
             ui.add_space(14.0);
-            ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if widgets::primary_button(ui, &palette, "  Continue in browser  ").clicked() {
                     actions.push(Action::RequestScope(scope));
                 }
-                if widgets::secondary_button(ui, &palette, "Not now").clicked() {
+                if widgets::secondary_button(ui, &palette, "  Not now  ").clicked() {
                     actions.push(Action::CloseOverlay);
                 }
             });

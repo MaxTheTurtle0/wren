@@ -122,7 +122,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     );
     egui::ScrollArea::vertical().id_salt("calls-page").auto_shrink([false, false]).show(ui, |ui| {
         Frame::new().inner_margin(Margin { left: 24, right: 24, top: 20, bottom: 0 }).show(ui, |ui| {
-            ui.set_max_width(680.0f32.min(ui.available_width()));
+            let column = widgets::centred_column(ui.max_rect(), super::calendar::DETAIL_WIDTH);
+            ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
             // Join by link.
             let link_id = egui::Id::new("wren-join-link");
             let mut link: String = ui.ctx().data(|d| d.get_temp(link_id)).unwrap_or_default();
@@ -158,7 +159,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 crate::calling::Opener::Browser => "Teams on the web, in your default browser".to_owned(),
                 crate::calling::Opener::TeamsApp => "the Microsoft Teams app".to_owned(),
             };
-            ui.label(egui::RichText::new(format!("Calls open in {place}. Microsoft's own client runs the call, so it costs nothing extra; Wren shows the meeting chat and follows the call.")).color(palette.secondary));
+            ui.label(egui::RichText::new(format!("Calls open in {place}. Microsoft's own client runs the call, so it costs nothing extra; Wren shows the meeting chat and follows the call.")).line_height(Some(theme::leading(14.0))).color(palette.secondary));
             ui.add_space(10.0);
             // What works, at a glance; the details on request.
             for (status, color, icon) in [("Works", palette.success, Icon::Check), ("Not possible", palette.secondary, Icon::Close)] {
@@ -215,5 +216,6 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 });
             ui.add_space(24.0);
         });
+});
     });
 }

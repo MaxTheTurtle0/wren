@@ -109,14 +109,14 @@ impl Palette {
             surface_hover: Color32::from_rgb(0x2c, 0x2d, 0x33),
             surface_active: Color32::from_rgb(0x34, 0x35, 0x3c),
             outline: Color32::from_rgb(0x30, 0x31, 0x37),
-            control: Color32::from_rgb(0x6e, 0x71, 0x79),
+            control: Color32::from_rgb(0x82, 0x85, 0x8e),
             text: Color32::from_rgb(0xe9, 0xe9, 0xec),
             secondary: Color32::from_rgb(0xb4, 0xb6, 0xbf),
             dim: Color32::from_rgb(0x9c, 0x9e, 0xa8),
             accent: Color32::from_rgb(0xe8, 0x8c, 0x3e),
             accent_hover: Color32::from_rgb(0xf2, 0x9e, 0x55),
             on_accent: Color32::from_rgb(0x1c, 0x12, 0x08),
-            danger: Color32::from_rgb(0xf2, 0x74, 0x74),
+            danger: Color32::from_rgb(0xf5, 0x8a, 0x8a),
             warning: Color32::from_rgb(0xe3, 0xb3, 0x41),
             success: Color32::from_rgb(0x4c, 0xc3, 0x6e),
             overlay: Color32::from_rgba_premultiplied(0, 0, 0, 150),
@@ -136,14 +136,14 @@ impl Palette {
             surface_hover: Color32::from_rgb(0xee, 0xee, 0xf0),
             surface_active: Color32::from_rgb(0xe4, 0xe4, 0xe8),
             outline: Color32::from_rgb(0xdf, 0xdf, 0xe3),
-            control: Color32::from_rgb(0x8a, 0x8d, 0x95),
+            control: Color32::from_rgb(0x7c, 0x7f, 0x87),
             text: Color32::from_rgb(0x1b, 0x1c, 0x1f),
             secondary: Color32::from_rgb(0x4a, 0x4d, 0x55),
             dim: Color32::from_rgb(0x62, 0x65, 0x6d),
             accent: Color32::from_rgb(0xa9, 0x53, 0x0f),
             accent_hover: Color32::from_rgb(0x8f, 0x45, 0x0b),
             on_accent: Color32::from_rgb(0xff, 0xff, 0xff),
-            danger: Color32::from_rgb(0xc4, 0x2b, 0x2b),
+            danger: Color32::from_rgb(0xb4, 0x25, 0x25),
             warning: Color32::from_rgb(0x8a, 0x5a, 0x00),
             success: Color32::from_rgb(0x1b, 0x7a, 0x42),
             overlay: Color32::from_rgba_premultiplied(0, 0, 0, 90),
@@ -182,6 +182,11 @@ pub const RAIL_WIDTH: f32 = 64.0;
 pub const HEADER_HEIGHT: f32 = 52.0;
 pub const ROW_HEIGHT: f32 = 60.0;
 pub const RADIUS: u8 = 8;
+
+/// The line height for running text at `size`: about 1.45, on whole points.
+pub fn leading(size: f32) -> f32 {
+    (size * 1.45).round()
+}
 
 pub fn regular(size: f32) -> FontId {
     Weight::Regular.font_id(size)
@@ -431,6 +436,10 @@ mod tests {
                 palette.surface_active,
             ];
             for surface in surfaces {
+                // Control edges keep 3:1 on every surface they sit on.
+                assert!(contrast(palette.control, surface) >= 3.0, "{surface:?}");
+                // Errors show on selected rows too ("Not sent" in the list).
+                assert!(contrast(palette.danger, surface) >= 4.5, "{surface:?}");
                 for text in [palette.text, palette.secondary, palette.dim] {
                     assert!(
                         contrast(text, surface) >= 4.5,

@@ -344,6 +344,7 @@ pub fn empty_state_with_action(
             ui.label(
                 egui::RichText::new(text)
                     .font(theme::regular(13.0))
+                    .line_height(Some(theme::leading(13.0)))
                     .color(palette.secondary),
             );
         }
@@ -474,31 +475,30 @@ pub fn pane_header(
         Stroke::new(1.0, palette.outline),
     );
     let inset = super::header_inset(ui.ctx(), rect.left());
-    ui.scope_builder(
-        egui::UiBuilder::new().max_rect(rect.shrink2(vec2(16.0, 0.0))),
-        |ui| {
-            ui.horizontal_centered(|ui| {
-                ui.add_space(inset);
-                ui.vertical(|ui| {
-                    ui.spacing_mut().item_spacing.y = 0.0;
-                    ui.add_space(8.0);
+    // Title and actions line up with the page's centred content column.
+    let column = centred_column(rect.shrink2(vec2(24.0, 0.0)), super::calendar::DETAIL_WIDTH);
+    ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
+        ui.horizontal_centered(|ui| {
+            ui.add_space(inset);
+            ui.vertical(|ui| {
+                ui.spacing_mut().item_spacing.y = 0.0;
+                ui.add_space(8.0);
+                ui.label(
+                    egui::RichText::new(title)
+                        .font(theme::semibold(15.0))
+                        .color(palette.text),
+                );
+                if !subtitle.is_empty() {
                     ui.label(
-                        egui::RichText::new(title)
-                            .font(theme::semibold(15.0))
-                            .color(palette.text),
+                        egui::RichText::new(subtitle)
+                            .font(theme::regular(12.0))
+                            .color(palette.secondary),
                     );
-                    if !subtitle.is_empty() {
-                        ui.label(
-                            egui::RichText::new(subtitle)
-                                .font(theme::regular(12.0))
-                                .color(palette.secondary),
-                        );
-                    }
-                });
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), actions);
+                }
             });
-        },
-    );
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), actions);
+        });
+    });
     ui.allocate_rect(rect, Sense::hover());
 }
 
@@ -570,6 +570,35 @@ pub fn segmented(ui: &mut Ui, palette: &Palette, value: &mut bool, first: &str, 
             }
         }
     });
+}
+
+/// `max` wide at most, centred in `rect`: the reading column shared by a
+/// conversation's header, history and composer, and by detail pages.
+pub fn centred_column(rect: egui::Rect, max: f32) -> egui::Rect {
+    let width = rect.width().min(max);
+    egui::Rect::from_min_size(
+        egui::pos2(rect.center().x - width / 2.0, rect.top()),
+        vec2(width, rect.height()),
+    )
+}
+
+/// Help for the checkbox above it, indented to the checkbox's label.
+pub fn checkbox_note(ui: &mut Ui, palette: &Palette, text: &str) {
+    egui::Frame::new()
+        .inner_margin(egui::Margin {
+            left: 26,
+            right: 0,
+            top: 0,
+            bottom: 4,
+        })
+        .show(ui, |ui| {
+            ui.label(
+                egui::RichText::new(text)
+                    .font(theme::regular(13.0))
+                    .line_height(Some(theme::leading(13.0)))
+                    .color(palette.secondary),
+            );
+        });
 }
 
 /// A label above a field or drop-down.

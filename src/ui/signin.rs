@@ -32,7 +32,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(160.0, 121.0)).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
                     ui.label(
-                        egui::RichText::new("A fast, native client for Microsoft Teams chats, channels and meetings.")
+                        egui::RichText::new("A fast, native client for Microsoft Teams chats, channels and meetings.").line_height(Some(theme::leading(14.0)))
                             .font(theme::regular(14.0))
                             .color(palette.secondary),
                     );
@@ -79,7 +79,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui.add_space(24.0);
                     ui.set_max_width(472.0f32.min(ui.available_width() - 32.0));
                     ui.label(
-                        egui::RichText::new("Wren is an independent open-source project, not affiliated with Microsoft. It talks only to Microsoft's official APIs and keeps your data on this computer.")
+                        egui::RichText::new("Wren is an independent open-source project, not affiliated with Microsoft. It talks only to Microsoft's official APIs and keeps your data on this computer.").line_height(Some(theme::leading(12.0)))
                             .font(theme::regular(12.0))
                             .color(palette.dim),
                     );
@@ -117,7 +117,7 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     .color(palette.text),
             );
             ui.label(
-                egui::RichText::new("Sign in with your work or school account in the browser window Wren opened. You'll come back here automatically.")
+                egui::RichText::new("Sign in with your work or school account in the browser window Wren opened. You'll come back here automatically.").line_height(Some(theme::leading(14.0)))
                     .color(palette.secondary),
             );
             ui.horizontal(|ui| {
@@ -214,7 +214,11 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     );
                 });
             } else {
-                ui.label(egui::RichText::new(&text).color(palette.secondary));
+                ui.label(
+                    egui::RichText::new(&text)
+                        .line_height(Some(theme::leading(14.0)))
+                        .color(palette.secondary),
+                );
             }
             if let AuthStatus::Expired { username, .. } = &status
                 && !username.is_empty()
@@ -274,7 +278,7 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
                 .color(palette.text),
         );
         ui.label(
-            egui::RichText::new("Wren signs in through an Entra ID app registration that you or your administrator create. It takes about five minutes and needs no secrets.")
+            egui::RichText::new("Wren signs in through an Entra ID app registration that you or your administrator create. It takes about five minutes and needs no secrets.").line_height(Some(theme::leading(14.0)))
                 .color(palette.secondary),
         );
         ui.add_space(2.0);
@@ -294,7 +298,7 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
     );
     ui.add(widgets::text_field(
         &mut app.form_client_id,
-        "00000000-0000-0000-0000-000000000000",
+        "Paste the application ID",
         theme::mono(13.0),
     ));
     ui.label(
@@ -347,9 +351,29 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
                 .color(palette.dim),
         );
     }
-    ui.label(
-        egui::RichText::new("Or start Wren with WREN_CLIENT_ID and WREN_TENANT set.")
-            .font(theme::regular(12.0))
-            .color(palette.dim),
-    );
+    if first_run {
+        egui::CollapsingHeader::new(
+            egui::RichText::new("Advanced")
+                .font(theme::medium(13.0))
+                .color(palette.secondary),
+        )
+        .id_salt("registration-advanced")
+        .icon(widgets::disclosure_chevron(palette.secondary))
+        .default_open(false)
+        .show(ui, |ui| {
+            ui.label(
+                egui::RichText::new(
+                    "Managed installs can set WREN_CLIENT_ID and WREN_TENANT instead.",
+                )
+                .font(theme::regular(12.0))
+                .color(palette.secondary),
+            );
+        });
+    } else {
+        ui.label(
+            egui::RichText::new("Or start Wren with WREN_CLIENT_ID and WREN_TENANT set.")
+                .font(theme::regular(12.0))
+                .color(palette.dim),
+        );
+    }
 }

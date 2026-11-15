@@ -112,14 +112,22 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
     chat_avatar(ui, app, chat, me, &title, avatar_rect);
 
     let text_left = avatar_rect.right() + 10.0;
-    let time = chat
-        .preview
-        .as_ref()
-        .map(|p| crate::time::short_label(p.at, now))
-        .unwrap_or_default();
-    let time_galley = ui.ctx().fonts_mut(|f| {
-        f.layout_no_wrap(
-            time,
+    // A message that failed to send shows here too, where the time would.
+    let failed = app
+        .conversation(&ConversationId::Chat(chat.id.clone()))
+        .is_some_and(|c| {
+            c.messages
+                .iter()
+                .any(|m| m.delivery == crate::model::Delivery::Failed)
+        });
+    let (time, time_font, time_color) = if failed {
+        ("Not sent".to_owned(), theme::semibold(12.0), palette.danger)
+    } else {
+        (
+            chat.preview
+                .as_ref()
+                .map(|p| crate::time::short_label(p.at, now))
+                .unwrap_or_default(),
             if unread {
                 theme::semibold(12.0)
             } else {
@@ -127,7 +135,10 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
             },
             if unread { palette.accent } else { palette.dim },
         )
-    });
+    };
+    let time_galley = ui
+        .ctx()
+        .fonts_mut(|f| f.layout_no_wrap(time, time_font, time_color));
     let time_pos = egui::pos2(
         inner.right() - 10.0 - time_galley.size().x,
         inner.top() + 12.0,

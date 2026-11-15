@@ -142,6 +142,9 @@ fn row(
     response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
+/// The width of a detail page's content (Calendar, Calls), centred.
+pub const DETAIL_WIDTH: f32 = 720.0;
+
 pub fn detail(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let header = egui::Rect::from_min_size(
@@ -186,7 +189,9 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
     });
     ui.add_space(20.0);
     Frame::new().inner_margin(Margin::symmetric(24, 0)).show(ui, |ui| {
-        ui.set_max_width(640.0f32.min(ui.available_width()));
+        // The same centred column as Calls; conversations use a wider one.
+        let column = widgets::centred_column(ui.max_rect(), DETAIL_WIDTH);
+        ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
         ui.add_space(20.0);
         Frame::new()
             .fill(palette.panel)
@@ -224,9 +229,10 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
             });
         ui.add_space(14.0);
         ui.label(
-            egui::RichText::new("Joining opens the meeting in Teams on the web beside Wren, with its chat here. Wren reminds you five minutes before online meetings start.")
+            egui::RichText::new("Joining opens the meeting in Teams on the web beside Wren, with its chat here. Wren reminds you five minutes before online meetings start.").line_height(Some(theme::leading(12.0)))
                 .font(theme::regular(12.0))
                 .color(palette.dim),
         );
     });
+});
 }

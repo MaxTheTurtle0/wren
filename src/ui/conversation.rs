@@ -46,7 +46,7 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             );
             widgets::window_drag(ui, rect, "header-drag");
             // Actions end where the message column ends on wide windows.
-            let column = centred_column(rect, MAX_HISTORY_WIDTH - 4.0);
+            let column = widgets::centred_column(rect, MAX_HISTORY_WIDTH - 4.0);
             ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
                 ui.horizontal_centered(|ui| {
                     ui.spacing_mut().item_spacing.x = 10.0;
@@ -256,17 +256,7 @@ fn estimate(message: &Message, width: f32, grouped: bool) -> f32 {
 }
 
 /// The widest the message column grows, avatar gutter included.
-const MAX_HISTORY_WIDTH: f32 = 920.0;
-
-/// `max` wide at most, centred in `rect`: the conversation's reading column,
-/// shared by its header, history and composer.
-fn centred_column(rect: egui::Rect, max: f32) -> egui::Rect {
-    let width = rect.width().min(max);
-    egui::Rect::from_min_size(
-        egui::pos2(rect.center().x - width / 2.0, rect.top()),
-        vec2(width, rect.height()),
-    )
-}
+const MAX_HISTORY_WIDTH: f32 = 860.0;
 
 fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let palette = app.palette;
@@ -345,7 +335,7 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                     .show(ui, |ui| {
                         // A readable measure on wide windows, centred like the
                         // header and composer.
-                        let column = centred_column(ui.max_rect(), MAX_HISTORY_WIDTH);
+                        let column = widgets::centred_column(ui.max_rect(), MAX_HISTORY_WIDTH);
                         ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
                             let width = column.width();
                             ui.set_width(width);
@@ -1444,7 +1434,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
         .show(ui, |ui| {
             // As wide as the message column above it. The panel stretches
             // its own Ui to the full width, so draw into a narrower child.
-            let column = centred_column(ui.max_rect(), MAX_HISTORY_WIDTH - 4.0);
+            let column = widgets::centred_column(ui.max_rect(), MAX_HISTORY_WIDTH - 4.0);
             ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
                 composer_top = Some(ui.cursor().min);
                 // The field's edge reads as a control, and focus as a ring.
@@ -1956,14 +1946,21 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
         && !candidates.is_empty()
         && let Some(top) = composer_top
     {
-        let height = candidates.len() as f32 * 40.0 + 12.0;
+        let height = candidates.len() as f32 * 40.0 + 12.0 + 26.0;
         egui::Area::new(id.with("mentions"))
             .order(egui::Order::Foreground)
             .fixed_pos(top + vec2(0.0, -height - 4.0))
             .show(ui.ctx(), |ui| {
                 Frame::new()
                     .fill(palette.surface)
-                    .stroke(Stroke::new(1.0, palette.outline))
+                    .stroke(Stroke::new(
+                        1.0,
+                        if palette.dark {
+                            palette.surface_active
+                        } else {
+                            palette.outline
+                        },
+                    ))
                     .corner_radius(CornerRadius::same(10))
                     .shadow(egui::Shadow {
                         offset: [0, 4],
@@ -1974,6 +1971,21 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                     .inner_margin(Margin::same(6))
                     .show(ui, |ui| {
                         ui.set_width(300.0);
+                        // What the list is and how to pick from it.
+                        ui.horizontal(|ui| {
+                            ui.set_height(20.0);
+                            ui.add_space(8.0);
+                            widgets::section_label(ui, &palette, "People");
+                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                ui.add_space(8.0);
+                                ui.label(
+                                    egui::RichText::new("Tab or Enter to insert")
+                                        .font(theme::regular(12.0))
+                                        .color(palette.dim),
+                                );
+                            });
+                        });
+                        ui.add_space(4.0);
                         for (index, person) in candidates.iter().enumerate() {
                             let (rect, response) =
                                 ui.allocate_exact_size(vec2(300.0, 38.0), Sense::click());

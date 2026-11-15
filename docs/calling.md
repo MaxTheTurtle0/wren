@@ -32,7 +32,7 @@ request; the browser may choose a different position.
 
 ## During a call
 
-The call bar offers **Meeting chat**, **Join on phone**, **Dock/Restore**,
+The call bar offers **Meeting chat**, **Join on phone**, **Dock/Full window**,
 and **Hide call bar**. **Show call** activates the browser on macOS. Joining the same
 meeting again brings the current call forward.
 

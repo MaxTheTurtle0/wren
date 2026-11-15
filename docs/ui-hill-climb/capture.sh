@@ -1,7 +1,11 @@
 #!/bin/bash
 # Capture every screen of the demo in light and dark mode.
 #
-#   docs/ui-hill-climb/capture.sh round-0
+#   docs/ui-hill-climb/capture.sh round-0 [output-root]
+#
+# Screenshots go to <output-root>/<round>/{light,dark}/, by default
+# docs/ui-hill-climb/. Rounds that are not committed can go elsewhere,
+# e.g. /tmp/wren-hill-climb.
 #
 # Needs a release build (cargo build --locked --release). On a headless
 # Linux machine it runs each screenshot under its own Xvfb (xvfb-run).
@@ -9,7 +13,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 round="${1:?usage: capture.sh round-N}"
 binary="${WREN:-target/release/wren}"
-out="docs/ui-hill-climb/$round"
+out="${2:-docs/ui-hill-climb}/$round"
 
 # name | --page parts (mode is appended) | size
 shots=(

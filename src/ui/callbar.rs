@@ -69,7 +69,7 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
                     .color(palette.text),
             );
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let restore = widgets::pill(ui, &palette, Icon::Monitor, "Restore", false);
+                let restore = widgets::pill(ui, &palette, Icon::Monitor, "Full window", false);
                 widgets::on_click(&restore, &mut actions, Action::DockWindow(false));
             });
         });
@@ -126,7 +126,7 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
     if docked {
         buttons.push((
             Icon::Monitor,
-            "Restore",
+            "Full window",
             Action::DockWindow(false),
             false,
             "Give Wren its full window back",
