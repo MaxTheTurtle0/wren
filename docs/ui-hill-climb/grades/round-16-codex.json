@@ -1,0 +1,415 @@
+{
+  "overall": 8,
+  "dimensions": {
+    "contrast": 8.5,
+    "typography": 8,
+    "colour": 8.5,
+    "spacing": 7.5,
+    "hierarchy": 8
+  },
+  "blocks_9": [
+    "Narrow layouts truncate participant identity and squeeze reading space; the narrow Calls page also removes the visible video action.",
+    "Thread-card separation is weak, while small utility typography and strongly outlined reactions make the reading hierarchy uneven.",
+    "Vertical spacing is inconsistent: meeting history leaves large empty gaps, settings rows use different rhythms, and authentication footers jump between states.",
+    "Extreme-aspect attachment thumbnails are hard to inspect and the long-draft state has no visible expansion affordance.",
+    "Selected preview controls and explanatory copy do not yet have the same clarity as the strongest dialogs."
+  ],
+  "screens": {
+    "account-menu": {
+      "score": 8.5,
+      "issues": [
+        "Utility labels are small; presence rows have a tight 30 px rhythm."
+      ]
+    },
+    "calendar": {
+      "score": 8,
+      "issues": [
+        "Meeting detail has weak differentiation between metadata and invitation; long explanatory copy competes with the sparse meeting content."
+      ]
+    },
+    "call-bar": {
+      "score": 8,
+      "issues": [
+        "Large gap between meeting header and the beginning-of-conversation marker; utility text is small."
+      ]
+    },
+    "call-docked": {
+      "score": 7.5,
+      "issues": [
+        "About 170 px of empty vertical space above the history marker wastes meeting-chat height.",
+        "Reaction pill and toolbar borders are stronger than the surrounding message grouping."
+      ]
+    },
+    "calls": {
+      "score": 8,
+      "issues": [
+        "Explanatory prose and capability notes occupy more visual attention than the recent-person actions.",
+        "Secondary actions are small outline icons."
+      ]
+    },
+    "calls-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Video-call actions disappear from the people rows at this width.",
+        "The explanatory paragraph wraps to four lines and dominates the task area."
+      ]
+    },
+    "channel": {
+      "score": 8,
+      "issues": [
+        "Thread-card outlines provide weak separation, especially in dark mode.",
+        "Nested reply timestamps and action labels are small."
+      ]
+    },
+    "channel-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Sidebar takes 296 of 760 px; post content is squeezed into short lines.",
+        "Thread-card outlines are faint in both themes.",
+        "Composer context nearly fills its available text width."
+      ]
+    },
+    "chat-filter-no-match": {
+      "score": 8.5,
+      "issues": [
+        "The no-results explanation uses small secondary text; the open conversation remains much more visually dominant."
+      ]
+    },
+    "chat-no-selection": {
+      "score": 8.5,
+      "issues": [
+        "Small secondary instruction text and persistent sidebar truncation are the remaining polish issues."
+      ]
+    },
+    "chats": {
+      "score": 8,
+      "issues": [
+        "Sidebar previews truncate extensively.",
+        "Small metadata and strongly outlined reaction pills make the hierarchy slightly busy."
+      ]
+    },
+    "chats-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Several person names and most message previews truncate while the sidebar still consumes 39% of the window.",
+        "The composer loses its mention hint."
+      ]
+    },
+    "chats-wide": {
+      "score": 8.5,
+      "issues": [
+        "The capped reading column is sensible, but small metadata remains visually slight at this window size.",
+        "Reaction borders are disproportionately prominent."
+      ]
+    },
+    "composer-images": {
+      "score": 7.5,
+      "issues": [
+        "Extreme-aspect images become roughly 10 px strips inside 144 x 96 px cards, making content difficult to inspect.",
+        "The remove controls are visually tiny."
+      ]
+    },
+    "composer-long-draft": {
+      "score": 8,
+      "issues": [
+        "The draft shows only lines 111 through 119 with a small internal scrollbar and no visible expand affordance.",
+        "Dense draft text and send controls share the same lower edge."
+      ]
+    },
+    "composer-mention": {
+      "score": 8.5,
+      "issues": [
+        "Attachment size and popup keyboard hint are small.",
+        "The suggestion popup obscures the latest message context, though it remains clearly attached to the composer."
+      ]
+    },
+    "error-toast": {
+      "score": 8.5,
+      "issues": [
+        "Failure is clearly persistent and retryable, but the important explanation is compressed into one small utility line."
+      ]
+    },
+    "first-sync-empty": {
+      "score": 9,
+      "issues": []
+    },
+    "first-sync-loading": {
+      "score": 8.5,
+      "issues": [
+        "Clear loading state; small supporting text is the main visual limitation."
+      ]
+    },
+    "group-chat": {
+      "score": 8.5,
+      "issues": [
+        "Good mention emphasis and theme parity; utility text and reaction outlines still compete with the restrained message styling."
+      ]
+    },
+    "image-preview": {
+      "score": 8,
+      "issues": [
+        "Fit selection is communicated with a weak grey fill instead of the clearer selected-control treatment used elsewhere.",
+        "Controls and dimensions are small relative to the very large preview surface."
+      ]
+    },
+    "join-on-phone": {
+      "score": 8.5,
+      "issues": [
+        "QR is legible and well isolated; the instruction is fairly small and the copy action is visually detached at the bottom right."
+      ]
+    },
+    "new-chat": {
+      "score": 8.5,
+      "issues": [
+        "Good grouping and clear primary action; email addresses and keyboard hints are small."
+      ]
+    },
+    "permission-consent": {
+      "score": 8.5,
+      "issues": [
+        "Clear purpose and action hierarchy; permission detail is small and relatively dense."
+      ]
+    },
+    "search-switcher": {
+      "score": 8.5,
+      "issues": [
+        "Readable search structure; repeated long truncated snippets and small bottom guidance make scanning slightly laborious."
+      ]
+    },
+    "settings": {
+      "score": 8,
+      "issues": [
+        "Uneven vertical rhythm across checkbox rows and their helper text.",
+        "Small section labels and hints make the dialog feel denser than its overall whitespace warrants."
+      ]
+    },
+    "setup": {
+      "score": 8,
+      "issues": [
+        "The first-run card contains many similarly weighted instructional lines.",
+        "Important tenant guidance is small; technical field labels need more visual hierarchy."
+      ]
+    },
+    "shortcuts": {
+      "score": 8.5,
+      "issues": [
+        "Clear columns; the 191 px key column in the left half creates long jumps between short shortcuts and their meanings.",
+        "Keycap labels are small."
+      ]
+    },
+    "signin": {
+      "score": 8.5,
+      "issues": [
+        "Clear primary action and calm composition; small secondary controls and a prominent two-line legal footer limit polish."
+      ]
+    },
+    "signin-browser": {
+      "score": 8.5,
+      "issues": [
+        "Clear waiting and recovery actions; the legal footer shifts upward compared with the initial sign-in screen."
+      ]
+    },
+    "signin-device-code": {
+      "score": 8.5,
+      "issues": [
+        "Strong code hierarchy; small waiting text and three equally sized compact action buttons slightly crowd the lower card."
+      ]
+    },
+    "signin-expired": {
+      "score": 8.5,
+      "issues": [
+        "Clear recovery and account identity; secondary account and app-registration text are small."
+      ]
+    },
+    "signin-failed": {
+      "score": 8.5,
+      "issues": [
+        "Failure and recovery are clear; the footer and card bottom shift noticeably between authentication states."
+      ]
+    },
+    "signin-finishing": {
+      "score": 8,
+      "issues": [
+        "The short card and legal footer move upward substantially compared with other sign-in states, leaving a very empty lower canvas."
+      ]
+    },
+    "status-message": {
+      "score": 8.5,
+      "issues": [
+        "Clear compact dialog; small field label and compact controls are the remaining limitations."
+      ]
+    },
+    "teams": {
+      "score": 8.5,
+      "issues": [
+        "Calm empty state; channel names and guidance are small compared with the available space."
+      ]
+    }
+  },
+  "top_issues": [
+    {
+      "priority": 1,
+      "severity": "medium",
+      "screens": [
+        "chats-narrow",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "The narrow layout preserves too much sidebar width and sacrifices identification and message space.",
+      "evidence": "The sidebar boundary is x=296 in a 760 px window, 38.9% of its width. Katherine Johnson, Grace Hopper and Margaret Hamilton truncate; channel text begins around x=369.",
+      "fix": "Below 800 px, reduce the rail plus list to 248-264 px, use 32 px list avatars, and preserve a 160 px name lane before timestamps. Allow a collapsed list while reading."
+    },
+    {
+      "priority": 2,
+      "severity": "medium",
+      "screens": [
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "dimension": "other",
+      "issue": "Narrow calls rows lose the visible video-call action without a replacement affordance.",
+      "evidence": "At 1280 px each person has phone and video icons around x=295 and x=333. At 760 px each row shows only a phone around x=268; no overflow is visible.",
+      "fix": "Reserve a 56 px two-icon action lane or replace the action lane with a visible menu containing both call choices."
+    },
+    {
+      "priority": 3,
+      "severity": "medium",
+      "screens": [
+        "channel",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "dimension": "contrast",
+      "issue": "Thread containers have weak edge separation, making distinct posts and nested replies harder to parse.",
+      "evidence": "Pillow samples: light outline #b9bcc4 on #ffffff = 1.90:1; dark outline #4d4f58 on card #26272c = 1.83:1 and on canvas #1a1b1f = 2.11:1. These are grouping outlines, so this alone does not establish an interactive-component WCAG failure.",
+      "fix": "Use #858994 in light and #747884 in dark for thread outlines if the boundary carries grouping, with 16 px between cards and a restrained reply divider."
+    },
+    {
+      "priority": 4,
+      "severity": "medium",
+      "screens": [
+        "chats",
+        "chats-narrow",
+        "channel",
+        "settings",
+        "setup",
+        "shortcuts",
+        "composer-mention",
+        "search-switcher"
+      ],
+      "mode": "both",
+      "dimension": "typography",
+      "issue": "Too much useful information lives at the smallest utility sizes.",
+      "evidence": "Timestamp glyphs occupy about 9-10 raster pixels vertically; rail labels about 9 px; attachment-size text about 8 px. Body text occupies about 14 px with about 20 px line spacing. Exact font point sizes cannot be recovered from pixels alone.",
+      "fix": "Use 13 pt for timestamps, helper text, email addresses and attachment metadata, with 18 pt line height; retain 11 pt only for nonessential overlines. Keep message body at 14-15 pt / 20-22 pt."
+    },
+    {
+      "priority": 5,
+      "severity": "medium",
+      "screens": [
+        "call-docked",
+        "call-bar"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Meeting history wastes substantial vertical space above its first content.",
+      "evidence": "In call-docked the header ends at y=132 and the history marker sits around y=307, leaving about 170 px before the marker. In call-bar the marker is around y=247.",
+      "fix": "Use 32-48 px top padding before the history marker; retain bottom anchoring for recent activity but cap empty top padding so useful history can fill the panel."
+    },
+    {
+      "priority": 6,
+      "severity": "medium",
+      "screens": [
+        "composer-images"
+      ],
+      "mode": "both",
+      "dimension": "other",
+      "issue": "Extreme-aspect image previews are technically contained but visually uninformative.",
+      "evidence": "The 3072 x 256 and 256 x 3072 attachments occupy 144 x 96 px tiles, producing content strips roughly 12 px high and 8 px wide. Each remove circle is about 22 px.",
+      "fix": "Use a cropped detail thumbnail for aspect ratios beyond 4:1, retain the dimension caption, and offer a clearly visible full-preview action. Increase the remove hit area to at least 24 x 24 px."
+    },
+    {
+      "priority": 7,
+      "severity": "medium",
+      "screens": [
+        "settings"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Checkbox spacing mixes two rhythms and weakens grouping.",
+      "evidence": "Notification checkbox baseline is near y=357 with helper text y=386; the next row is y=422, then rows around y=456 and y=490. The first row-to-row interval is about 65 px versus 34 px thereafter.",
+      "fix": "Use 36 px rows, 4 px between a label and helper, and 16 px after the full helper block. Give section headers 24 px top and 8 px bottom spacing."
+    },
+    {
+      "priority": 8,
+      "severity": "low",
+      "screens": [
+        "composer-long-draft"
+      ],
+      "mode": "both",
+      "dimension": "hierarchy",
+      "issue": "A long draft offers little visible orientation or room to inspect the full composition.",
+      "evidence": "The composer spans y=552-760, shows about nine lines from column_111 through column_119, and has a narrow scrollbar at x=1168; no expansion control is visible.",
+      "fix": "Add a small expand action to open a larger drafting surface; keep the compact composer capped near 200 px and separate its action lane from draft text by 12 px."
+    },
+    {
+      "priority": 9,
+      "severity": "low",
+      "screens": [
+        "image-preview"
+      ],
+      "mode": "both",
+      "dimension": "colour",
+      "issue": "Selected zoom mode is weaker than selected controls elsewhere.",
+      "evidence": "Fit uses #e2e3e8 against white in light, only 1.28:1 fill contrast; dark uses #34353c against #26272c, 1.22:1. Settings instead uses a distinct orange selected appearance. Text itself remains readable.",
+      "fix": "Use the existing orange selected fill with contrasting text for Fit, or add a 2 px accent underline and semibold label. Maintain the 3:1 control-outline target."
+    },
+    {
+      "priority": 10,
+      "severity": "low",
+      "screens": [
+        "signin",
+        "signin-browser",
+        "signin-device-code",
+        "signin-finishing",
+        "signin-failed"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Authentication state changes shift the lower layout excessively.",
+      "evidence": "The card begins at y=217 across these states, but ends around y=460 for signin, y=418 for signin-browser, y=490 for device-code and y=343 for finishing. The legal footer consequently moves from about y=555 to y=400.",
+      "fix": "Reserve a consistent 280 px authentication card body and place the legal footer on a stable baseline below it, around y=560; vary content inside the reserved space."
+    },
+    {
+      "priority": 11,
+      "severity": "low",
+      "screens": [
+        "calls",
+        "calls-narrow",
+        "calendar",
+        "setup"
+      ],
+      "mode": "both",
+      "dimension": "hierarchy",
+      "issue": "Long explanatory copy competes with the task instead of forming a clear secondary layer.",
+      "evidence": "Calls-narrow has four lines of explanation around y=235-300 followed by two capability rows; setup has three introductory lines plus labels, tenant guidance, save guidance and a two-line footer.",
+      "fix": "Keep one 14 pt instruction sentence near the task, move secondary explanation into the existing Details/Advanced disclosure, and use 16 px separation between instructions and actions."
+    },
+    {
+      "priority": 12,
+      "severity": "low",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "group-chat",
+        "call-docked"
+      ],
+      "mode": "both",
+      "dimension": "hierarchy",
+      "issue": "Reaction pills have stronger visual edges than their supporting role warrants.",
+      "evidence": "Selected reaction outlines are about 2 px and visibly darker/lighter than the faint card grouping elsewhere; pills are roughly 28 px high for a 12-13 px emoji/count label.",
+      "fix": "Use a 1 px outline with at least 3:1 contrast, 24-26 px pill height and 8 px horizontal padding; reserve the accent fill or stronger outline for the person\u2019s own selected reaction."
+    }
+  ]
+}
