@@ -1,0 +1,506 @@
+{
+  "overall": 7,
+  "dimensions": {
+    "hierarchy": 7,
+    "spacing": 6.5,
+    "typography": 7,
+    "consistency": 8,
+    "contrast_accessibility": 6,
+    "feedback": 6.5,
+    "states": 8,
+    "navigation": 7
+  },
+  "screens": {
+    "chats": {
+      "score": 7,
+      "issues": [
+        "Light filter placeholder fails 4.5:1 (4.39:1); composer placeholder 4.48:1.",
+        "Composer outline is too faint; persistent formatting help is small."
+      ]
+    },
+    "chats-wide": {
+      "score": 6.5,
+      "issues": [
+        "Light filter and composer placeholders fail 4.5:1.",
+        "Unbounded message rows create long reading lines and separate the hover actions far from their message."
+      ]
+    },
+    "chats-narrow": {
+      "score": 6,
+      "issues": [
+        "A 364 px navigation/sidebar block consumes 48% of the 760 px window.",
+        "Hover toolbar covers sender name and timestamp around y=287\u2013305.",
+        "Light filter and composer placeholders fail 4.5:1."
+      ]
+    },
+    "chat-no-selection": {
+      "score": 7,
+      "issues": [
+        "Light filter placeholder fails 4.5:1.",
+        "Empty-state block sits high at y=216\u2013332 rather than near the pane centre."
+      ]
+    },
+    "chat-filter-no-match": {
+      "score": 7,
+      "issues": [
+        "Light composer placeholder fails 4.5:1.",
+        "Open conversation remains visible while absent from filtered navigation; no selected-conversation context in the empty list."
+      ]
+    },
+    "group-chat": {
+      "score": 7,
+      "issues": [
+        "Light filter/composer placeholders fail 4.5:1.",
+        "Own-message orange author text competes with orange mentions and unread accents."
+      ]
+    },
+    "channel": {
+      "score": 7,
+      "issues": [
+        "Light composer placeholder fails 4.5:1.",
+        "Thread cards have weak outlines and repeated small Reply labels."
+      ]
+    },
+    "channel-narrow": {
+      "score": 6,
+      "issues": [
+        "Fixed 364 px navigation leaves only about 380 px for channel content.",
+        "Hover toolbar overlaps author/timestamp at y=352\u2013376.",
+        "Light composer placeholder fails 4.5:1."
+      ]
+    },
+    "teams": {
+      "score": 8,
+      "issues": [
+        "Empty-state block is high in the otherwise empty pane.",
+        "Channel types are primarily communicated by small similar outline icons."
+      ]
+    },
+    "calendar": {
+      "score": 8,
+      "issues": [
+        "Primary Join action is visually small beneath the 24 pt heading.",
+        "Meeting list dates and times use a small dense secondary type treatment."
+      ]
+    },
+    "calls": {
+      "score": 7,
+      "issues": [
+        "Light meeting-link placeholder fails 4.5:1.",
+        "Large capability explanation dominates the actual call/join tasks."
+      ]
+    },
+    "calls-narrow": {
+      "score": 6,
+      "issues": [
+        "Sidebar consumes 48% of width while introductory copy takes five lines.",
+        "Important unavailable-capability rows fall below the 640 px viewport.",
+        "Light meeting-link placeholder fails 4.5:1."
+      ]
+    },
+    "composer-mention": {
+      "score": 7,
+      "issues": [
+        "Light filter placeholder fails 4.5:1.",
+        "Attachment removal control and mention email are small.",
+        "Mention popup is detached from the actual @Mar caret by the attachment row."
+      ]
+    },
+    "composer-long-draft": {
+      "score": 6.5,
+      "issues": [
+        "Light filter placeholder fails 4.5:1.",
+        "Focused editor has no visible focus ring, caret, or internal scrollbar in this shot.",
+        "First draft line is clipped at y=552; send icon floats at the middle of the editor."
+      ]
+    },
+    "composer-images": {
+      "score": 7,
+      "issues": [
+        "Light filter and composer placeholders fail 4.5:1.",
+        "Image previews crop the tall attachment heavily without dimensions or file labels.",
+        "Removal circles are only about 22 px across."
+      ]
+    },
+    "image-preview": {
+      "score": 8,
+      "issues": [
+        "A 3072\u00d7256 image occupies only a thin strip inside a very tall preview viewport.",
+        "Fit selection and 100% text lack a clear control/selection hierarchy."
+      ]
+    },
+    "search-switcher": {
+      "score": 7,
+      "issues": [
+        "Light search placeholder fails 4.5:1 (4.48:1).",
+        "Footer joins keyboard guidance and search-scope explanation into tiny wrapped text."
+      ]
+    },
+    "new-chat": {
+      "score": 8,
+      "issues": [
+        "Search input has no visible label after typing.",
+        "Existing-chat explanation is very small beside the primary action."
+      ]
+    },
+    "settings": {
+      "score": 7.5,
+      "issues": [
+        "Long technical refresh explanation interrupts simple behaviour controls.",
+        "Scroll thumb/track is extremely faint, especially in dark mode.",
+        "Checkbox marks are small and resemble radio controls."
+      ]
+    },
+    "shortcuts": {
+      "score": 8.5,
+      "issues": [
+        "A long single list gives all shortcuts equal weight.",
+        "Platform key notation varies between compact keycaps and prose."
+      ]
+    },
+    "status-message": {
+      "score": 7,
+      "issues": [
+        "Light placeholder fails 4.5:1 (4.39:1).",
+        "No character-count or length guidance is visible.",
+        "Save, Clear, Cancel share a left-aligned cluster with little grouping."
+      ]
+    },
+    "account-menu": {
+      "score": 7,
+      "issues": [
+        "Light shell filter placeholder fails 4.5:1.",
+        "Busy and Do not disturb use identical dots; next-account unread count is unlabelled.",
+        "Account email text is small."
+      ]
+    },
+    "permission-consent": {
+      "score": 8,
+      "issues": [
+        "Permission explanation is dense 12 pt prose including a raw API permission name.",
+        "Primary action identifies the browser transition but not the permission action itself."
+      ]
+    },
+    "error-toast": {
+      "score": 6,
+      "issues": [
+        "Failed-send toast offers dismissal but no Retry action or visible failed-message marker.",
+        "Toast obscures the latest message around y=638\u2013692.",
+        "Light filter/composer placeholders fail 4.5:1."
+      ]
+    },
+    "first-sync-loading": {
+      "score": 7,
+      "issues": [
+        "Light filter placeholder fails 4.5:1.",
+        "Main-pane spinner and small sidebar spinner duplicate progress cues.",
+        "Status block is placed well above the vertical centre."
+      ]
+    },
+    "first-sync-empty": {
+      "score": 7,
+      "issues": [
+        "Light filter placeholder fails 4.5:1.",
+        "No-chats text, a compose icon and central CTA duplicate the empty-state instruction."
+      ]
+    },
+    "call-bar": {
+      "score": 7,
+      "issues": [
+        "Light composer placeholder fails 4.5:1.",
+        "Live In the meeting status conflicts with Meeting ended in the visible transcript.",
+        "Done is ambiguous as a call-related action; meeting title truncates despite available header space."
+      ]
+    },
+    "call-docked": {
+      "score": 7,
+      "issues": [
+        "Light composer placeholder fails 4.5:1.",
+        "122 px call bar is oversized for its compact status/actions.",
+        "Live meeting status conflicts with the ended transcript; Done action is ambiguous."
+      ]
+    },
+    "join-on-phone": {
+      "score": 8.5,
+      "issues": [
+        "Copy the link is visually secondary and left-aligned beneath a centred QR code.",
+        "Phone dialog lacks the meeting title, so the target is only identifiable in the dimmed background."
+      ]
+    },
+    "setup": {
+      "score": 7,
+      "issues": [
+        "Light application-ID placeholder fails 4.5:1 (4.39:1).",
+        "Tenant guidance precedes its input, breaking the label/input rhythm.",
+        "Environment-variable instruction and full-width affiliation footer add onboarding noise."
+      ]
+    },
+    "signin": {
+      "score": 8,
+      "issues": [
+        "Registration disclosure and demo option compete with a straightforward sign-in task.",
+        "Affiliation/privacy footer spans about 856 px in small type."
+      ]
+    },
+    "signin-browser": {
+      "score": 8,
+      "issues": [
+        "Waiting state gives clear recovery controls, but reopening the page dominates while the task is in progress.",
+        "Small full-width affiliation/privacy footer is visually remote from the card."
+      ]
+    },
+    "signin-device-code": {
+      "score": 8.5,
+      "issues": [
+        "Large code is clear, but instructions split the destination and code over multiple lines.",
+        "No visible expiry guidance accompanies the waiting state."
+      ]
+    },
+    "signin-finishing": {
+      "score": 8,
+      "issues": [
+        "Clear progress copy, but card title is smaller than other authentication headings.",
+        "Full-width small footer is disproportionately prominent relative to the small progress card."
+      ]
+    },
+    "signin-expired": {
+      "score": 8,
+      "issues": [
+        "Expired-session recovery is clear; app registration disclosure is unrelated to the immediate task.",
+        "Small full-width footer reduces reading comfort."
+      ]
+    },
+    "signin-failed": {
+      "score": 8,
+      "issues": [
+        "Error and retry are clear, but no short guidance differentiates retrying from using a code.",
+        "Registration disclosure and demo action distract from recovery."
+      ]
+    }
+  },
+  "top_issues": [
+    {
+      "priority": 1,
+      "severity": "high",
+      "screens": [
+        "chats-narrow",
+        "channel-narrow",
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "issue": "Narrow layouts preserve a desktop-width sidebar at the expense of the task pane.",
+      "evidence": "Rail plus list occupies x=0\u2013363 at 760 px width: 47.9%; channel body starts around x=437, leaving only 290 px of readable line width.",
+      "fix": "Below 900 pt, collapse the 300 pt list behind a back/list control or reduce it to 220 pt; preserve at least 440 pt for messages and primary tasks."
+    },
+    {
+      "priority": 2,
+      "severity": "high",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "chats-narrow",
+        "chat-no-selection",
+        "group-chat",
+        "composer-mention",
+        "composer-long-draft",
+        "composer-images",
+        "account-menu",
+        "error-toast",
+        "first-sync-loading",
+        "first-sync-empty",
+        "calls",
+        "calls-narrow",
+        "status-message",
+        "setup"
+      ],
+      "mode": "light",
+      "issue": "Tinted-input placeholder text narrowly fails WCAG 2.2 body-text contrast.",
+      "evidence": "Pillow sampled strongest glyph cores #727376 against #F6F6F7: 4.390:1. Examples: chats (86,68), calls (423,236), status-message (452,219). Setup uses the same pair in its ID placeholder. Disabled Save/Join text was excluded.",
+      "fix": "Use placeholder #62656D on #F6F6F7 (about 5.4:1), retaining at least 13 pt type. Recheck all placeholder renderings."
+    },
+    {
+      "priority": 3,
+      "severity": "high",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "chats-narrow",
+        "chat-filter-no-match",
+        "group-chat",
+        "channel",
+        "channel-narrow",
+        "composer-images",
+        "error-toast",
+        "call-bar",
+        "call-docked",
+        "search-switcher"
+      ],
+      "mode": "light",
+      "issue": "White-field placeholder text also fails the 4.5:1 threshold.",
+      "evidence": "Strongest glyph #767779 on #FFFFFF: 4.482:1; chats (395,737), search-switcher (386,111). No antialiased edge pixels were used as the foreground.",
+      "fix": "Use #62656D on white (5.83:1), including the switcher and composer placeholder. Dark placeholder #9B9B9F on #25262B measures 5.45:1 and passes."
+    },
+    {
+      "priority": 4,
+      "severity": "high",
+      "screens": [
+        "error-toast"
+      ],
+      "mode": "both",
+      "issue": "Failed-send feedback does not provide a visible recovery path tied to the failed message.",
+      "evidence": "Toast at x=370\u2013910, y=638\u2013692 says Retry in a moment, but shows only a close icon. No Sending failed marker or Retry control is visible on a message.",
+      "fix": "Show a persistent Failed to send label and a 32 pt-high Retry action beneath the failed message; keep a concise toast above the composer with at least 12 pt clearance from message content."
+    },
+    {
+      "priority": 5,
+      "severity": "high",
+      "screens": [
+        "chats-narrow",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "issue": "Hover action strips obscure sender metadata.",
+      "evidence": "Chats strip spans approximately x=444\u2013732, y=268\u2013306 over Alex Rivera at y\u2248301; channel strip x=506\u2013738, y=333\u2013371 overlaps Hedy Lamarr and timestamp at y\u2248370. Pointer hover is expected, but content occlusion remains a defect.",
+      "fix": "Reserve a 36 pt action band above the sender row, or place a compact overflow button in a dedicated 32 pt trailing column; ensure at least 8 pt between toolbar bounds and text."
+    },
+    {
+      "priority": 6,
+      "severity": "medium",
+      "screens": [
+        "chats",
+        "channel",
+        "composer-long-draft",
+        "composer-images",
+        "call-bar",
+        "call-docked"
+      ],
+      "mode": "both",
+      "issue": "Composer boundaries do not meet 3:1 non-text contrast; the focused long draft has no distinct focus treatment.",
+      "evidence": "Light border #DFDFE3 against #FFFFFF: 1.329:1. Dark border #303137 against #25262B: 1.165:1. Long-draft top edge at y=551 has the same pair despite the supplied focused state.",
+      "fix": "Use #8E9199 for light input outlines and #787C87 for dark outlines, 1 pt stroke. Add a 2 pt #AD520C light / #EF913B dark focus outline with a 2 pt offset."
+    },
+    {
+      "priority": 7,
+      "severity": "medium",
+      "screens": [
+        "call-bar",
+        "call-docked"
+      ],
+      "mode": "both",
+      "issue": "Call status and action wording leave the current meeting state unclear.",
+      "evidence": "Top bar says In the meeting \u00b7 just joined; the same meeting transcript says Meeting ended: 58 min \u00b7 09:35 at y\u2248502 (380 px) or y\u2248442 (720 px). Done appears alongside Restore without clarifying its effect.",
+      "fix": "Use a 14 pt In call heading with the meeting start time; distinguish earlier meeting-ended events with their date. Rename Done to the actual outcome, such as Close call panel, and use a 32 pt-high control."
+    },
+    {
+      "priority": 8,
+      "severity": "medium",
+      "screens": [
+        "composer-long-draft"
+      ],
+      "mode": "both",
+      "issue": "Long draft scrolling and send placement lack clear affordances.",
+      "evidence": "Draft occupies y=552\u2013764; column_108 is cut at the upper edge, no scrollbar is visible, and send/attachment icons sit halfway down at y\u2248658.",
+      "fix": "Keep 12 pt top/bottom inner padding, show a 6 pt scroll thumb with 3:1 contrast, add a 13 pt draft position/line indicator, and anchor actions to the editor bottom-right with 12 pt inset."
+    },
+    {
+      "priority": 9,
+      "severity": "medium",
+      "screens": [
+        "calls",
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "issue": "The Calls view prioritises implementation and capability prose over placing a call.",
+      "evidence": "At 760\u00d7640, introductory prose fills y=108\u2013187 and capability content starts at y=338; Incoming calls is clipped at the bottom. At 1280\u00d7800, five explanatory blocks occupy y=305\u2013673.",
+      "fix": "Place the join field directly below the 24 pt title with 16 pt spacing; condense limitations into a 14 pt notice and put the detailed explanation behind a disclosure. Give recent people 44 pt rows."
+    },
+    {
+      "priority": 10,
+      "severity": "medium",
+      "screens": [
+        "chats-wide"
+      ],
+      "mode": "both",
+      "issue": "Wide chat rows are not bounded for comfortable reading or local action discovery.",
+      "evidence": "Main pane spans x=364\u20131919; highlighted message spans x=372\u20131908 while its text/quote begins at x=432. Hover actions appear at x\u22481660, over 1200 px from the author.",
+      "fix": "Cap the message content column at 880 pt and locate its action strip at the column edge; use remaining space as gutters rather than extending the interactive row."
+    },
+    {
+      "priority": 11,
+      "severity": "medium",
+      "screens": [
+        "settings"
+      ],
+      "mode": "both",
+      "issue": "Technical copy interrupts routine preferences and weak scrolling cues hide further settings.",
+      "evidence": "Refresh explanation takes three lines at y=436\u2013475 between checkboxes. Dark scrollbar #2C2D33 on #25262B is 1.10:1; light #EEEEF0 on white is about 1.16:1. Content is cut at y=719.",
+      "fix": "Move refresh-policy details into a 13 pt help disclosure; group settings with 24 pt section gaps. Use a 6 pt scrollbar thumb #8E9199 light / #8E9199 dark and retain a clear bottom continuation cue."
+    },
+    {
+      "priority": 12,
+      "severity": "medium",
+      "screens": [
+        "composer-images",
+        "composer-mention"
+      ],
+      "mode": "both",
+      "issue": "Attachment controls and metadata are too compressed for confident review before sending.",
+      "evidence": "Image tiles are approximately 144\u00d796 px at y=622\u2013718; tall image is heavily cropped. Close discs are approximately 22 px. File removal in mention composer is a tiny x beside 177 KB at y\u2248701.",
+      "fix": "Use contain-fit thumbnails in 144\u00d7112 pt tiles, show filename/dimensions in 12 pt text, and provide 24\u00d724 pt removal targets with 4 pt separation from image content."
+    },
+    {
+      "priority": 13,
+      "severity": "medium",
+      "screens": [
+        "search-switcher"
+      ],
+      "mode": "both",
+      "issue": "Search guidance is packed into a tiny two-line footer.",
+      "evidence": "At x=354\u2013930, y=607\u2013628, keyboard instructions and cache/Microsoft Search scope share roughly 11 pt type and wrap the final word onto a new line.",
+      "fix": "Use 13 pt footer text, separate key hints and search scope into two rows with 8 pt gap, and provide 16 pt bottom padding."
+    },
+    {
+      "priority": 14,
+      "severity": "low",
+      "screens": [
+        "setup",
+        "signin",
+        "signin-browser",
+        "signin-device-code",
+        "signin-finishing",
+        "signin-expired",
+        "signin-failed"
+      ],
+      "mode": "both",
+      "issue": "Authentication screens repeat a very long small-print footer with weak proximity to its related card.",
+      "evidence": "Footer runs approximately x=212\u20131068, a line length of 856 px; signin card is only x=405\u2013875 (470 px). Footer y position changes with each card height.",
+      "fix": "Constrain footer to 470 pt, use 13 pt type and 18 pt line height, align it with the card, and keep a consistent 24 pt gap after the last action."
+    },
+    {
+      "priority": 15,
+      "severity": "low",
+      "screens": [
+        "chat-no-selection",
+        "teams",
+        "first-sync-loading",
+        "first-sync-empty"
+      ],
+      "mode": "both",
+      "issue": "Empty-state compositions sit noticeably high in a large blank pane.",
+      "evidence": "Icon starts at y=216; title at y\u2248299, while main pane centre is y=400. The repeated composition leaves over 400 px blank below the explanatory text.",
+      "fix": "Centre the complete icon/title/body/action group within the pane excluding the header; use 16 pt icon-to-title, 8 pt title-to-body, and 20 pt body-to-action spacing."
+    },
+    {
+      "priority": 16,
+      "severity": "low",
+      "screens": [
+        "account-menu",
+        "settings"
+      ],
+      "mode": "both",
+      "issue": "Presence and preference symbols are visually ambiguous at small sizes.",
+      "evidence": "Busy and Do not disturb both show an identical red disc at x=79, y\u2248549/579. Settings uses approximately 14 px circular outlines for independent checkboxes.",
+      "fix": "Use a white minus inside the Do not disturb disc and clock detail for away; use 16 pt square checkboxes with a 2 pt check and 8 pt label gap."
+    }
+  ]
+}
