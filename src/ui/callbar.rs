@@ -142,10 +142,10 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
     }
     buttons.push((
         Icon::Close,
-        "Close bar",
+        "Hide call bar",
         Action::CallDone,
         false,
-        "Close the call bar. The call itself goes on in Teams until you leave it there.",
+        "Hide this bar. The meeting goes on in Teams until you leave it there.",
     ));
 
     let title = |ui: &mut egui::Ui, width: f32| {
@@ -163,18 +163,34 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
         // Title and status read as one block.
         ui.spacing_mut().interact_size.y = 18.0;
         ui.spacing_mut().item_spacing.y = 2.0;
-        ui.horizontal(|ui| {
-            ui.add_space(inset);
-            title(ui, (ui.available_width() - 20.0).max(60.0));
-        });
-        ui.horizontal(|ui| {
-            ui.add_space(inset + 18.0);
-            ui.label(
-                egui::RichText::new(&status)
-                    .font(theme::regular(12.0))
-                    .color(palette.secondary),
-            );
-        });
+        // Docked, the meeting chat sits right below and its header names the
+        // meeting; then the bar only says how the call is going.
+        let chat_below = call.chat.is_some();
+        if chat_below {
+            ui.horizontal(|ui| {
+                ui.add_space(inset);
+                let (rect, _) = ui.allocate_exact_size(vec2(10.0, 10.0), egui::Sense::hover());
+                ui.painter().circle_filled(rect.center(), 4.5, dot);
+                ui.label(
+                    egui::RichText::new(&status)
+                        .font(theme::semibold(13.0))
+                        .color(palette.text),
+                );
+            });
+        } else {
+            ui.horizontal(|ui| {
+                ui.add_space(inset);
+                title(ui, (ui.available_width() - 20.0).max(60.0));
+            });
+            ui.horizontal(|ui| {
+                ui.add_space(inset + 18.0);
+                ui.label(
+                    egui::RichText::new(&status)
+                        .font(theme::regular(12.0))
+                        .color(palette.secondary),
+                );
+            });
+        }
         ui.add_space(8.0);
         ui.horizontal_wrapped(|ui| {
             ui.spacing_mut().item_spacing = vec2(6.0, 6.0);

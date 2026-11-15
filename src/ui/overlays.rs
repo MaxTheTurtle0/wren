@@ -625,8 +625,8 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                 }
                 ui.label(
                     egui::RichText::new(format!("New messages arrive when you open a chat, come back to Wren or press {}. Microsoft doesn't allow apps to check in the background; for instant alerts, connect a push relay.", super::keys::shortcut("⌘R")))
-                        .font(theme::regular(12.0))
-                        .color(palette.dim),
+                        .font(theme::regular(13.0))
+                        .color(palette.secondary),
                 );
                 let mut session = app.settings.presence_session;
                 if ui

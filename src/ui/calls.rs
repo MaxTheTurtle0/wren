@@ -53,7 +53,11 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                 );
                 widgets::avatar(&mut child, app, Some(user), name, 32.0, true);
                 child.add_space(8.0);
-                let label_width = (child.available_width() - 72.0).max(40.0);
+                // A narrow list keeps names whole: video calls stay a click
+                // away in the person's chat.
+                let compact = width < 260.0;
+                let label_width =
+                    (child.available_width() - if compact { 38.0 } else { 72.0 }).max(40.0);
                 child.add(egui::Label::new(super::chat_list::elided(
                     &child,
                     name,
@@ -62,15 +66,17 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                     label_width,
                 )));
                 child.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let video = widgets::icon_button(ui, &palette, Icon::Video, "Video call");
-                    widgets::on_click(
-                        &video,
-                        &mut actions,
-                        Action::StartCall {
-                            users: vec![email.clone()],
-                            video: true,
-                        },
-                    );
+                    if !compact {
+                        let video = widgets::icon_button(ui, &palette, Icon::Video, "Video call");
+                        widgets::on_click(
+                            &video,
+                            &mut actions,
+                            Action::StartCall {
+                                users: vec![email.clone()],
+                                video: true,
+                            },
+                        );
+                    }
                     let audio = widgets::icon_button(ui, &palette, Icon::Phone, "Audio call");
                     widgets::on_click(
                         &audio,

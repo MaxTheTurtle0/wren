@@ -486,6 +486,11 @@ impl Window {
 
 impl eframe::App for Window {
     fn raw_input_hook(&mut self, _ctx: &egui::Context, input: &mut egui::RawInput) {
+        // Screenshots show the window as it looks in use: focused, so focus
+        // rings and the caret draw (a headless display never focuses it).
+        if self.screenshot.is_some() {
+            input.focused = true;
+        }
         self.paste_input.prepare(input);
     }
     fn persist_egui_memory(&self) -> bool {

@@ -602,9 +602,9 @@ fn message_row(
     let palette = &app.palette;
     let width = ui.available_width();
     if message.system {
-        let response = ui.allocate_ui(vec2(width, 24.0), |ui| {
+        let response = ui.allocate_ui(vec2(width, 32.0), |ui| {
             ui.set_width(width);
-            ui.add_space(4.0);
+            ui.add_space(10.0);
             ui.vertical_centered(|ui| {
                 let text = format!(
                     "{} · {}",
@@ -617,7 +617,7 @@ fn message_row(
                         .color(palette.dim),
                 );
             });
-            ui.add_space(4.0);
+            ui.add_space(8.0);
         });
         return response.response.rect;
     }
@@ -977,7 +977,7 @@ fn hover_toolbar(
         &QUICK_REACTIONS[..]
     };
     let buttons = reactions.len() as f32 + 2.0 + if mine { 2.0 } else { 0.0 };
-    let size = vec2(buttons * 28.0 + 12.0, 34.0);
+    let size = vec2(buttons * 28.0 + 21.0, 34.0);
     let min = egui::pos2(
         row.right() - size.x - 4.0,
         // Inside the hovered row's own top padding, never over a neighbour.
@@ -1023,6 +1023,11 @@ fn hover_toolbar(
                             });
                         }
                     }
+                    // Reactions, then what to do with the message.
+                    ui.add_space(4.0);
+                    let (divider, _) = ui.allocate_exact_size(vec2(1.0, 20.0), Sense::hover());
+                    ui.painter().rect_filled(divider, 0.0, palette.outline);
+                    ui.add_space(4.0);
                     let reply_label = if conversation.is_channel() {
                         "Reply in thread"
                     } else {
@@ -1437,7 +1442,9 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
                 composer_top = Some(ui.cursor().min);
                 // The field's edge reads as a control, and focus as a ring.
-                let edge = if ui.memory(|m| m.has_focus(id)) {
+                // As egui draws focus: only while the window itself has focus.
+                let focused = ui.memory(|m| m.has_focus(id)) && ui.input(|i| i.focused);
+                let edge = if focused {
                     Stroke::new(2.0, palette.accent)
                 } else {
                     Stroke::new(1.0, palette.control)
@@ -1803,9 +1810,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                     vec2(width, max_editor_height),
                                     Layout::top_down(Align::Min),
                                     |ui| {
-                                        // Show that a long draft scrolls.
-                                        ui.spacing_mut().scroll.dormant_handle_opacity = 0.6;
-                                        egui::ScrollArea::vertical()
+                                        let scrolled = egui::ScrollArea::vertical()
                                             .id_salt(id.with("scroll"))
                                             .max_height(max_editor_height)
                                             .min_scrolled_height(0.0)
@@ -1829,8 +1834,26 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                                     output.response
                                                 })
                                                 .inner
-                                            })
-                                            .inner
+                                            });
+                                        // Lines scrolled above fade out instead of
+                                        // showing a cut row along the top edge.
+                                        if scrolled.state.offset.y > 0.5 {
+                                            let top = scrolled.inner_rect;
+                                            for step in 0..5 {
+                                                let strip = egui::Rect::from_min_size(
+                                                    top.min + vec2(0.0, step as f32 * 2.0),
+                                                    vec2(top.width(), 2.0),
+                                                );
+                                                ui.painter().rect_filled(
+                                                    strip,
+                                                    0.0,
+                                                    palette
+                                                        .surface
+                                                        .gamma_multiply(1.0 - step as f32 / 5.0),
+                                                );
+                                            }
+                                        }
+                                        scrolled.inner
                                     },
                                 )
                                 .inner;
