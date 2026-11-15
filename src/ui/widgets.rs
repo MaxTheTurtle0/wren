@@ -481,8 +481,8 @@ pub fn pane_header(
         Stroke::new(1.0, palette.outline),
     );
     let inset = super::header_inset(ui.ctx(), rect.left());
-    // The title lines up with the page's content column; the actions sit at
-    // the pane's right edge, as in a conversation header.
+    // Title and actions both sit over the page's content column, so the
+    // actions stay next to what they act on.
     let column = detail_column(rect);
     ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
         ui.horizontal_centered(|ui| {
@@ -508,9 +508,12 @@ pub fn pane_header(
     });
     ui.scope_builder(
         egui::UiBuilder::new()
-            .max_rect(rect.shrink2(vec2(24.0, 0.0)))
+            .max_rect(column)
             .layout(egui::Layout::right_to_left(egui::Align::Center)),
-        actions,
+        |ui| {
+            ui.spacing_mut().item_spacing.x = 8.0;
+            actions(ui);
+        },
     );
     ui.allocate_rect(rect, Sense::hover());
 }
@@ -721,7 +724,7 @@ pub fn keycaps(ui: &mut Ui, palette: &Palette, keys: &str) {
             }
             egui::Frame::new()
                 .fill(palette.surface_hover)
-                .stroke(Stroke::new(1.0, palette.outline))
+                .stroke(Stroke::new(1.0, palette.card_edge))
                 .corner_radius(CornerRadius::same(4))
                 .inner_margin(egui::Margin::symmetric(6, 2))
                 .show(ui, |ui| {

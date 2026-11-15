@@ -23,12 +23,13 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 ui.vertical_centered(|ui| {
                     // The logo, card and footer sit as one group near the middle.
-                    let group = if matches!(app.auth, AuthStatus::NotConfigured) {
-                        700.0
-                    } else {
-                        560.0
-                    };
-                    ui.add_space(((ui.available_height() - group) / 2.0).max(48.0));
+                    // Centred by the stack's own height last frame, so a long
+                    // form starts higher instead of overflowing.
+                    let height_id = egui::Id::new(("signin-height", app.auth.log_label()));
+                    let group: f32 = ui.ctx().data(|d| d.get_temp(height_id)).unwrap_or(560.0);
+                    let top = ((ui.available_height() - group) / 2.0).max(24.0);
+                    ui.add_space(top);
+                    let stack_top = ui.cursor().top();
                     // The setup form is long: a smaller mark keeps the stack
                     // starting where the other sign-in screens start.
                     let logo = if matches!(app.auth, AuthStatus::NotConfigured) {
@@ -99,6 +100,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         );
                     });
                     ui.add_space(24.0);
+                    let height = ui.cursor().top() - stack_top;
+                    ui.ctx().data_mut(|d| d.insert_temp(height_id, height));
                 });
             });
         });

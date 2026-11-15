@@ -183,7 +183,6 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
         ));
     }
     widgets::pane_header(ui, &palette, &meeting.subject, &when, |ui| {
-        ui.spacing_mut().item_spacing.x = 6.0;
         // Right to left: the primary action ends up rightmost.
         if let Some(url) = &meeting.join_url {
             let join = widgets::pill(ui, &palette, Icon::Video, "Join", true);

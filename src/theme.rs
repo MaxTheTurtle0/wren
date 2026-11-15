@@ -333,6 +333,10 @@ pub fn apply(ctx: &egui::Context, palette: &Palette) {
         style.spacing.menu_margin = egui::Margin::symmetric(10, 6);
         style.spacing.scroll = egui::style::ScrollStyle::floating();
         style.spacing.scroll.floating_width = 6.0;
+        // egui fades content at scroll edges by default; that leaves text
+        // half-visible below 4.5:1. Edges clip cleanly, and Wren draws its
+        // own shadow where more content lies beyond.
+        style.spacing.scroll.fade.strength = 0.0;
         style.interaction.selectable_labels = false;
         // Tooltips wrap at a readable measure instead of running wide.
         style.spacing.tooltip_width = 280.0;

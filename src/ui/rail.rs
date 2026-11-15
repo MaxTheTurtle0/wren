@@ -95,15 +95,23 @@ fn item(ui: &mut egui::Ui, app: &App, section: Section, badge: usize) -> egui::R
     let active = app.section == section;
     if ui.is_rect_visible(rect) {
         if active || response.hovered() {
-            ui.painter().rect_filled(
-                rect.shrink2(vec2(2.0, 0.0)),
-                CornerRadius::same(10),
-                if active {
-                    palette.surface_active
-                } else {
-                    palette.surface_hover
-                },
-            );
+            // The light rail is already grey: the chosen tile is raised to
+            // white with an edge, as visible as the dark mode's lighter tile.
+            let tile = rect.shrink2(vec2(2.0, 0.0));
+            let fill = match (active, palette.dark) {
+                (true, true) => palette.surface_active,
+                (true, false) => palette.surface,
+                (false, _) => palette.surface_hover,
+            };
+            ui.painter().rect_filled(tile, CornerRadius::same(10), fill);
+            if active && !palette.dark {
+                ui.painter().rect_stroke(
+                    tile,
+                    CornerRadius::same(10),
+                    egui::Stroke::new(1.0, palette.card_edge),
+                    egui::StrokeKind::Inside,
+                );
+            }
         }
         if active {
             let bar = egui::Rect::from_min_size(

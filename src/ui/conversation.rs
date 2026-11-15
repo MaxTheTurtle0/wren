@@ -1025,7 +1025,7 @@ fn hover_toolbar(
             } else {
                 palette.surface
             })
-            .stroke(Stroke::new(1.0, palette.card_edge))
+            .stroke(Stroke::new(1.0, palette.control))
             .corner_radius(CornerRadius::same(8))
             .shadow(egui::Shadow {
                 offset: [0, 2],

@@ -421,11 +421,19 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
                             }
                         });
                 });
+            // The key hints stand apart from the results.
+            ui.add_space(4.0);
+            let divider = ui.cursor().top();
+            ui.painter().hline(
+                ui.max_rect().x_range(),
+                divider,
+                Stroke::new(1.0, palette.outline),
+            );
             Frame::new()
                 .inner_margin(Margin {
                     left: 14,
                     right: 14,
-                    top: 8,
+                    top: 10,
                     bottom: 12,
                 })
                 .show(ui, |ui| {
