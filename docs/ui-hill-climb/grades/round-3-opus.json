@@ -1,0 +1,521 @@
+{
+ "overall": 7.5,
+ "dimensions": {
+  "hierarchy": 8,
+  "spacing": 7,
+  "typography": 7.5,
+  "consistency": 7,
+  "contrast_accessibility": 8,
+  "feedback": 7.5,
+  "states": 8,
+  "navigation": 7
+ },
+ "screens": {
+  "chats": {
+   "score": 8,
+   "issues": [
+    "Hover toolbar (pointer) floats over the message edge; fine, but reaction chips and toolbar have 1.33:1 (light) / 1.37:1 (dark) borders (#dfdfe3 on #ffffff)",
+    "Hyphens render with a gap: 'On-call', 'full-text' read as 'On -call'",
+    "Composer helper line is 11-12 pt grey and long; it competes with nothing but adds noise under every composer",
+    "Topmost message is cut under the header with no fade (avatar 'AR' half visible at y=40-60)"
+   ]
+  },
+  "chats-wide": {
+   "score": 7.5,
+   "issues": [
+    "Message column stops at x~1300 while header and composer stretch to x=1904: the composer is 2x wider than the text it sends",
+    "About 600 px of dead space to the right of messages at 1920 wide",
+    "Hover toolbar anchors to the 1300 px column edge, not the window edge, so it floats mid-screen"
+   ]
+  },
+  "chats-narrow": {
+   "score": 7,
+   "issues": [
+    "Chat list keeps ~232 px of a 760 px window; names truncate ('Katherine Jo...', 'Design rev...', 'Margaret Hamil...')",
+    "Composer helper wraps to two lines with an orphan 'quote, - list'",
+    "Last list row is cut at the bottom edge with no fade"
+   ]
+  },
+  "chat-no-selection": {
+   "score": 8,
+   "issues": [
+    "Empty pane offers only text; no 'New chat' button unlike the first-sync empty state",
+    "Selected-row state disappears entirely, so nothing hints where to look first"
+   ]
+  },
+  "chat-filter-no-match": {
+   "score": 8,
+   "issues": [
+    "Filter field has no inline clear (x) button and no focus ring while it holds text",
+    "Open conversation on the right stays as is while list says 'No matches'; acceptable but the two panes disagree visually"
+   ]
+  },
+  "group-chat": {
+   "score": 8,
+   "issues": [
+    "Hover toolbar (y=389-425) straddles the highlighted mention row and the next message",
+    "Hyphen gap in 'go/no-go' and 'Ad-hoc'",
+    "Composer is focused (orange 2 px ring) with no caret visible in the shot"
+   ]
+  },
+  "channel": {
+   "score": 7.5,
+   "issues": [
+    "Hover toolbar overlaps the post card's top border (toolbar y=250-287, card border y=261)",
+    "Fragment of a previous card's Reply button peeks out under the header at y=40-52",
+    "Post card borders 1.33:1 light / 1.37:1 dark; cards separate mostly by whitespace",
+    "Reply avatars (22 px) and post avatars (36 px) give two different left edges for author names (x=435 vs 437)"
+   ]
+  },
+  "channel-narrow": {
+   "score": 6.5,
+   "issues": [
+    "Composer placeholder wraps to two lines and leaves a dangling '·' at the end of line one",
+    "Team/channel tree keeps ~232 px of 760; content column is ~430 px",
+    "Helper text wraps to two lines",
+    "Top post title 'Performance check' is half-hidden under the header"
+   ]
+  },
+  "teams": {
+   "score": 7.5,
+   "issues": [
+    "No unread or activity markers on channels, so the tree gives no reason to pick one",
+    "Empty pane has no shortcut or recent-channel suggestion",
+    "Large empty canvas; the hint 'Pick a channel on the left' is all the guidance"
+   ]
+  },
+  "calendar": {
+   "score": 7,
+   "issues": [
+    "Detail card is 640 px wide and left-aligned, leaving ~250 px dead to its right and ~440 px dead below",
+    "'Location: Teams' duplicates 'Online: Microsoft Teams meeting'",
+    "No attendees, agenda or response status; the detail view is thin",
+    "Footnote is 12 pt grey under the card and reads like fine print for a key behaviour"
+   ]
+  },
+  "calls": {
+   "score": 7,
+   "issues": [
+    "Join button (32 px tall) and link field (29 px) differ in height and baseline",
+    "Field text is 15 pt while other inputs use 13-14 pt",
+    "'▸ Details' uses a text triangle glyph, not a Lucide chevron as elsewhere",
+    "Right side is mostly empty below y=380"
+   ]
+  },
+  "calls-narrow": {
+   "score": 6.5,
+   "issues": [
+    "Names truncate to 'Katherine ...' and 'Margaret ...' because the two call icons keep 80 px",
+    "'Not possible' line wraps and 'window' falls back under the icon at x=321 instead of the text indent at x=342",
+    "List still takes ~232 px of 760"
+   ]
+  },
+  "composer-mention": {
+   "score": 8,
+   "issues": [
+    "Suggestion popup is left-aligned to the composer, not to the '@Mar' token",
+    "Matched letters are not highlighted in the suggestion",
+    "Selected-row email text is 4.60:1 (light) / 4.57:1 (dark): passes, but with no margin"
+   ]
+  },
+  "composer-long-draft": {
+   "score": 6.5,
+   "issues": [
+    "Draft line height ~17 px at ~15 pt (about 1.13) versus ~24 px in messages; the draft reads cramped",
+    "First visible line is clipped by the top border with no inner padding",
+    "Composer scrollbar thumb sits at x~1180 next to the paperclip, not at the composer's right edge",
+    "Composer grows to ~215 px with no line count or 'expand' affordance"
+   ]
+  },
+  "composer-images": {
+   "score": 6.5,
+   "issues": [
+    "Thumbnails are centre-cropped: the third shows only fragments of the image",
+    "Remove (x) buttons overlap the image corner and have no gap from the edge",
+    "No file name or size, unlike the file chip in composer-mention",
+    "Thumbnails sit flush against the composer's left border with ~8 px gap, tighter than the 14 px text inset"
+   ]
+  },
+  "image-preview": {
+   "score": 7,
+   "issues": [
+    "Described as full-window but drawn as a 960 px modal; most of the image area is empty grey",
+    "Segmented control: unselected '100%' has no boundary, so it reads as a label",
+    "Title is generic 'Image preview'; no file name, Save, Copy or Open actions",
+    "Scrim shows the hover toolbar of the message behind (x=1115-1250)"
+   ]
+  },
+  "search-switcher": {
+   "score": 7,
+   "issues": [
+    "Avatar colours differ from the chat list: Ada blue rgb(69,96,196) in list vs green rgb(74,122,46) here; Katherine green vs ochre; Grace teal vs blue; Margaret pink vs green",
+    "Meeting chat shows initials 'D0' here but a calendar icon in the list",
+    "Search field has no visible focus ring or caret; only placeholder text",
+    "Preview lines truncate mid-word at a fixed width"
+   ]
+  },
+  "new-chat": {
+   "score": 7.5,
+   "issues": [
+    "Primary 'Chat with Grace Hopper' button is ~30 px tall and the 12 pt hint beside it is crowded",
+    "No highlight of the matched letters 'ra'",
+    "Search field shows no focus ring while typing",
+    "Highlighted first result looks selected, not merely hovered/focused; unclear which Enter would pick"
+   ]
+  },
+  "settings": {
+   "score": 7.5,
+   "issues": [
+    "Dropdowns use a solid ▼ text glyph, not the Lucide chevron used elsewhere",
+    "Content is cut at the bottom ('Move Wren beside...' half-visible) with only a 3 px scrollbar to show more exists",
+    "Theme segment selected state: light uses white-on-orange, dark uses dark-on-orange; fine, but unselected segments have no border",
+    "Section labels are 11 pt caps with no dividers; the long list blurs"
+   ]
+  },
+  "shortcuts": {
+   "score": 8,
+   "issues": [
+    "Sixteen rows with no grouping (Navigation, Composer, View)",
+    "Keycaps mix prose ('@ in the composer', '↑ in an empty composer') with keys",
+    "Description column starts at x=613 regardless of key width, leaving wide gaps"
+   ]
+  },
+  "status-message": {
+   "score": 7,
+   "issues": [
+    "No close (x) button, unlike Settings, New chat, Shortcuts and Join on phone",
+    "Disabled Save is grey and looks like a secondary button; primary/secondary hierarchy disappears",
+    "No 'clear after' or duration choice; the field is a 50 px multi-line box for a one-line value"
+   ]
+  },
+  "account-menu": {
+   "score": 7.5,
+   "issues": [
+    "'Be right back' and 'Appear away' use the identical yellow ring icon",
+    "'Busy' and 'Do not disturb' are both red; only the small bar separates them",
+    "No section labels between accounts, presence and actions",
+    "Two accounts with the same name rely on the 12 pt email to tell apart"
+   ]
+  },
+  "permission-consent": {
+   "score": 8,
+   "issues": [
+    "No close (x) button",
+    "'Not now' boundary is 1.33:1 light / 1.16:1 dark",
+    "Explanation is 12 pt in three dense lines; the important 'administrator' caveat is easy to miss"
+   ]
+  },
+  "error-toast": {
+   "score": 7.5,
+   "issues": [
+    "Toast pinned at x=393, y=64, top-left of the pane, covering the first message; not centred or anchored to the failed message",
+    "Failed message has no row tint; only the small 'Not sent' line marks it",
+    "Toast and inline state duplicate the same failure with different wording"
+   ]
+  },
+  "first-sync-loading": {
+   "score": 8,
+   "issues": [
+    "Header shows a spinner and the refresh button together; refresh should be replaced or disabled while loading",
+    "Filter field is enabled though there is nothing to filter",
+    "Skeleton blocks are 1.17:1 on the light list background; nearly invisible on some panels"
+   ]
+  },
+  "first-sync-empty": {
+   "score": 7.5,
+   "issues": [
+    "'No chats yet' in the list duplicates the main-pane message",
+    "Filter field still shown with nothing to filter",
+    "Empty-state block sits at y~370 here but y~395 in other empty states"
+   ]
+  },
+  "call-bar": {
+   "score": 6.5,
+   "issues": [
+    "Chat title truncates to 'Design review:...' at x=178 although ~160 px are free before the open icon at x=335",
+    "No navigation rail; no way to reach other chats from this layout",
+    "Composer placeholder wraps with a dangling '·'; helper wraps to three lines",
+    "'Meeting ended' system line sits ~8 px under the last message versus ~24 px elsewhere"
+   ]
+  },
+  "call-docked": {
+   "score": 7.5,
+   "issues": [
+    "No navigation rail or way back to chat list while docked",
+    "'Meeting ended' spacing as in call-bar",
+    "Call bar has three equal-weight buttons; 'Close bar' is as prominent as 'Join on phone'"
+   ]
+  },
+  "join-on-phone": {
+   "score": 8,
+   "issues": [
+    "Light mode QR sits on white with no plate or quiet-zone border, while dark mode gets a white plate; inconsistent",
+    "Only action is a secondary 'Copy the link'; no meeting name repeated in the dialog"
+   ]
+  },
+  "setup": {
+   "score": 7.5,
+   "issues": [
+    "A vertical scrollbar shows at x=1275 though the content almost fits; footer at y=777 is jammed against the bottom",
+    "'Step-by-step registration guide' is bold body text with a blue icon, unlike the blue underlined links elsewhere",
+    "Monospace GUID placeholder looks like a prefilled value",
+    "Gap between the ID field and the 'Tenant' label (~8 px) is tighter than label-to-field spacing"
+   ]
+  },
+  "signin": {
+   "score": 8,
+   "issues": [
+    "Primary button label is 14 pt bold, secondary 13 pt regular; the two buttons differ in type as well as weight",
+    "Composition is top-heavy: ~300 px empty below the footer",
+    "Secondary button boundary 1.33:1 light / 1.16:1 dark"
+   ]
+  },
+  "signin-browser": {
+   "score": 8,
+   "issues": [
+    "While waiting, 'Open the page again' is styled primary; the main state is waiting, so this should be secondary",
+    "Spinner and 'Waiting for Microsoft...' are 13 pt grey; the state is understated"
+   ]
+  },
+  "signin-device-code": {
+   "score": 8.5,
+   "issues": [
+    "Code uses the proportional UI font with spaced hyphen 'F4KQ - 9TZW'; a monospace face would avoid 0/O and 1/I confusion",
+    "Body line height (23 px) differs from other sign-in cards (17 px)"
+   ]
+  },
+  "signin-finishing": {
+   "score": 8.5,
+   "issues": [
+    "No Cancel while finishing",
+    "Card is shorter than siblings, so the footer jumps up between states"
+   ]
+  },
+  "signin-expired": {
+   "score": 8.5,
+   "issues": [
+    "'Account' label and value at 13 pt look like metadata rather than the account being restored",
+    "Footer jumps position relative to other sign-in states"
+   ]
+  },
+  "signin-failed": {
+   "score": 8,
+   "issues": [
+    "Only the short reason; no detail, error code or help link",
+    "Footer and demo button shift up compared with the other sign-in states"
+   ]
+  }
+ },
+ "top_issues": [
+  {
+   "priority": 1,
+   "severity": "high",
+   "screens": [
+    "chats-narrow",
+    "channel-narrow",
+    "calls-narrow",
+    "call-bar"
+   ],
+   "mode": "both",
+   "issue": "Narrow layouts do not adapt: the list pane stays ~232 px, names truncate, the composer placeholder wraps with a dangling '·' and the helper wraps onto 2-3 lines.",
+   "evidence": "760x640: list x=64-296, content ~430 px; channel-narrow placeholder line 1 ends with '·' at x=655; call-bar helper wraps to 3 lines (y=757-791); calls-narrow 'Katherine ...'.",
+   "fix": "Below 900 pt window width shrink the list to 200 pt (or make it resizable, min 180); below 600 pt content width drop ' · @ to mention' from the placeholder and hide the helper line (show it as a tooltip on a '?' icon). Never wrap placeholders."
+  },
+  {
+   "priority": 2,
+   "severity": "high",
+   "screens": [
+    "call-bar",
+    "call-docked"
+   ],
+   "mode": "both",
+   "issue": "Call layouts truncate the chat title early and remove all navigation.",
+   "evidence": "call-bar: 'Design review:...' ends at x=178 while the open-in-window icon is at x=335 (~160 px unused). No rail in either call layout.",
+   "fix": "Let the title take all width up to 8 pt before the trailing icon; truncate only on real overflow. Add a back/chats button (24 pt Lucide 'arrow-left' or 'message-circle') at the left of the header so the person can reach other chats."
+  },
+  {
+   "priority": 3,
+   "severity": "high",
+   "screens": [
+    "composer-long-draft"
+   ],
+   "mode": "both",
+   "issue": "Long drafts are cramped and clipped: tight leading, no top padding, scrollbar beside the attach icon.",
+   "evidence": "Line pitch ~17 px for ~15 pt text (1.13) vs ~24 px in message bodies; first line clipped at y=546-556 by the border; scrollbar thumb at x~1180, y=735-752.",
+   "fix": "Use line height 1.4 (21 pt at 15 pt) in the composer, 10 pt inner top/bottom padding inside the scroll area, put the scrollbar 4 pt inside the composer's right border above the action icons, and cap the composer at 40% of window height."
+  },
+  {
+   "priority": 4,
+   "severity": "medium",
+   "screens": [
+    "signin",
+    "signin-expired",
+    "signin-failed",
+    "signin-browser",
+    "signin-device-code",
+    "permission-consent",
+    "calendar",
+    "chats",
+    "channel"
+   ],
+   "mode": "both",
+   "issue": "Secondary buttons, reaction chips, hover toolbar and cards rely on borders far below 3:1, so secondary controls barely read as buttons, especially in dark mode.",
+   "evidence": "Border #dfdfe3 on #ffffff = 1.33:1; dark #303137 on #25262b = 1.16:1 (secondary button), on #17181b = 1.37:1. Inputs already use #8a8d95 (3.07-3.32:1) and #6e7179 (3.09-3.64:1).",
+   "fix": "Give secondary buttons and chips a fill: light #eeeef0 with border #b9bbc1, dark #2c2d33 with border #4a4c54; or reuse the input border tokens #8a8d95 / #6e7179 for button outlines so boundaries reach 3:1."
+  },
+  {
+   "priority": 5,
+   "severity": "medium",
+   "screens": [
+    "search-switcher"
+   ],
+   "mode": "both",
+   "issue": "Avatar colours and icons in the switcher do not match the chat list, breaking recognition.",
+   "evidence": "Ada: list rgb(69,96,196) blue vs switcher rgb(74,122,46) green; Katherine green vs ochre rgb(143,109,15); Grace teal vs blue rgb(42,115,181); Margaret pink vs green. Meeting chat shows 'D0' initials vs calendar icon in the list.",
+   "fix": "Derive avatar colour from the same key (person id / chat id) everywhere; reuse the list's avatar widget (with presence dot) and the calendar icon for meeting chats in the switcher."
+  },
+  {
+   "priority": 6,
+   "severity": "medium",
+   "screens": [
+    "chats-wide"
+   ],
+   "mode": "both",
+   "issue": "At 1920 wide the message column caps at ~920 px but the composer and header span the full 1540 px, so the composer does not line up with the text.",
+   "evidence": "Messages x=380-1300; composer x=380-1904; ~600 px dead area right of messages.",
+   "fix": "Cap the composer (and hover toolbar anchor) to the same max width as the message column (about 920 pt), or let messages use the full width up to ~1100 pt and centre the column with the composer."
+  },
+  {
+   "priority": 7,
+   "severity": "medium",
+   "screens": [
+    "composer-images"
+   ],
+   "mode": "both",
+   "issue": "Pasted image thumbnails are crudely centre-cropped and their remove buttons overlap the image.",
+   "evidence": "Third thumbnail (x=698-840) shows only fragments; x buttons at (522,632),(675,632),(826,632) sit on the image corners; no name or size.",
+   "fix": "Use aspect-fit thumbnails at 96 pt height on a #eeeef0 / #2c2d33 plate, place the 20 pt remove button 4 pt outside the top-right corner with a 1 pt ring, and show name + size (11-12 pt) below like the file chip."
+  },
+  {
+   "priority": 8,
+   "severity": "medium",
+   "screens": [
+    "group-chat",
+    "channel",
+    "composer-mention"
+   ],
+   "mode": "both",
+   "issue": "The hover toolbar straddles neighbouring rows and card borders.",
+   "evidence": "group-chat toolbar y=389-425 over the mention row ending at y~399; channel toolbar y=250-287 crosses the card border at y=261.",
+   "fix": "Anchor the toolbar inside the hovered row: top = row top + 4 pt, right = row right - 8 pt; for channel posts place it inside the card's top-right corner."
+  },
+  {
+   "priority": 9,
+   "severity": "medium",
+   "screens": [
+    "calls",
+    "calls-narrow",
+    "settings"
+   ],
+   "mode": "both",
+   "issue": "Control sizing and glyphs are inconsistent: Join button and link field differ in height, text-triangle disclosures and ▼ dropdown carets instead of Lucide icons.",
+   "evidence": "Join field 29 px vs button 32 px, baselines offset ~2 px; '▸ Details', '▸ App registration'; settings dropdowns use a solid ▼.",
+   "fix": "Make field and button share one height (32 pt) and baseline; replace ▸ with Lucide chevron-right (rotating to chevron-down) and ▼ with Lucide chevron-down at 16 pt in the secondary text colour."
+  },
+  {
+   "priority": 10,
+   "severity": "medium",
+   "screens": [
+    "calendar"
+   ],
+   "mode": "both",
+   "issue": "Meeting detail is thin and partly redundant while most of the pane is empty.",
+   "evidence": "Card 640x210 at top-left; 'Location: Teams' duplicates 'Online: Microsoft Teams meeting'; no attendees or response.",
+   "fix": "Drop the Location row when it equals the online provider, add attendees (avatars + count) and your response, and widen the card to the pane width minus 24 pt margins (max 720 pt); move the footnote into the card as 13 pt secondary text."
+  },
+  {
+   "priority": 11,
+   "severity": "medium",
+   "screens": [
+    "account-menu"
+   ],
+   "mode": "both",
+   "issue": "Presence icons are ambiguous.",
+   "evidence": "'Be right back' and 'Appear away' both show the same yellow ring (#a9530f-ish ring with dot); 'Busy' and 'Do not disturb' both solid red.",
+   "fix": "Use Teams-style distinct glyphs: Away = yellow clock, Be right back = yellow clock with arrow, Busy = red filled dot, DND = red dot with white bar; add 11 pt section labels 'Accounts', 'Status'."
+  },
+  {
+   "priority": 12,
+   "severity": "medium",
+   "screens": [
+    "error-toast"
+   ],
+   "mode": "both",
+   "issue": "The error toast is placed at the top-left of the conversation, covering messages, away from the failed message.",
+   "evidence": "Toast at x=393-886, y=64-111 over the first visible message; failed message at y=627-697.",
+   "fix": "Show toasts bottom-centre above the composer (12 pt gap) or top-centre of the pane; tint the failed message row with the danger tint (#fdecec light / #3a2022 dark) and keep the inline Retry."
+  },
+  {
+   "priority": 13,
+   "severity": "low",
+   "screens": [
+    "status-message",
+    "permission-consent"
+   ],
+   "mode": "both",
+   "issue": "Dialogs are inconsistent: some lack a close button, and a disabled primary button looks like a secondary one.",
+   "evidence": "Settings, New chat, Shortcuts, Join on phone have an x; Status message and permission dialog do not. Disabled Save is #62656d on #e4e4e8, same family as Cancel.",
+   "fix": "Add the 24 pt close icon to every dialog header; render disabled primary as the accent at 40% opacity (light #a9530f66 fill, white text) so its role is still clear."
+  },
+  {
+   "priority": 14,
+   "severity": "low",
+   "screens": [
+    "first-sync-loading",
+    "first-sync-empty"
+   ],
+   "mode": "both",
+   "issue": "Loading and empty states leave live controls that do nothing and duplicate messages.",
+   "evidence": "Loading: spinner at x=231 next to an active refresh button; filter enabled. Empty: 'No chats yet' in the list plus 'Start your first chat' in the pane.",
+   "fix": "Replace the refresh icon with the spinner while syncing; disable/hide the filter until there is at least one chat; remove the list's 'No chats yet' when the main pane shows the empty state."
+  },
+  {
+   "priority": 15,
+   "severity": "low",
+   "screens": [
+    "image-preview"
+   ],
+   "mode": "both",
+   "issue": "Image preview is a modal with weak controls and no actions.",
+   "evidence": "960x745 modal; unselected '100%' segment has no boundary; title 'Image preview' with no name; no Save/Copy/Open.",
+   "fix": "Use a full-window overlay with 24 pt margins, a segmented control with a 1 pt #8a8d95 / #6e7179 outline, the file name as the title, and Save, Copy and Open-in-viewer icon buttons beside the close button."
+  },
+  {
+   "priority": 16,
+   "severity": "low",
+   "screens": [
+    "chats",
+    "group-chat",
+    "calendar",
+    "setup",
+    "signin",
+    "call-docked"
+   ],
+   "mode": "both",
+   "issue": "Hyphens render with a visible gap, so words look split.",
+   "evidence": "'On -call', 'full -text', 'go/no -go', 'Sign -in', 'Step -by -step', 'F4KQ - 9TZW' in every screen with hyphenated words.",
+   "fix": "Use U+002D (or make sure the bundled Inter includes U+2010/U+2011 and is used for them) so the hyphen gets normal sidebearings; check the fallback font chain."
+  },
+  {
+   "priority": 17,
+   "severity": "low",
+   "screens": [
+    "setup"
+   ],
+   "mode": "both",
+   "issue": "Setup page shows a stray scrollbar and styles its guide link unlike other links.",
+   "evidence": "Scrollbar at x=1275 y=0-790; footer at y=777; guide link is bold #1b1c1f text with a blue icon while chat links are #1f63c6 underlined.",
+   "fix": "Reduce top padding (logo at y~60) so the page fits at 800 pt without scrolling; style the guide link with the link colour #1f63c6 / #7cb4f5 and underline on hover."
+  }
+ ]
+}
