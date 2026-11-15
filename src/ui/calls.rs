@@ -53,12 +53,11 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                 );
                 widgets::avatar(&mut child, app, Some(user), name, 32.0, true);
                 child.add_space(8.0);
-                // A narrow list shows the call buttons on the row under the
-                // pointer only, so names keep their room.
+                // A narrow list keeps both call buttons, smaller, so names
+                // keep some room and the actions stay visible.
                 let compact = width < 260.0;
-                let show_buttons = !compact || response.hovered();
                 let label_width =
-                    (child.available_width() - if show_buttons { 72.0 } else { 8.0 }).max(40.0);
+                    (child.available_width() - if compact { 56.0 } else { 72.0 }).max(40.0);
                 child.add(egui::Label::new(super::chat_list::elided(
                     &child,
                     name,
@@ -66,46 +65,44 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                     palette.text,
                     label_width,
                 )));
-                if show_buttons {
-                    child.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        // Narrow lists use tighter buttons, so names keep room.
-                        let button = if compact { 26.0 } else { 30.0 };
-                        let video = widgets::icon_button_sized(
-                            ui,
-                            &palette,
-                            Icon::Video,
-                            "Video call",
-                            button,
-                            16.0,
-                            palette.secondary,
-                        );
-                        widgets::on_click(
-                            &video,
-                            &mut actions,
-                            Action::StartCall {
-                                users: vec![email.clone()],
-                                video: true,
-                            },
-                        );
-                        let audio = widgets::icon_button_sized(
-                            ui,
-                            &palette,
-                            Icon::Phone,
-                            "Audio call",
-                            button,
-                            16.0,
-                            palette.secondary,
-                        );
-                        widgets::on_click(
-                            &audio,
-                            &mut actions,
-                            Action::StartCall {
-                                users: vec![email.clone()],
-                                video: false,
-                            },
-                        );
-                    });
-                }
+                child.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // Narrow lists use tighter buttons, so names keep room.
+                    let button = if compact { 26.0 } else { 30.0 };
+                    let video = widgets::icon_button_sized(
+                        ui,
+                        &palette,
+                        Icon::Video,
+                        "Video call",
+                        button,
+                        16.0,
+                        palette.secondary,
+                    );
+                    widgets::on_click(
+                        &video,
+                        &mut actions,
+                        Action::StartCall {
+                            users: vec![email.clone()],
+                            video: true,
+                        },
+                    );
+                    let audio = widgets::icon_button_sized(
+                        ui,
+                        &palette,
+                        Icon::Phone,
+                        "Audio call",
+                        button,
+                        16.0,
+                        palette.secondary,
+                    );
+                    widgets::on_click(
+                        &audio,
+                        &mut actions,
+                        Action::StartCall {
+                            users: vec![email.clone()],
+                            video: false,
+                        },
+                    );
+                });
             }
         });
     app.actions.extend(actions);
@@ -143,7 +140,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
                         let field = widgets::text_field(&mut link, "Paste a Teams meeting link", theme::regular(13.0))
-                            .desired_width(ui.available_width() - 90.0);
+                            // The field runs up to the Join button (about 54 pt plus the gap).
+                            .desired_width(ui.available_width() - 64.0);
                         let response = ui.add(field);
                         let valid = crate::calling::is_teams_link(link.trim());
                         let join = ui.add_enabled_ui(valid, |ui| widgets::primary_button(ui, &palette, "Join")).inner;

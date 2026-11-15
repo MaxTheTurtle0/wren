@@ -98,7 +98,7 @@ fn team_row(ui: &mut egui::Ui, app: &App, name: &str, expanded: bool) -> egui::R
             tile.center(),
             egui::Align2::CENTER_CENTER,
             theme::initials(name),
-            theme::bold(11.0),
+            theme::bold(12.0),
             egui::Color32::WHITE,
         );
         let galley = super::chat_list::elided(

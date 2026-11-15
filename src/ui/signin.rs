@@ -67,10 +67,10 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         // finishes or is cancelled.
                     } else if let Some(previous) = app.adding_from().map(|account| account.label()) {
                         // Adding a second account: the way back.
-                        if widgets::secondary_button(ui, &palette, &format!("  Back to {previous}  ")).clicked() {
+                        if widgets::secondary_button(ui, &palette, &format!("Back to {previous}")).clicked() {
                             app.actions.push(Action::CancelAddAccount);
                         }
-                    } else if widgets::secondary_button(ui, &palette, "  Explore the demo  ")
+                    } else if widgets::secondary_button(ui, &palette, "Explore the demo")
                         .on_hover_text("Sample chats, channels and meetings. Nothing leaves this computer.")
                         .clicked()
                     {
@@ -95,11 +95,12 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
     match app.auth.clone() {
         AuthStatus::NotConfigured => registration(app, ui, true),
         AuthStatus::Restoring | AuthStatus::Finishing => {
+            // The same title and body styles as the other sign-in cards.
             ui.horizontal(|ui| {
-                widgets::loading(ui, palette.accent, 20.0);
+                widgets::loading(ui, palette.accent, 18.0);
                 ui.label(
                     egui::RichText::new("Signing in…")
-                        .font(theme::semibold(15.0))
+                        .font(theme::semibold(18.0))
                         .color(palette.text),
                 );
             });
@@ -107,6 +108,7 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                 egui::RichText::new(
                     "Wren is finishing the sign-in with Microsoft. This takes a few seconds.",
                 )
+                .line_height(Some(theme::leading(14.0)))
                 .color(palette.secondary),
             );
         }
@@ -149,11 +151,22 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
             );
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = 4.0;
-                ui.label(egui::RichText::new("On any device, go to").color(palette.secondary));
-                if ui.link(&url).clicked() {
+                ui.label(
+                    egui::RichText::new("On any device, go to")
+                        .line_height(Some(theme::leading(14.0)))
+                        .color(palette.secondary),
+                );
+                if ui
+                    .link(egui::RichText::new(&url).line_height(Some(theme::leading(14.0))))
+                    .clicked()
+                {
                     app.actions.push(Action::OpenUrl(url.clone()));
                 }
-                ui.label(egui::RichText::new("and enter this code:").color(palette.secondary));
+                ui.label(
+                    egui::RichText::new("and enter this code:")
+                        .line_height(Some(theme::leading(14.0)))
+                        .color(palette.secondary),
+                );
             });
             ui.add_space(4.0);
             ui.vertical_centered(|ui| {
@@ -238,9 +251,9 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
             }
             ui.add_space(6.0);
             let label = if matches!(status, AuthStatus::Failed(_)) {
-                "  Try again  "
+                "Try again"
             } else {
-                "  Sign in with Microsoft  "
+                "Sign in with Microsoft"
             };
             ui.horizontal(|ui| {
                 if widgets::primary_button(ui, &palette, label).clicked() {
@@ -301,6 +314,8 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
         "Paste the application ID",
         theme::regular(13.0),
     ));
+    // Field groups stand apart; a label stays close to its field.
+    ui.add_space(10.0);
     ui.label(
         egui::RichText::new("Tenant")
             .font(theme::medium(12.0))
@@ -327,9 +342,9 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
                     ui,
                     &palette,
                     if first_run {
-                        "  Save and continue  "
+                        "Save and continue"
                     } else {
-                        "  Save  "
+                        "Save"
                     },
                 )
             })
@@ -346,7 +361,7 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
     });
     if !crate::settings::is_guid(app.form_client_id.trim()) {
         ui.label(
-            egui::RichText::new("Save needs the application ID, a GUID like the one shown.")
+            egui::RichText::new("Save needs the Application (client) ID from your registration.")
                 .font(theme::regular(12.0))
                 .color(palette.dim),
         );

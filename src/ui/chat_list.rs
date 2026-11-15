@@ -113,14 +113,16 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
 
     let text_left = avatar_rect.right() + 10.0;
     // A message that failed to send shows here too, where the time would.
-    let failed = app
+    let failed: Option<String> = app
         .conversation(&ConversationId::Chat(chat.id.clone()))
-        .is_some_and(|c| {
+        .and_then(|c| {
             c.messages
                 .iter()
-                .any(|m| m.delivery == crate::model::Delivery::Failed)
-        });
-    let (time, time_font, time_color) = if failed {
+                .rev()
+                .find(|m| m.delivery == crate::model::Delivery::Failed)
+        })
+        .map(|m| m.body.to_plain());
+    let (time, time_font, time_color) = if failed.is_some() {
         ("Not sent".to_owned(), theme::semibold(12.0), palette.danger)
     } else {
         (
@@ -133,7 +135,14 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
             } else {
                 theme::regular(12.0)
             },
-            if unread { palette.accent } else { palette.dim },
+            if unread {
+                palette.accent
+            } else if selected {
+                // More headroom on the selected row's fill.
+                palette.secondary
+            } else {
+                palette.dim
+            },
         )
     };
     let time_galley = ui
@@ -162,22 +171,26 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
     );
     ui.painter().galley(time_pos, time_galley, palette.dim);
 
-    let preview = chat.preview.as_ref().map(|p| {
-        let who = match (&p.author_id, &p.author) {
-            (Some(id), _) if id == me => Some("You".to_owned()),
-            (_, Some(author)) if chat.kind != ChatKind::OneOnOne => Some(
-                author
-                    .split_whitespace()
-                    .next()
-                    .unwrap_or(author)
-                    .to_owned(),
-            ),
-            _ => None,
-        };
-        match who {
-            Some(who) => format!("{who}: {}", p.text),
-            None => p.text.clone(),
-        }
+    // The message that did not go out, which the row's Not sent is about.
+    let failed_preview = failed.map(|text| format!("You: {text}"));
+    let preview = failed_preview.or_else(|| {
+        chat.preview.as_ref().map(|p| {
+            let who = match (&p.author_id, &p.author) {
+                (Some(id), _) if id == me => Some("You".to_owned()),
+                (_, Some(author)) if chat.kind != ChatKind::OneOnOne => Some(
+                    author
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or(author)
+                        .to_owned(),
+                ),
+                _ => None,
+            };
+            match who {
+                Some(who) => format!("{who}: {}", p.text),
+                None => p.text.clone(),
+            }
+        })
     });
     let preview_width = (inner.right() - text_left - if unread { 28.0 } else { 10.0 }).max(20.0);
     let preview_galley = elided(

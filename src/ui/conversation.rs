@@ -376,7 +376,24 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                             // composer, as chats read (newest last).
                             let slack = clip.bottom() - 24.0 - (ui.cursor().top() + layout.total());
                             if slack > 0.0 {
-                                ui.add_space(slack);
+                                if more || slack < 48.0 {
+                                    ui.add_space(slack);
+                                } else {
+                                    // Nothing older to load: say so, rather than
+                                    // leave an unexplained gap above the history.
+                                    ui.add_space(slack - 40.0);
+                                    let (marker, _) = ui.allocate_exact_size(
+                                        vec2(ui.available_width(), 40.0),
+                                        Sense::hover(),
+                                    );
+                                    ui.painter().text(
+                                        marker.center(),
+                                        egui::Align2::CENTER_CENTER,
+                                        "This is the beginning of the conversation",
+                                        theme::regular(12.0),
+                                        palette.dim,
+                                    );
+                                }
                             }
                             let origin = ui.cursor().top();
                             // Behind the hovered message, set once it is known.
@@ -467,7 +484,12 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                         let keep =
                                             previous_hover.as_ref().is_some_and(|(id, toolbar)| {
                                                 id == &message.id
-                                                    && pointer.is_some_and(|p| toolbar.contains(p))
+                                                    && (pointer
+                                                        .is_some_and(|p| toolbar.contains(p))
+                                                        || egui::Popup::is_id_open(
+                                                            ui.ctx(),
+                                                            more_menu_id(id),
+                                                        ))
                                             });
                                         if keep
                                             || pointer.is_some_and(|p| {
@@ -529,26 +551,6 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                     .data_mut(|d| d.remove::<(String, egui::Rect)>(hover_id));
                             }
                         });
-                        // Messages fade out under the header instead of being cut.
-                        let fade = egui::Rect::from_min_size(
-                            egui::pos2(clip.left(), clip.top()),
-                            vec2(clip.width(), 20.0),
-                        );
-                        for step in 0..10 {
-                            let strip = egui::Rect::from_min_size(
-                                fade.min + vec2(0.0, step as f32 * 2.0),
-                                vec2(fade.width(), 2.0),
-                            );
-                            // Eased: mostly solid at the top edge, so a cut line
-                            // reads as hidden rather than half there.
-                            let t = step as f32 / 10.0;
-                            let alpha = 1.0 - t * t;
-                            ui.painter().with_clip_rect(clip).rect_filled(
-                                strip,
-                                0.0,
-                                palette.window.gamma_multiply(alpha),
-                            );
-                        }
                     });
             });
         if let Some(view) = app.conversations.get_mut(conversation) {
@@ -960,6 +962,11 @@ fn reactions(
 }
 
 /// The actions shown over the hovered message. Returns the toolbar's rect.
+/// The popup behind a message's More button.
+fn more_menu_id(message: &str) -> egui::Id {
+    egui::Id::new(("message-more", message))
+}
+
 #[allow(clippy::too_many_arguments)]
 fn hover_toolbar(
     ui: &mut egui::Ui,
@@ -972,14 +979,10 @@ fn hover_toolbar(
     actions: &mut Vec<Action>,
 ) -> egui::Rect {
     let palette = &app.palette;
-    // In a narrow pane, a shorter toolbar keeps the author line readable.
-    let reactions = if row.width() < 560.0 {
-        &QUICK_REACTIONS[..3]
-    } else {
-        &QUICK_REACTIONS[..]
-    };
-    let buttons = reactions.len() as f32 + 2.0 + if mine { 2.0 } else { 0.0 };
-    let size = vec2(buttons * 28.0 + 21.0, 34.0);
+    // Three quick reactions, Reply and More; the rest lives in More, so the
+    // toolbar stays quieter than the message it belongs to.
+    let (quick, more_reactions) = QUICK_REACTIONS.split_at(3);
+    let size = vec2(5.0 * 28.0 + 15.0, 34.0);
     let min = egui::pos2(
         row.right() - size.x - 4.0,
         // Inside the hovered row's own top padding, never over a neighbour.
@@ -993,14 +996,25 @@ fn hover_toolbar(
                 .any(|r| r.emoji == emoji && r.users.iter().any(|u| u == app.me()))
         })
     };
+    let react = |emoji: &str, actions: &mut Vec<Action>| {
+        let on = reacted(emoji);
+        actions.push(Action::React {
+            conversation: conversation.clone(),
+            message: id.to_owned(),
+            emoji: emoji.to_owned(),
+            on: !on,
+        });
+    };
+    let can_edit =
+        mine && (!conversation.is_channel() || app.has_scope("ChannelMessage.ReadWrite"));
     ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
         Frame::new()
             .fill(palette.surface)
-            .stroke(Stroke::new(1.0, palette.control))
+            .stroke(Stroke::new(1.0, palette.outline))
             .corner_radius(CornerRadius::same(8))
             .shadow(egui::Shadow {
-                offset: [0, 2],
-                blur: 8,
+                offset: [0, 1],
+                blur: 4,
                 spread: 0,
                 color: palette.shadow,
             })
@@ -1008,24 +1022,17 @@ fn hover_toolbar(
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 0.0;
-                    for &emoji in reactions {
-                        let on = reacted(emoji);
+                    for &emoji in quick {
                         let response = ui.add_sized(
                             vec2(28.0, 26.0),
                             egui::Button::new(egui::RichText::new(emoji).size(15.0))
-                                .frame(on)
+                                .frame(reacted(emoji))
                                 .fill(palette.highlight),
                         );
                         if response.clicked() {
-                            actions.push(Action::React {
-                                conversation: conversation.clone(),
-                                message: id.to_owned(),
-                                emoji: emoji.to_owned(),
-                                on: !on,
-                            });
+                            react(emoji, actions);
                         }
                     }
-                    // Reactions, then what to do with the message.
                     ui.add_space(4.0);
                     let (divider, _) = ui.allocate_exact_size(vec2(1.0, 20.0), Sense::hover());
                     ui.painter().rect_filled(divider, 0.0, palette.outline);
@@ -1045,51 +1052,74 @@ fn hover_toolbar(
                         palette.secondary,
                     );
                     widgets::on_click(&reply, actions, Action::StartReply(id.to_owned()));
-                    if mine
-                        && (!conversation.is_channel() || app.has_scope("ChannelMessage.ReadWrite"))
-                    {
-                        let edit = widgets::icon_button_sized(
-                            ui,
-                            palette,
-                            Icon::Pencil,
-                            "Edit",
-                            28.0,
-                            16.0,
-                            palette.secondary,
-                        );
-                        widgets::on_click(&edit, actions, Action::StartEdit(id.to_owned()));
-                        let delete = widgets::icon_button_sized(
-                            ui,
-                            palette,
-                            Icon::Trash,
-                            "Delete",
-                            28.0,
-                            16.0,
-                            palette.secondary,
-                        );
-                        widgets::on_click(
-                            &delete,
-                            actions,
-                            Action::Delete {
-                                conversation: conversation.clone(),
-                                message: id.to_owned(),
-                            },
-                        );
-                    }
-                    let copy = widgets::icon_button_sized(
+                    let more = widgets::icon_button_sized(
                         ui,
                         palette,
-                        Icon::Copy,
-                        "Copy text",
+                        Icon::More,
+                        "More",
                         28.0,
                         16.0,
                         palette.secondary,
                     );
-                    if copy.clicked()
-                        && let Some(message) = message
-                    {
-                        actions.push(Action::CopyText(message.body.to_plain()));
-                    }
+                    egui::Popup::menu(&more).id(more_menu_id(id)).show(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 0.0;
+                            for &emoji in more_reactions {
+                                let response = ui.add_sized(
+                                    vec2(32.0, 28.0),
+                                    egui::Button::new(egui::RichText::new(emoji).size(15.0))
+                                        .frame(reacted(emoji))
+                                        .fill(palette.highlight),
+                                );
+                                if response.clicked() {
+                                    react(emoji, actions);
+                                }
+                            }
+                        });
+                        ui.separator();
+                        if widgets::menu_row(
+                            ui,
+                            palette,
+                            180.0,
+                            Icon::Copy,
+                            "Copy text",
+                            palette.text,
+                        )
+                        .clicked()
+                            && let Some(message) = message
+                        {
+                            actions.push(Action::CopyText(message.body.to_plain()));
+                        }
+                        if can_edit {
+                            if widgets::menu_row(
+                                ui,
+                                palette,
+                                180.0,
+                                Icon::Pencil,
+                                "Edit",
+                                palette.text,
+                            )
+                            .clicked()
+                            {
+                                actions.push(Action::StartEdit(id.to_owned()));
+                            }
+                            if widgets::menu_row(
+                                ui,
+                                palette,
+                                180.0,
+                                Icon::Trash,
+                                "Delete",
+                                palette.danger,
+                            )
+                            .clicked()
+                            {
+                                actions.push(Action::Delete {
+                                    conversation: conversation.clone(),
+                                    message: id.to_owned(),
+                                });
+                            }
+                        }
+                    });
                 });
             });
     });
@@ -1822,8 +1852,12 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                         // control colour.
                                         // A floating bar: a solid lane would re-wrap the
                                         // text and lose the caret on paste.
+                                        // A full-height track reads as a scroll bar,
+                                        // not a stray mark by the icons.
                                         ui.spacing_mut().scroll.dormant_handle_opacity = 1.0;
+                                        ui.spacing_mut().scroll.dormant_background_opacity = 1.0;
                                         ui.spacing_mut().scroll.floating_width = 4.0;
+                                        ui.spacing_mut().scroll.handle_min_length = 24.0;
                                         let editor_widgets = ui.visuals().widgets.clone();
                                         let bars = &mut ui.visuals_mut().widgets;
                                         bars.inactive.bg_fill = palette.control;
@@ -1855,24 +1889,6 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                                 })
                                                 .inner
                                             });
-                                        // Lines scrolled above fade out instead of
-                                        // showing a cut row along the top edge.
-                                        if scrolled.state.offset.y > 0.5 {
-                                            let top = scrolled.inner_rect;
-                                            for step in 0..5 {
-                                                let strip = egui::Rect::from_min_size(
-                                                    top.min + vec2(0.0, step as f32 * 2.0),
-                                                    vec2(top.width(), 2.0),
-                                                );
-                                                ui.painter().rect_filled(
-                                                    strip,
-                                                    0.0,
-                                                    palette
-                                                        .surface
-                                                        .gamma_multiply(1.0 - step as f32 / 5.0),
-                                                );
-                                            }
-                                        }
                                         scrolled.inner
                                     },
                                 )

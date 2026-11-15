@@ -11,12 +11,14 @@ use crate::theme::{self, Icon};
 pub fn list(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let now = crate::time::now();
-    let upcoming: Vec<Meeting> = app
+    let mut upcoming: Vec<Meeting> = app
         .meetings
         .iter()
         .filter(|m| m.end > now && !m.cancelled)
         .cloned()
         .collect();
+    // In time order, whatever order they arrived in.
+    upcoming.sort_by_key(|m| m.start);
     if upcoming.is_empty() {
         let (title, text) = if app.loading.contains(&crate::sync::Resource::Calendar) {
             ("Loading your calendar…", "")

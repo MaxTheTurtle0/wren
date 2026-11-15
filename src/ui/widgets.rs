@@ -63,8 +63,13 @@ pub fn avatar(
             ui.painter().text(
                 rect.center(),
                 Align2::CENTER_CENTER,
-                theme::initials(name),
-                theme::semibold((size * 0.38).round()),
+                // Never below 11 pt; tiny avatars show one letter.
+                if size <= 20.0 {
+                    theme::initials(name).chars().take(1).collect()
+                } else {
+                    theme::initials(name)
+                },
+                theme::semibold((size * 0.38).round().max(11.0)),
                 Color32::WHITE,
             );
         }
@@ -614,6 +619,37 @@ pub fn detail_column(rect: egui::Rect) -> egui::Rect {
             inner.height(),
         ),
     )
+}
+
+/// One row of a menu: an icon column, then the label.
+pub fn menu_row(
+    ui: &mut Ui,
+    palette: &Palette,
+    width: f32,
+    icon: Icon,
+    label: &str,
+    color: Color32,
+) -> Response {
+    let (rect, response) = ui.allocate_exact_size(vec2(width, 28.0), Sense::click());
+    if response.hovered() {
+        ui.painter()
+            .rect_filled(rect, CornerRadius::same(6), palette.surface_hover);
+    }
+    icon.image(palette.secondary, 14.0).paint_at(
+        ui,
+        egui::Rect::from_center_size(
+            egui::pos2(rect.left() + 16.0, rect.center().y),
+            Vec2::splat(14.0),
+        ),
+    );
+    ui.painter().text(
+        egui::pos2(rect.left() + 32.0, rect.center().y),
+        Align2::LEFT_CENTER,
+        label,
+        theme::regular(13.0),
+        color,
+    );
+    response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
 /// A label above a field or drop-down.

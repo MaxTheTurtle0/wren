@@ -141,7 +141,7 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
         ));
     }
     buttons.push((
-        Icon::Close,
+        Icon::EyeOff,
         "Hide call bar",
         Action::CallDone,
         false,
@@ -192,14 +192,21 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
             });
         }
         ui.add_space(8.0);
-        // A narrow panel keeps the actions on one row: icons, with their
-        // names in the tooltips.
+        // A narrow panel keeps the actions on one row with short labels.
         let compact = ui.available_width() < 480.0;
         ui.horizontal_wrapped(|ui| {
             ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
             for (icon, label, action, accent, tip) in buttons {
                 let response = if compact {
-                    widgets::pill(ui, &palette, icon, "", accent)
+                    let short = match label {
+                        "Join on phone" => "Phone",
+                        "Full window" => "Expand",
+                        "Hide call bar" => "Hide",
+                        "Meeting chat" => "Chat",
+                        "Show call" => "Call",
+                        other => other,
+                    };
+                    widgets::pill(ui, &palette, icon, short, accent)
                         .on_hover_text(format!("{label}: {tip}"))
                 } else {
                     widgets::pill(ui, &palette, icon, label, accent).on_hover_text(tip)

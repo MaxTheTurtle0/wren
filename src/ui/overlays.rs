@@ -28,7 +28,7 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
 fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
     let palette = app.palette;
     let viewport = ctx.content_rect();
-    let width = (viewport.width() - 32.0).clamp(240.0, 960.0);
+    let width = (viewport.width() - 96.0).clamp(240.0, 1200.0);
     let height = (viewport.height() - 152.0).max(120.0);
     let zoom_id = egui::Id::new("image-preview-actual-size").with(uri);
     // Both draft and message images are already in egui's local byte cache.
@@ -47,7 +47,7 @@ fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
         _ => height,
     };
     let mut actions = Vec::new();
-    let close = modal(palette, ctx, "image-preview", width, 24.0, |ui| {
+    let close = modal(palette, ctx, "image-preview", width, Some(48.0), |ui| {
         ui.set_height(height + 96.0);
         Frame::new().inner_margin(Margin::same(16)).show(ui, |ui| {
             ui.horizontal(|ui| {
@@ -121,9 +121,16 @@ fn modal(
     ctx: &egui::Context,
     id: &str,
     width: f32,
-    top: f32,
+    top: Option<f32>,
     content: impl FnOnce(&mut egui::Ui),
 ) -> bool {
+    // A dialog sits a little above the middle of the window, by its height
+    // last frame. Dialogs whose height follows what is typed (search, people,
+    // zoom) keep a fixed top instead, so their fields never move.
+    let height_id = egui::Id::new(id).with("height");
+    let height: f32 = ctx.data(|d| d.get_temp(height_id)).unwrap_or(360.0);
+    let window = ctx.content_rect();
+    let top = top.unwrap_or_else(|| (window.height() * 0.4 - height / 2.0).max(48.0));
     let response = egui::Modal::new(egui::Id::new(id))
         .backdrop_color(palette.overlay)
         .frame(
@@ -159,6 +166,7 @@ fn modal(
     // with the title. Drawn after the content, so a wide dialog still gets
     // it at its real edge.
     let frame = response.response.rect;
+    ctx.data_mut(|d| d.insert_temp(height_id, frame.height()));
     let close = egui::Area::new(egui::Id::new(id).with("close"))
         .order(egui::Order::Tooltip)
         .fixed_pos(egui::pos2(frame.right() - 16.0 - 28.0, frame.top() + 22.0))
@@ -280,7 +288,7 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
             chosen = true;
         }
     });
-    let close = modal(palette, ctx, "switcher", 600.0, 90.0, |ui| {
+    let close = modal(palette, ctx, "switcher", 600.0, Some(90.0), |ui| {
         Frame::new()
             .inner_margin(Margin::symmetric(14, 12))
             .show(ui, |ui| {
@@ -532,7 +540,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
     let mut actions = Vec::new();
     let browsers: Vec<BrowserKind> = app.call_browsers().iter().map(|b| b.kind).collect();
-    let close = modal(palette, ctx, "settings", 560.0, 70.0, |ui| {
+    let close = modal(palette, ctx, "settings", 560.0, None, |ui| {
         Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new("Settings").font(theme::bold(20.0)).color(palette.text));
@@ -793,7 +801,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
 
 fn shortcuts(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
-    let close = modal(palette, ctx, "shortcuts", 880.0, 90.0, |ui| {
+    let close = modal(palette, ctx, "shortcuts", 880.0, None, |ui| {
         Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
@@ -821,10 +829,11 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
                 .iter()
                 .partition(|(group, _)| *group == "Messages");
             let (left, right) = (rows(left), rows(right));
-            let cell = |ui: &mut egui::Ui, row: Option<&Row>| match row {
+            let cell = |ui: &mut egui::Ui, row: Option<&Row>, first: bool| match row {
                 Some(Row::Heading(group)) => {
                     ui.vertical(|ui| {
-                        ui.add_space(6.0);
+                        // Groups after the first get room above their heading.
+                        ui.add_space(if first { 0.0 } else { 14.0 });
                         widgets::section_label(ui, &palette, group);
                     });
                     ui.label("");
@@ -843,10 +852,10 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
                 .spacing(vec2(14.0, 6.0))
                 .show(ui, |ui| {
                     for index in 0..left.len().max(right.len()) {
-                        cell(ui, left.get(index));
+                        cell(ui, left.get(index), index == 0);
                         // The gap between the two halves, as its own cell.
                         ui.allocate_exact_size(vec2(12.0, 0.0), Sense::hover());
-                        cell(ui, right.get(index));
+                        cell(ui, right.get(index), index == 0);
                         ui.end_row();
                     }
                 });
@@ -904,7 +913,7 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
             start = true;
         }
     });
-    let close = modal(palette, ctx, "new-chat", 520.0, 90.0, |ui| {
+    let close = modal(palette, ctx, "new-chat", 520.0, Some(90.0), |ui| {
         Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
@@ -1078,7 +1087,7 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                 };
                 let button = ui
                     .add_enabled_ui(!picked.is_empty(), |ui| {
-                        widgets::primary_button(ui, &palette, &format!("  {label}  "))
+                        widgets::primary_button(ui, &palette, &label)
                     })
                     .inner;
                 if button.clicked() {
@@ -1118,7 +1127,7 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
     let mut actions = Vec::new();
     let mut text = app.form_status.clone();
-    let close = modal(palette, ctx, "status-message", 440.0, 120.0, |ui| {
+    let close = modal(palette, ctx, "status-message", 440.0, None, |ui| {
         Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
@@ -1157,9 +1166,7 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
                     // Save once something changed.
                     let changed = text.trim() != current.trim();
                     let save = ui
-                        .add_enabled_ui(changed, |ui| {
-                            widgets::primary_button(ui, &palette, "  Save  ")
-                        })
+                        .add_enabled_ui(changed, |ui| widgets::primary_button(ui, &palette, "Save"))
                         .inner;
                     let enter =
                         changed && response.lost_focus() && ui.input(|i| i.key_pressed(Key::Enter));
@@ -1273,7 +1280,7 @@ fn call_settings(
 fn join_on_phone(app: &mut App, ctx: &egui::Context, url: &str) {
     let palette = app.palette;
     let mut actions = Vec::new();
-    let close = modal(palette, ctx, "join-on-phone", 340.0, 100.0, |ui| {
+    let close = modal(palette, ctx, "join-on-phone", 340.0, None, |ui| {
         Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
@@ -1300,7 +1307,7 @@ fn join_on_phone(app: &mut App, ctx: &egui::Context, url: &str) {
             ui.vertical_centered(|ui| qr_code(ui, url, 232.0));
             ui.add_space(16.0);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if widgets::secondary_button(ui, &palette, "  Copy link  ").clicked() {
+                if widgets::secondary_button(ui, &palette, "Copy link").clicked() {
                     actions.push(Action::CopyText(url.to_owned()));
                 }
             });
@@ -1351,7 +1358,7 @@ pub fn qr_code(ui: &mut egui::Ui, text: &str, size: f32) {
 fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
     let palette = app.palette;
     let mut actions = Vec::new();
-    let close = modal(palette, ctx, "consent", 460.0, 120.0, |ui| {
+    let close = modal(palette, ctx, "consent", 460.0, None, |ui| {
         Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 theme::icon(ui, Icon::Lock, 20.0, palette.secondary);
@@ -1373,10 +1380,10 @@ fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
             );
             ui.add_space(14.0);
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if widgets::primary_button(ui, &palette, "  Continue in browser  ").clicked() {
+                if widgets::primary_button(ui, &palette, "Continue in browser").clicked() {
                     actions.push(Action::RequestScope(scope));
                 }
-                if widgets::secondary_button(ui, &palette, "  Not now  ").clicked() {
+                if widgets::secondary_button(ui, &palette, "Not now").clicked() {
                     actions.push(Action::CloseOverlay);
                 }
             });

@@ -60,6 +60,7 @@ fastframe_icons::icons! {
         Loader => "loader-circle",
         Sidebar => lucide "panel-left",
         Clock => lucide "clock",
+        EyeOff => lucide "eye-off",
     }
 }
 
@@ -140,11 +141,12 @@ impl Palette {
             text: Color32::from_rgb(0x1b, 0x1c, 0x1f),
             secondary: Color32::from_rgb(0x4a, 0x4d, 0x55),
             dim: Color32::from_rgb(0x62, 0x65, 0x6d),
-            accent: Color32::from_rgb(0x9c, 0x4b, 0x0c),
-            accent_hover: Color32::from_rgb(0x80, 0x3d, 0x08),
+            accent: Color32::from_rgb(0xa5, 0x50, 0x0f),
+            accent_hover: Color32::from_rgb(0x87, 0x41, 0x0a),
             on_accent: Color32::from_rgb(0xff, 0xff, 0xff),
             danger: Color32::from_rgb(0xb4, 0x25, 0x25),
-            warning: Color32::from_rgb(0x8a, 0x5a, 0x00),
+            // Gold, clear of the orange accent in hue.
+            warning: Color32::from_rgb(0x8f, 0x6a, 0x00),
             success: Color32::from_rgb(0x1b, 0x7a, 0x42),
             overlay: Color32::from_rgba_premultiplied(0, 0, 0, 90),
             shadow: Color32::from_rgba_premultiplied(0, 0, 0, 40),
@@ -317,9 +319,11 @@ pub fn apply(ctx: &egui::Context, palette: &Palette) {
         ]
         .into();
         style.spacing.item_spacing = Vec2::new(8.0, 6.0);
-        style.spacing.button_padding = Vec2::new(10.0, 5.0);
+        // One button padding everywhere; labels carry no padding spaces.
+        style.spacing.button_padding = Vec2::new(14.0, 5.0);
         style.spacing.interact_size.y = 28.0;
-        style.spacing.menu_margin = egui::Margin::same(6);
+        // Menus and tooltips: 10 pt at the sides, 6 pt above and below.
+        style.spacing.menu_margin = egui::Margin::symmetric(10, 6);
         style.spacing.scroll = egui::style::ScrollStyle::floating();
         style.spacing.scroll.floating_width = 6.0;
         style.interaction.selectable_labels = false;
