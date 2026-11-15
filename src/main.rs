@@ -331,6 +331,20 @@ fn apply_page(app: &mut App, page: &str) {
                 if part == "phone" {
                     app.actions.push(Action::JoinOnPhone);
                 }
+                // Today's session starts in the meeting chat, as Teams posts it.
+                let chat = ConversationId::Chat("19:meeting_demo-design-review@thread.v2".into());
+                if let Some(view) = app.conversations.get_mut(&chat) {
+                    let now = wren::time::now();
+                    view.messages.push(wren::model::Message {
+                        id: "demo-meeting-started-today".into(),
+                        conversation: Some(chat.clone()),
+                        created: now,
+                        modified: now,
+                        system: true,
+                        body: wren::html::RichText::plain("Meeting started"),
+                        ..Default::default()
+                    });
+                }
             }
             "signin" => {
                 app.demo = false;

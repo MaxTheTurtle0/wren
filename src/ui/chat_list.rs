@@ -109,6 +109,9 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
             },
         );
     }
+    if selected {
+        widgets::selection_marker(ui, palette, inner);
+    }
     let title = chat.title(me);
     let avatar_rect =
         egui::Rect::from_min_size(inner.left_top() + vec2(8.0, 9.0), egui::Vec2::splat(38.0));

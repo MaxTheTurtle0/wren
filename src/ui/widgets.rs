@@ -424,6 +424,64 @@ pub fn checkbox(
     response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
+/// The accent bar on the left of a selected list row, so selection does
+/// not rest on a fill alone.
+pub fn selection_marker(ui: &Ui, palette: &Palette, row: egui::Rect) {
+    let bar = egui::Rect::from_min_max(
+        egui::pos2(row.left(), row.top() + 8.0),
+        egui::pos2(row.left() + 3.0, row.bottom() - 8.0),
+    );
+    ui.painter()
+        .rect_filled(bar, CornerRadius::same(2), palette.accent);
+}
+
+/// The 52 pt bar along the top of a main pane: title, subtitle, actions on
+/// the right and a hairline below, as the conversation header has.
+pub fn pane_header(
+    ui: &mut Ui,
+    palette: &Palette,
+    title: &str,
+    subtitle: &str,
+    actions: impl FnOnce(&mut Ui),
+) {
+    let rect = egui::Rect::from_min_size(
+        ui.max_rect().min,
+        vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
+    );
+    ui.painter().hline(
+        rect.x_range(),
+        rect.bottom() - 0.5,
+        Stroke::new(1.0, palette.outline),
+    );
+    let inset = super::header_inset(ui.ctx(), rect.left());
+    ui.scope_builder(
+        egui::UiBuilder::new().max_rect(rect.shrink2(vec2(16.0, 0.0))),
+        |ui| {
+            ui.horizontal_centered(|ui| {
+                ui.add_space(inset);
+                ui.vertical(|ui| {
+                    ui.spacing_mut().item_spacing.y = 0.0;
+                    ui.add_space(8.0);
+                    ui.label(
+                        egui::RichText::new(title)
+                            .font(theme::semibold(15.0))
+                            .color(palette.text),
+                    );
+                    if !subtitle.is_empty() {
+                        ui.label(
+                            egui::RichText::new(subtitle)
+                                .font(theme::regular(12.0))
+                                .color(palette.secondary),
+                        );
+                    }
+                });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), actions);
+            });
+        },
+    );
+    ui.allocate_rect(rect, Sense::hover());
+}
+
 /// A label above a field or drop-down.
 pub fn field_label(ui: &mut Ui, palette: &Palette, text: &str) {
     ui.label(

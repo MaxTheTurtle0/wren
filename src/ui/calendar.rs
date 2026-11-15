@@ -163,30 +163,28 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
         return;
     };
     let now = crate::time::now();
-    ui.add_space(theme::HEADER_HEIGHT + 12.0);
-    Frame::new().inner_margin(Margin::symmetric(32, 0)).show(ui, |ui| {
-        ui.set_max_width(640.0);
-        ui.label(egui::RichText::new(&meeting.subject).font(theme::bold(24.0)).color(palette.text));
-        ui.add_space(6.0);
-        let when = format!(
-            "{} · {}",
-            crate::time::day_label(meeting.start, now),
-            crate::time::span_label(meeting.start, meeting.end, meeting.all_day)
-        );
-        ui.label(egui::RichText::new(when).font(theme::medium(14.0)).color(palette.secondary));
-        ui.add_space(16.0);
-        ui.horizontal(|ui| {
-            if let Some(url) = &meeting.join_url {
-                let join = widgets::pill(ui, &palette, Icon::Video, "Join", true);
-                widgets::on_click(&join, &mut app.actions, Action::JoinMeeting(url.clone()));
-                let copy = widgets::pill(ui, &palette, Icon::Copy, "Copy link", false);
-                widgets::on_click(&copy, &mut app.actions, Action::CopyText(url.clone()));
-            }
-            if let Some(web) = &meeting.web_link {
-                let open = widgets::pill(ui, &palette, Icon::ExternalLink, "Open in Outlook", false);
-                widgets::on_click(&open, &mut app.actions, Action::OpenUrl(web.clone()));
-            }
-        });
+    let when = format!(
+        "{} · {}",
+        crate::time::day_label(meeting.start, now),
+        crate::time::span_label(meeting.start, meeting.end, meeting.all_day)
+    );
+    widgets::pane_header(ui, &palette, &meeting.subject, &when, |ui| {
+        ui.spacing_mut().item_spacing.x = 6.0;
+        // Right to left: the primary action ends up rightmost.
+        if let Some(url) = &meeting.join_url {
+            let join = widgets::pill(ui, &palette, Icon::Video, "Join", true);
+            widgets::on_click(&join, &mut app.actions, Action::JoinMeeting(url.clone()));
+            let copy = widgets::pill(ui, &palette, Icon::Copy, "Copy link", false);
+            widgets::on_click(&copy, &mut app.actions, Action::CopyText(url.clone()));
+        }
+        if let Some(web) = &meeting.web_link {
+            let open = widgets::pill(ui, &palette, Icon::ExternalLink, "Open in Outlook", false);
+            widgets::on_click(&open, &mut app.actions, Action::OpenUrl(web.clone()));
+        }
+    });
+    ui.add_space(20.0);
+    Frame::new().inner_margin(Margin::symmetric(24, 0)).show(ui, |ui| {
+        ui.set_max_width(640.0f32.min(ui.available_width()));
         ui.add_space(20.0);
         Frame::new()
             .fill(palette.panel)

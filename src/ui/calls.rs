@@ -93,12 +93,16 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
     );
     widgets::window_drag(ui, header, "calls-drag");
-    ui.add_space(theme::HEADER_HEIGHT + 12.0);
+    widgets::pane_header(
+        ui,
+        &palette,
+        "Calls and meetings",
+        "Join by link, or call someone from the list",
+        |_| {},
+    );
     egui::ScrollArea::vertical().id_salt("calls-page").auto_shrink([false, false]).show(ui, |ui| {
-        Frame::new().inner_margin(Margin::symmetric(32, 0)).show(ui, |ui| {
+        Frame::new().inner_margin(Margin { left: 24, right: 24, top: 20, bottom: 0 }).show(ui, |ui| {
             ui.set_max_width(680.0f32.min(ui.available_width()));
-            ui.label(egui::RichText::new("Calls and meetings").font(theme::bold(24.0)).color(palette.text));
-            ui.add_space(16.0);
             // Join by link.
             let link_id = egui::Id::new("wren-join-link");
             let mut link: String = ui.ctx().data(|d| d.get_temp(link_id)).unwrap_or_default();
@@ -137,35 +141,57 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 crate::calling::Opener::Browser => "Teams on the web, in your default browser".to_owned(),
                 crate::calling::Opener::TeamsApp => "the Microsoft Teams app".to_owned(),
             };
-            ui.label(egui::RichText::new(format!("Calls and meetings open in {place}. The call itself runs in Microsoft's own client, so it costs nothing extra; Wren shows the meeting chat and follows the call. Change this in Settings.")).color(palette.secondary));
-            ui.add_space(16.0);
-
-            ui.label(egui::RichText::new("What works today").font(theme::semibold(15.0)).color(palette.text));
-            ui.add_space(6.0);
-            for capability in CAPABILITIES {
-                let (color, icon) = match capability.status {
-                    "Works" => (palette.success, Icon::Check),
-                    "Not possible" => (palette.danger, Icon::Close),
-                    _ => (palette.warning, Icon::Info),
-                };
-                Frame::new()
-                    .inner_margin(Margin::symmetric(0, 6))
-                    .show(ui, |ui| {
-                        ui.horizontal_wrapped(|ui| {
-                            ui.label(egui::RichText::new(capability.name).font(theme::semibold(13.0)).color(palette.text));
-                            ui.add_space(4.0);
-                            theme::icon(ui, icon, 14.0, color);
-                            ui.label(egui::RichText::new(capability.status).font(theme::semibold(12.0)).color(color));
-                        });
-                        ui.add(egui::Label::new(egui::RichText::new(capability.detail).font(theme::regular(13.0)).color(palette.secondary)).wrap());
-                    });
+            ui.label(egui::RichText::new(format!("Calls open in {place}. Microsoft's own client runs the call, so it costs nothing extra; Wren shows the meeting chat and follows the call.")).color(palette.secondary));
+            ui.add_space(10.0);
+            // What works, at a glance; the details on request.
+            for (status, color, icon) in [("Works", palette.success, Icon::Check), ("Not possible", palette.danger, Icon::Close)] {
+                // "Join meetings, start audio or video calls, call status"
+                let names: Vec<String> = CAPABILITIES
+                    .iter()
+                    .filter(|c| c.status == status)
+                    .enumerate()
+                    .map(|(index, c)| {
+                        let mut chars = c.name.chars();
+                        match chars.next() {
+                            Some(first) if index > 0 => first.to_lowercase().chain(chars).collect(),
+                            _ => c.name.to_owned(),
+                        }
+                    })
+                    .collect();
+                if names.is_empty() {
+                    continue;
+                }
+                ui.horizontal_wrapped(|ui| {
+                    theme::icon(ui, icon, 14.0, color);
+                    ui.label(egui::RichText::new(format!("{status}:")).font(theme::semibold(13.0)).color(color));
+                    ui.label(egui::RichText::new(names.join(", ")).font(theme::regular(13.0)).color(palette.text));
+                });
             }
-            ui.add_space(14.0);
-            ui.label(
-                egui::RichText::new("Calls open in Teams. Use the Teams window for audio, video and call controls.")
-                    .font(theme::regular(12.0))
-                    .color(palette.dim),
-            );
+            ui.add_space(4.0);
+            egui::CollapsingHeader::new(egui::RichText::new("Details").font(theme::medium(13.0)).color(palette.secondary))
+                .id_salt("call-capabilities")
+                .default_open(false)
+                .show(ui, |ui| {
+                    for capability in CAPABILITIES {
+                        let (color, icon) = match capability.status {
+                            "Works" => (palette.success, Icon::Check),
+                            "Not possible" => (palette.danger, Icon::Close),
+                            _ => (palette.warning, Icon::Info),
+                        };
+                        Frame::new()
+                            .inner_margin(Margin::symmetric(0, 6))
+                            .show(ui, |ui| {
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.label(egui::RichText::new(capability.name).font(theme::semibold(13.0)).color(palette.text));
+                                    ui.add_space(4.0);
+                                    theme::icon(ui, icon, 14.0, color);
+                                    ui.label(egui::RichText::new(capability.status).font(theme::semibold(12.0)).color(color));
+                                });
+                                ui.add(egui::Label::new(egui::RichText::new(capability.detail).font(theme::regular(13.0)).color(palette.secondary)).wrap());
+                            });
+                    }
+                });
+            ui.add_space(24.0);
         });
     });
 }

@@ -45,11 +45,6 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                 Stroke::new(1.0, palette.outline),
             );
             widgets::window_drag(ui, rect, "header-drag");
-            ui.painter().hline(
-                rect.x_range().expand(16.0),
-                rect.bottom(),
-                Stroke::new(1.0, palette.outline),
-            );
             ui.horizontal_centered(|ui| {
                 ui.spacing_mut().item_spacing.x = 10.0;
                 let mut call_users: Vec<String> = Vec::new();
@@ -1202,14 +1197,21 @@ fn thread_card(
                     "Reply"
                 };
                 let response = ui.add(
-                    egui::Button::new(
+                    egui::Button::image_and_text(
+                        Icon::Reply.image(palette.secondary, 14.0),
                         egui::RichText::new(label)
-                            .font(theme::medium(12.0))
+                            .font(theme::medium(13.0))
                             .color(palette.secondary),
                     )
-                    .frame(false),
+                    .fill(palette.surface)
+                    .stroke(Stroke::new(1.0, palette.outline))
+                    .corner_radius(CornerRadius::same(6))
+                    .min_size(vec2(0.0, 28.0)),
                 );
-                if response.clicked() {
+                if response
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .clicked()
+                {
                     actions.push(Action::StartReply(root.id.clone()));
                 }
             });
@@ -1359,6 +1361,8 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             bottom: 14,
         }))
         .show(ui, |ui| {
+            // As wide as the message column above it.
+            ui.set_max_width(ui.available_width().min(MAX_HISTORY_WIDTH - 4.0));
             composer_top = Some(ui.cursor().min);
             // The field's edge reads as a control, and focus as a ring.
             let edge = if ui.memory(|m| m.has_focus(id)) {
@@ -1711,12 +1715,12 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         }
                     });
                 });
-            ui.add_space(2.0);
+            ui.add_space(4.0);
             ui.label(
                 egui::RichText::new(
-                    "**bold**  *italic*  `code`  > quote  - list  @ mention   ·   Shift+Enter for a new line",
+                    "Enter to send · Shift+Enter for a new line · **bold**, *italic*, `code`, > quote, - list",
                 )
-                .font(theme::regular(11.0))
+                .font(theme::regular(12.0))
                 .color(palette.dim),
             );
         });

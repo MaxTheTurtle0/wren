@@ -270,7 +270,18 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
             egui::RichText::new("Wren signs in through an Entra ID app registration that you or your administrator create. It takes about five minutes and needs no secrets.")
                 .color(palette.secondary),
         );
-        ui.add_space(4.0);
+        ui.add_space(2.0);
+        // The guide first: the fields below need what it produces.
+        let guide = ui.horizontal(|ui| {
+            theme::icon(ui, crate::theme::Icon::ExternalLink, 14.0, palette.link);
+            ui.link(
+                egui::RichText::new("Step-by-step registration guide").font(theme::semibold(13.0)),
+            )
+        });
+        if guide.inner.clicked() {
+            app.actions.push(Action::OpenUrl(DOCS.into()));
+        }
+        ui.add_space(8.0);
     }
     ui.label(
         egui::RichText::new("Application (client) ID")
@@ -313,7 +324,7 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
                 tenant: app.form_tenant.clone(),
             });
         }
-        if ui.link("How to register Wren").clicked() {
+        if !first_run && ui.link("How to register Wren").clicked() {
             app.actions.push(Action::OpenUrl(DOCS.into()));
         }
     });

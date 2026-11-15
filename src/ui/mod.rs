@@ -337,7 +337,9 @@ fn toasts(app: &mut App, ctx: &egui::Context) {
     ctx.data_mut(|d| d.insert_temp(shown_id, times));
 
     egui::Area::new(egui::Id::new("wren-toasts"))
-        .anchor(Align2::CENTER_BOTTOM, vec2(0.0, -96.0))
+        // At the top, clear of the newest messages and the composer, where
+        // a failed message and its Retry button appear.
+        .anchor(Align2::CENTER_TOP, vec2(0.0, theme::HEADER_HEIGHT + 12.0))
         .order(egui::Order::Foreground)
         .interactable(true)
         .show(ctx, |ui| {

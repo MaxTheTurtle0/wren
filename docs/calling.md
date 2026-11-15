@@ -33,7 +33,7 @@ request; the browser may choose a different position.
 ## During a call
 
 The call bar offers **Meeting chat**, **Join on phone**, **Dock/Restore**,
-and **Done**. **Show call** activates the browser on macOS. Joining the same
+and **Close bar**. **Show call** activates the browser on macOS. Joining the same
 meeting again brings the current call forward.
 
 Wren finds the meeting chat in its cache. If it is missing, **Meeting chat**
@@ -43,10 +43,10 @@ is requested only when needed. Calls started from a chat use that chat.
 Call status follows your presence on focus and, with a relay, through
 presence change notifications. These trigger ordinary Graph fetches; Wren
 does not poll. After presence leaves a call, a one-minute grace period
-avoids flicker before the window is restored. **Done** restores it at once.
+avoids flicker before the window is restored. **Close bar** restores it at once.
 
 Calendar-derived `InAMeeting` counts only for meetings Wren opened. It can
-outlast a meeting you leave early; use **Done** if the bar stays visible.
+outlast a meeting you leave early; use **Close bar** if the bar stays visible.
 Calls started elsewhere can also appear when your presence indicates a call.
 
 ## Sign-in and privacy
@@ -82,5 +82,5 @@ These still need a real browser, meeting and tenant:
 | Placement with an already-running browser and Windows display scaling | Wren docks itself; browser placement is best effort |
 | Teams' pre-join page and remembered browser choice | Follow Teams' own join prompts |
 | Browser session reuse and creation of missing account profiles | Sign in to Teams on the web; separate profiles are optional |
-| Presence timing when entering or leaving a real call | One-minute grace period and **Done** |
+| Presence timing when entering or leaving a real call | One-minute grace period and **Close bar** |
 | Focusing the exact call window | **Show call** activates the browser on macOS |

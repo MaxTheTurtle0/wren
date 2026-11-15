@@ -443,23 +443,35 @@ fn result_row(
     }
     if selected {
         ui.scroll_to_rect(rect, None);
+        widgets::selection_marker(ui, palette, rect);
     }
-    icon.image(
-        if selected {
-            palette.accent
-        } else {
-            palette.dim
-        },
-        16.0,
-    )
-    .paint_at(
-        ui,
-        egui::Rect::from_center_size(
-            egui::pos2(rect.left() + 20.0, rect.center().y),
-            egui::Vec2::splat(16.0),
-        ),
-    );
-    let left = rect.left() + 40.0;
+    let center = egui::pos2(rect.left() + 22.0, rect.center().y);
+    if matches!(icon, Icon::Chat) {
+        // People and chats: their initials, as in the chat list.
+        ui.painter()
+            .circle_filled(center, 13.0, theme::avatar_color(label, palette.dark));
+        ui.painter().text(
+            center,
+            egui::Align2::CENTER_CENTER,
+            theme::initials(label),
+            theme::semibold(11.0),
+            egui::Color32::WHITE,
+        );
+    } else {
+        icon.image(
+            if selected {
+                palette.accent
+            } else {
+                palette.secondary
+            },
+            16.0,
+        )
+        .paint_at(
+            ui,
+            egui::Rect::from_center_size(center, egui::Vec2::splat(16.0)),
+        );
+    }
+    let left = rect.left() + 44.0;
     let title = super::chat_list::elided(
         ui,
         label,
@@ -597,13 +609,13 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     actions.push(Action::SetKeepRunning(keep));
                 }
                 ui.label(
-                    egui::RichText::new(format!("New messages are fetched when you open a chat, come back to the window or press {}. Microsoft's rules for Teams forbid background polling; for instant alerts, connect a push relay below (docs/realtime.md).", super::keys::shortcut("⌘R")))
+                    egui::RichText::new(format!("New messages arrive when you open a chat, come back to Wren or press {}. Microsoft doesn't allow apps to check in the background; for instant alerts, connect a push relay.", super::keys::shortcut("⌘R")))
                         .font(theme::regular(12.0))
                         .color(palette.dim),
                 );
                 let mut session = app.settings.presence_session;
                 if ui
-                    .checkbox(&mut session, "Show me as available while I use Wren")
+                    .scope(|ui| widgets::checkbox(ui, &palette, &mut session, "Show me as available while I use Wren")).inner
                     .on_hover_text("Keeps a Microsoft presence session, as a Teams app does: you show Available while you use Wren, and Away a few minutes after you stop. Needs the Presence.ReadWrite permission, asked for the first time you set your status.")
                     .changed()
                 {
@@ -1039,11 +1051,25 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
             );
             response.request_focus();
             ui.add_space(12.0);
+            let current = app
+                .my_presence
+                .as_ref()
+                .and_then(|p| p.status_message.clone())
+                .unwrap_or_default();
             ui.horizontal(|ui| {
-                if widgets::primary_button(ui, &palette, "  Save  ").clicked() {
+                // Save once something changed; Remove only when a status is set.
+                let changed = text.trim() != current.trim();
+                let save = ui
+                    .add_enabled_ui(changed, |ui| {
+                        widgets::primary_button(ui, &palette, "  Save  ")
+                    })
+                    .inner;
+                if save.clicked() {
                     actions.push(Action::SetStatusMessage(text.clone()));
                 }
-                if widgets::secondary_button(ui, &palette, "Clear").clicked() {
+                if !current.is_empty()
+                    && widgets::secondary_button(ui, &palette, "Remove status").clicked()
+                {
                     actions.push(Action::SetStatusMessage(String::new()));
                 }
                 if widgets::secondary_button(ui, &palette, "Cancel").clicked() {

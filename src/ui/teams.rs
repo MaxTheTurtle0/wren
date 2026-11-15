@@ -155,6 +155,9 @@ fn channel_row(
                 },
             );
         }
+        if selected {
+            super::widgets::selection_marker(ui, palette, inner);
+        }
         let icon = match kind {
             ChannelKind::Private => Icon::Lock,
             ChannelKind::Shared => Icon::Teams,

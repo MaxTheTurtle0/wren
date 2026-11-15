@@ -103,5 +103,3 @@ Remaining checks and known issues:
   and pass tests in CI.
 - A real call in the Teams web window has not been confirmed. See the
   [calling open questions](calling.md#open-questions).
-- The Calls capability table clips at 760 × 700, observed in both themes
-  during the macOS demo checks.
