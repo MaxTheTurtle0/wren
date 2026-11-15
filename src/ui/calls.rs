@@ -170,6 +170,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             ui.add_space(4.0);
             egui::CollapsingHeader::new(egui::RichText::new("Details").font(theme::medium(13.0)).color(palette.secondary))
                 .id_salt("call-capabilities")
+                .icon(widgets::disclosure_chevron(palette.secondary))
                 .default_open(false)
                 .show(ui, |ui| {
                     for capability in CAPABILITIES {

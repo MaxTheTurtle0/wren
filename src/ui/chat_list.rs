@@ -23,6 +23,13 @@ pub fn matches_filter(chat: &Chat, filter: &str, me: &str) -> bool {
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
+    // Nothing to filter yet: the main pane explains why.
+    if app.chats.is_empty() {
+        if app.loading.contains(&crate::sync::Resource::Chats) {
+            skeleton(ui, &palette);
+        }
+        return;
+    }
     egui::Frame::new()
         .inner_margin(Margin::symmetric(12, 0))
         .show(ui, |ui| {
@@ -44,20 +51,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         .map(|(index, _)| index)
         .collect();
     if visible.is_empty() {
-        if app.chats.is_empty() {
-            if app.loading.contains(&crate::sync::Resource::Chats) {
-                skeleton(ui, &palette);
-            } else {
-                ui.add_space(8.0);
-                ui.vertical_centered(|ui| {
-                    ui.label(
-                        egui::RichText::new("No chats yet")
-                            .font(theme::regular(13.0))
-                            .color(palette.secondary),
-                    );
-                });
-            }
-        } else if widgets::empty_state_with_action(
+        if widgets::empty_state_with_action(
             ui,
             &palette,
             Icon::Search,
@@ -115,34 +109,7 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
     let title = chat.title(me);
     let avatar_rect =
         egui::Rect::from_min_size(inner.left_top() + vec2(8.0, 9.0), egui::Vec2::splat(38.0));
-    let mut child = ui.new_child(egui::UiBuilder::new().max_rect(avatar_rect));
-    match chat.kind {
-        ChatKind::OneOnOne => {
-            let peer = chat.peer(me);
-            widgets::avatar(
-                &mut child,
-                app,
-                peer.map(|p| p.user_id.as_str()),
-                peer.map_or(title.as_str(), |p| p.display_name.as_str()),
-                38.0,
-                true,
-            );
-        }
-        ChatKind::Group => {
-            widgets::avatar(&mut child, app, None, &title, 38.0, false);
-        }
-        ChatKind::Meeting => {
-            child.painter().rect_filled(
-                avatar_rect,
-                CornerRadius::same(10),
-                palette.surface_active,
-            );
-            Icon::Calendar.image(palette.accent, 18.0).paint_at(
-                &child,
-                egui::Rect::from_center_size(avatar_rect.center(), egui::Vec2::splat(18.0)),
-            );
-        }
-    }
+    chat_avatar(ui, app, chat, me, &title, avatar_rect);
 
     let text_left = avatar_rect.right() + 10.0;
     let time = chat
@@ -246,6 +213,50 @@ pub fn elided(
     );
     job.wrap = egui::text::TextWrapping::truncate_at_width(width);
     ui.ctx().fonts_mut(|f| f.layout_job(job))
+}
+
+/// A chat's picture in `rect`: the person for a 1:1 chat, initials for a
+/// group, a calendar tile for a meeting. Shared with the switcher so a
+/// chat looks the same everywhere.
+pub fn chat_avatar(
+    ui: &mut egui::Ui,
+    app: &App,
+    chat: &Chat,
+    me: &str,
+    title: &str,
+    rect: egui::Rect,
+) {
+    let palette = &app.palette;
+    let size = rect.width();
+    let mut child = ui.new_child(egui::UiBuilder::new().max_rect(rect));
+    match chat.kind {
+        ChatKind::OneOnOne => {
+            let peer = chat.peer(me);
+            widgets::avatar(
+                &mut child,
+                app,
+                peer.map(|p| p.user_id.as_str()),
+                peer.map_or(title, |p| p.display_name.as_str()),
+                size,
+                true,
+            );
+        }
+        ChatKind::Group => {
+            widgets::avatar(&mut child, app, None, title, size, false);
+        }
+        ChatKind::Meeting => {
+            child.painter().rect_filled(
+                rect,
+                CornerRadius::same((size * 0.26) as u8),
+                palette.surface_active,
+            );
+            let icon = (size * 0.47).round();
+            Icon::Calendar.image(palette.accent, icon).paint_at(
+                &child,
+                egui::Rect::from_center_size(rect.center(), egui::Vec2::splat(icon)),
+            );
+        }
+    }
 }
 
 /// Placeholder rows while the first chat list loads.

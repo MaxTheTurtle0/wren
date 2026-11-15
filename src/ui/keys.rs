@@ -5,23 +5,38 @@ use egui::{Key, Modifiers};
 use crate::app::{App, Overlay};
 use crate::model::{Action, Section};
 
-/// Shortcuts and what they do, for the shortcuts sheet.
-pub const SHORTCUTS: &[(&str, &str)] = &[
-    ("⌘K", "Search chats, channels and messages"),
-    ("⌘1 – ⌘4", "Chat, Teams, Calendar, Calls"),
-    ("⌘N", "New chat"),
-    ("⌘⇧A", "Next account"),
-    ("@ in the composer", "Mention someone"),
-    ("Alt ↑ / Alt ↓", "Previous or next conversation"),
-    ("Enter", "Send"),
-    ("Shift Enter", "New line"),
-    ("↑ in an empty composer", "Edit your last message"),
-    ("Esc", "Cancel reply or edit, close dialogs"),
-    ("⌘R", "Refresh what you're looking at"),
-    ("⌘,", "Settings"),
-    ("⌘ + / ⌘ − / ⌘0", "Zoom in, out, reset"),
-    ("⌘⇧P", "Performance overlay"),
-    ("⌘/", "This list"),
+/// Shortcuts and what they do, in groups, for the shortcuts sheet.
+pub const SHORTCUTS: &[(&str, &[(&str, &str)])] = &[
+    (
+        "Navigation",
+        &[
+            ("⌘K", "Search chats, channels and messages"),
+            ("⌘1 – ⌘4", "Chat, Teams, Calendar, Calls"),
+            ("Alt ↑ / Alt ↓", "Previous or next conversation"),
+            ("⌘⇧A", "Next account"),
+        ],
+    ),
+    (
+        "Messages",
+        &[
+            ("⌘N", "New chat"),
+            ("Enter", "Send"),
+            ("Shift Enter", "New line"),
+            ("@ in the composer", "Mention someone"),
+            ("↑ in an empty composer", "Edit your last message"),
+            ("Esc", "Cancel reply or edit, close dialogs"),
+        ],
+    ),
+    (
+        "App",
+        &[
+            ("⌘R", "Refresh what you're looking at"),
+            ("⌘,", "Settings"),
+            ("⌘ + / ⌘ − / ⌘0", "Zoom in, out, reset"),
+            ("⌘⇧P", "Performance overlay"),
+            ("⌘/", "This list"),
+        ],
+    ),
 ];
 
 /// A shortcut as written in [`SHORTCUTS`] (⌘ for the command key), in the

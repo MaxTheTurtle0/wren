@@ -204,7 +204,8 @@ pub fn secondary_button(ui: &mut Ui, palette: &Palette, text: &str) -> Response 
             .font(theme::medium(13.0)),
     )
     .fill(palette.surface)
-    .stroke(Stroke::new(1.0, palette.outline))
+    // A 3:1 edge, so it reads as a button and not a label.
+    .stroke(Stroke::new(1.0, palette.control))
     .corner_radius(CornerRadius::same(8))
     .min_size(vec2(0.0, 32.0));
     ui.add(button)
@@ -480,6 +481,31 @@ pub fn pane_header(
         },
     );
     ui.allocate_rect(rect, Sense::hover());
+}
+
+/// The Lucide chevron for a drop-down, instead of egui's triangle.
+pub fn combo_chevron(
+    color: Color32,
+) -> impl FnOnce(&Ui, egui::Rect, &egui::style::WidgetVisuals, bool) {
+    move |ui, rect, _, _| {
+        Icon::ChevronDown.image(color, 16.0).paint_at(
+            ui,
+            egui::Rect::from_center_size(rect.center(), Vec2::splat(16.0)),
+        );
+    }
+}
+
+/// The Lucide chevron for a disclosure, turning as it opens.
+pub fn disclosure_chevron(color: Color32) -> impl FnOnce(&mut Ui, f32, &Response) {
+    move |ui, openness, response| {
+        Icon::ChevronRight
+            .image(color, 14.0)
+            .rotate(openness * std::f32::consts::FRAC_PI_2, Vec2::splat(0.5))
+            .paint_at(
+                ui,
+                egui::Rect::from_center_size(response.rect.center(), Vec2::splat(14.0)),
+            );
+    }
 }
 
 /// A label above a field or drop-down.

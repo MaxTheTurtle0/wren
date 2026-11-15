@@ -307,6 +307,7 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
                                 } else {
                                     Icon::Chat
                                 },
+                                Some(&target.conversation),
                                 index == selected,
                             );
                             if response.clicked() || (chosen && index == selected) {
@@ -347,6 +348,7 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
                                     &hit.snippet,
                                     &detail,
                                     Icon::Search,
+                                    None,
                                     index == selected,
                                 );
                                 if response.clicked() || (chosen && index == selected) {
@@ -425,6 +427,7 @@ fn result_row(
     label: &str,
     detail: &str,
     icon: Icon,
+    conversation: Option<&ConversationId>,
     selected: bool,
 ) -> egui::Response {
     let palette = &app.palette;
@@ -446,16 +449,20 @@ fn result_row(
         widgets::selection_marker(ui, palette, rect);
     }
     let center = egui::pos2(rect.left() + 22.0, rect.center().y);
-    if matches!(icon, Icon::Chat) {
-        // People and chats: their initials, as in the chat list.
-        ui.painter()
-            .circle_filled(center, 13.0, theme::avatar_color(label, palette.dark));
-        ui.painter().text(
-            center,
-            egui::Align2::CENTER_CENTER,
-            theme::initials(label),
-            theme::semibold(11.0),
-            egui::Color32::WHITE,
+    let chat = match conversation {
+        Some(ConversationId::Chat(id)) => app.chat(id),
+        _ => None,
+    };
+    if let Some(chat) = chat {
+        // The same picture as in the chat list.
+        let me = app.me().to_owned();
+        super::chat_list::chat_avatar(
+            ui,
+            app,
+            chat,
+            &me,
+            label,
+            egui::Rect::from_center_size(center, egui::Vec2::splat(28.0)),
         );
     } else {
         icon.image(
@@ -514,10 +521,18 @@ fn settings(app: &mut App, ctx: &egui::Context) {
             // A solid scroll bar keeps its own lane, clear of the content.
             ui.spacing_mut().scroll = egui::style::ScrollStyle::solid();
             ui.spacing_mut().scroll.bar_outer_margin = 4.0;
+            ui.spacing_mut().scroll.bar_width = 8.0;
+            // The bar paints with these; the content gets the usual ones back.
+            let widgets_style = ui.visuals().widgets.clone();
+            let bars = &mut ui.visuals_mut().widgets;
+            bars.inactive.bg_fill = palette.control;
+            bars.hovered.bg_fill = palette.secondary;
+            bars.active.bg_fill = palette.secondary;
             egui::ScrollArea::vertical()
                 .max_height(height)
                 .min_scrolled_height(height)
                 .show(ui, |ui| {
+                ui.visuals_mut().widgets = widgets_style.clone();
                 ui.spacing_mut().item_spacing.y = 8.0;
                 // Account.
                 widgets::section_label(ui, &palette, "Account");
@@ -771,16 +786,21 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
                 });
             });
             ui.add_space(10.0);
-            egui::Grid::new("shortcuts")
-                .num_columns(2)
-                .spacing(vec2(24.0, 8.0))
-                .show(ui, |ui| {
-                    for (keys, what) in super::keys::SHORTCUTS {
-                        widgets::keycaps(ui, &palette, &super::keys::shortcut(keys));
-                        ui.label(egui::RichText::new(*what).color(palette.text));
-                        ui.end_row();
-                    }
-                });
+            for (group, shortcuts) in super::keys::SHORTCUTS {
+                ui.add_space(6.0);
+                widgets::section_label(ui, &palette, group);
+                egui::Grid::new(("shortcuts", *group))
+                    .num_columns(2)
+                    .min_col_width(150.0)
+                    .spacing(vec2(24.0, 8.0))
+                    .show(ui, |ui| {
+                        for (keys, what) in *shortcuts {
+                            widgets::keycaps(ui, &palette, &super::keys::shortcut(keys));
+                            ui.label(egui::RichText::new(*what).color(palette.text));
+                            ui.end_row();
+                        }
+                    });
+            }
         });
     });
     if close {
@@ -1031,11 +1051,17 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
     let mut text = app.form_status.clone();
     let close = modal(palette, ctx, "status-message", 440.0, 120.0, |ui| {
         Frame::new().inner_margin(Margin::same(20)).show(ui, |ui| {
-            ui.label(
-                egui::RichText::new("Status message")
-                    .font(theme::bold(20.0))
-                    .color(palette.text),
-            );
+            ui.horizontal(|ui| {
+                ui.label(
+                    egui::RichText::new("Status message")
+                        .font(theme::bold(20.0))
+                        .color(palette.text),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
+                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
+                });
+            });
             ui.add_space(4.0);
             ui.label(
                 egui::RichText::new("People see it next to your name in Teams and Wren.")
@@ -1098,6 +1124,7 @@ fn call_settings(
     let mut calls = app.settings.calls.clone();
     widgets::field_label(ui, &palette, "Open calls and meetings in");
     egui::ComboBox::from_id_salt("calls-open-in")
+        .icon(widgets::combo_chevron(palette.secondary))
         .selected_text(calls.open_in.label())
         .width(300.0)
         .show_ui(ui, |ui| {
@@ -1121,6 +1148,7 @@ fn call_settings(
                     .unwrap_or(found[0]);
                 widgets::field_label(ui, &palette, "Browser");
                 egui::ComboBox::from_id_salt("calls-browser")
+                    .icon(widgets::combo_chevron(palette.secondary))
                     .width(300.0)
                     .selected_text(current.name())
                     .show_ui(ui, |ui| {
@@ -1250,18 +1278,26 @@ fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
     let close = modal(palette, ctx, "consent", 460.0, 120.0, |ui| {
         Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
             ui.horizontal(|ui| {
-                theme::icon(ui, Icon::Lock, 20.0, palette.accent);
+                theme::icon(ui, Icon::Lock, 20.0, palette.secondary);
                 ui.label(egui::RichText::new("One more permission").font(theme::bold(20.0)).color(palette.text));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
+                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
+                });
             });
             ui.add_space(8.0);
-            ui.label(egui::RichText::new(crate::auth::scope_reason(scope)).color(palette.text));
+            ui.label(egui::RichText::new(crate::auth::scope_reason(scope)).font(theme::medium(14.0)).color(palette.text));
             ui.add_space(6.0);
             ui.label(
-                egui::RichText::new(format!(
-                    "Wren asks for Microsoft Graph's {scope} permission only now that you use this. Microsoft's consent page opens in your browser; some organisations need an administrator to approve it."
-                ))
-                .font(theme::regular(12.0))
-                .color(palette.secondary),
+                egui::RichText::new("Microsoft's consent page opens in your browser. Some organisations need an administrator to approve it first.")
+                    .font(theme::regular(13.0))
+                    .color(palette.secondary),
+            );
+            ui.add_space(4.0);
+            ui.label(
+                egui::RichText::new(format!("Permission: {scope} (Microsoft Graph), asked for only now that you use this."))
+                    .font(theme::regular(12.0))
+                    .color(palette.dim),
             );
             ui.add_space(14.0);
             ui.horizontal(|ui| {

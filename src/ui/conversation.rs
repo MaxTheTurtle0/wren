@@ -132,10 +132,24 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         (name, subtitle)
                     }
                 };
+                // During a call in this chat the call bar has the controls.
+                let in_call = app
+                    .call
+                    .as_ref()
+                    .is_some_and(|c| !c.is_ended() && c.chat.as_ref() == Some(conversation));
+                if in_call {
+                    call_users.clear();
+                    join = None;
+                }
+                // The title takes whatever the header's buttons leave.
+                let buttons = if web.is_some() { 34.0 } else { 0.0 }
+                    + if call_users.is_empty() { 0.0 } else { 68.0 }
+                    + if join.is_some() { 84.0 } else { 0.0 }
+                    + 40.0;
                 ui.vertical(|ui| {
                     ui.add_space(8.0);
                     ui.spacing_mut().item_spacing.y = 0.0;
-                    let width = (ui.available_width() - 260.0).max(120.0);
+                    let width = (ui.available_width() - buttons).max(120.0);
                     ui.add(egui::Label::new(super::chat_list::elided(
                         ui,
                         &title,
@@ -153,15 +167,6 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         )));
                     }
                 });
-                // During a call in this chat the call bar has the controls.
-                let in_call = app
-                    .call
-                    .as_ref()
-                    .is_some_and(|c| !c.is_ended() && c.chat.as_ref() == Some(conversation));
-                if in_call {
-                    call_users.clear();
-                    join = None;
-                }
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     ui.spacing_mut().item_spacing.x = 4.0;
                     if let Some(web) = web {
@@ -569,7 +574,7 @@ fn message_row(
         .is_some_and(|p| message.body.to_plain().contains(&p.display_name));
     let background = if highlighted || mentioned {
         Some(palette.highlight)
-    } else if message.importance_high {
+    } else if message.importance_high || message.delivery == Delivery::Failed {
         Some(palette.danger.gamma_multiply(0.08))
     } else {
         None
@@ -1361,8 +1366,16 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             bottom: 14,
         }))
         .show(ui, |ui| {
-            // As wide as the message column above it.
-            ui.set_max_width(ui.available_width().min(MAX_HISTORY_WIDTH - 4.0));
+            // As wide as the message column above it. The panel stretches
+            // its own Ui to the full width, so draw into a narrower child.
+            let column = egui::Rect::from_min_size(
+                ui.max_rect().min,
+                vec2(
+                    ui.available_width().min(MAX_HISTORY_WIDTH - 4.0),
+                    ui.max_rect().height(),
+                ),
+            );
+            ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
             composer_top = Some(ui.cursor().min);
             // The field's edge reads as a control, and focus as a ring.
             let edge = if ui.memory(|m| m.has_focus(id)) {
@@ -1598,20 +1611,39 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 egui::TextEdit::store_state(ui.ctx(), id, state);
                             }
                         }
+                        // Narrow panes drop the mention reminder so the hint fits one line.
+                        let mention = if ui.available_width() >= 520.0 { "  ·  @ to mention" } else { "" };
                         let hint = if !can_post {
                             "Posting needs the ChannelMessage.Send permission".to_owned()
                         } else if draft.editing.is_some() {
                             "Edit your message".to_owned()
                         } else if channel && draft.reply_to.is_none() {
-                            format!("Start a new post in {title}  ·  @ to mention")
+                            format!("Start a new post in {title}{mention}")
                         } else if channel {
                             "Reply to the thread".to_owned()
                         } else {
-                            format!("Message {title}  ·  @ to mention")
+                            format!("Message {title}{mention}")
                         };
                         let width = (ui.available_width() - 70.0).max(0.0);
+                        // Roomier lines than egui's default (1.43, like messages)
+                        // so long drafts stay readable.
+                        let text_color = palette.text;
+                        let mut layouter = |ui: &egui::Ui, buffer: &dyn egui::TextBuffer, wrap_width: f32| {
+                            let mut job = egui::text::LayoutJob::single_section(
+                                buffer.as_str().to_owned(),
+                                egui::TextFormat {
+                                    font_id: theme::regular(14.0),
+                                    color: text_color,
+                                    line_height: Some(20.0),
+                                    ..Default::default()
+                                },
+                            );
+                            job.wrap.max_width = wrap_width;
+                            ui.ctx().fonts_mut(|f| f.layout_job(job))
+                        };
                         let edit = egui::TextEdit::multiline(&mut draft.text)
                             .id(id)
+                            .layouter(&mut layouter)
                             .hint_text(hint)
                             .desired_rows(1)
                             .desired_width(width)
@@ -1716,13 +1748,14 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                     });
                 });
             ui.add_space(4.0);
-            ui.label(
-                egui::RichText::new(
-                    "Enter to send · Shift+Enter for a new line · **bold**, *italic*, `code`, > quote, - list",
-                )
-                .font(theme::regular(12.0))
-                .color(palette.dim),
-            );
+            // One line at any width: the formatting reminder only when it fits.
+            let hint = if ui.available_width() >= 640.0 {
+                "Enter to send · Shift+Enter for a new line · **bold**, *italic*, `code`, > quote, - list"
+            } else {
+                "Enter to send · Shift+Enter for a new line"
+            };
+            ui.label(egui::RichText::new(hint).font(theme::regular(12.0)).color(palette.dim));
+            });
         });
     ui.ctx().data_mut(|d| d.insert_temp(selected_id, selected));
     // The mention list, just above the composer.

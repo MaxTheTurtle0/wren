@@ -159,6 +159,14 @@ fn item(ui: &mut egui::Ui, app: &App, section: Section, badge: usize) -> egui::R
         .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
+/// A group heading in the account menu, aligned with the rows' text.
+fn menu_heading(ui: &mut egui::Ui, palette: &crate::theme::Palette, text: &str) {
+    ui.horizontal(|ui| {
+        ui.add_space(8.0);
+        widgets::section_label(ui, palette, text);
+    });
+}
+
 /// One row of the account menu: an icon column, then the label, aligned
 /// with the availability rows.
 fn menu_row(
@@ -201,6 +209,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
         .show(|ui| {
             ui.spacing_mut().item_spacing.y = 2.0;
             // Accounts.
+            menu_heading(ui, &palette, "Accounts");
             for (index, account) in app.accounts.iter().enumerate() {
                 let active = index == app.active;
                 let (rect, response) = ui.allocate_exact_size(vec2(268.0, 46.0), Sense::click());
@@ -267,6 +276,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
             }
             ui.separator();
             // Availability.
+            menu_heading(ui, &palette, "Status");
             let current = app.my_presence.as_ref().map(|p| p.availability);
             for (availability, label) in [
                 (Some(Availability::Available), "Available"),

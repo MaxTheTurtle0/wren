@@ -22,7 +22,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             widgets::window_drag(ui, header, "signin-drag");
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.add_space((ui.available_height() * 0.10).max(48.0));
+                    ui.add_space((ui.available_height() * 0.07).max(32.0));
                     ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(160.0, 121.0)).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
                     ui.label(
@@ -251,6 +251,7 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     .color(palette.secondary),
             )
             .id_salt("registration")
+            .icon(widgets::disclosure_chevron(palette.secondary))
             .default_open(false)
             .show(ui, |ui| registration(app, ui, false));
         }
