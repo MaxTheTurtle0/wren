@@ -124,7 +124,15 @@ fn modal(
         .frame(
             Frame::new()
                 .fill(palette.surface)
-                .stroke(Stroke::new(1.0, palette.outline))
+                // Dark dialogs need a lighter edge to stand off the scrim.
+                .stroke(Stroke::new(
+                    1.0,
+                    if palette.dark {
+                        palette.surface_active
+                    } else {
+                        palette.outline
+                    },
+                ))
                 .corner_radius(CornerRadius::same(14))
                 .inner_margin(Margin::same(0))
                 .shadow(egui::Shadow {
@@ -356,13 +364,34 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
                         }
                     });
             });
-        Frame::new().inner_margin(Margin::symmetric(14, 8)).show(ui, |ui| {
-            ui.label(
-                egui::RichText::new("↑↓ to move · Enter to open · Esc to close · message search covers this computer's cache, then Microsoft Search")
-                    .font(theme::regular(11.0))
+        Frame::new()
+            .inner_margin(Margin {
+                left: 14,
+                right: 14,
+                top: 8,
+                bottom: 12,
+            })
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 6.0;
+                    for (keys, what) in [("↑↓", "move"), ("Enter", "open"), ("Esc", "close")] {
+                        widgets::keycaps(ui, &palette, keys);
+                        ui.label(
+                            egui::RichText::new(what)
+                                .font(theme::regular(12.0))
+                                .color(palette.secondary),
+                        );
+                        ui.add_space(6.0);
+                    }
+                });
+                ui.label(
+                    egui::RichText::new(
+                        "Messages are searched on this computer first, then with Microsoft Search.",
+                    )
+                    .font(theme::regular(12.0))
                     .color(palette.dim),
-            );
-        });
+                );
+            });
     });
     if query != app.switcher.query {
         app.switcher.query = query.clone();
@@ -560,11 +589,11 @@ fn settings(app: &mut App, ctx: &egui::Context) {
 
                 widgets::section_label(ui, &palette, "Behaviour");
                 let mut notifications = app.settings.notifications;
-                if ui.checkbox(&mut notifications, "Desktop notifications for new messages and meeting reminders").changed() {
+                if widgets::checkbox(ui, &palette, &mut notifications, "Desktop notifications for new messages and meeting reminders").changed() {
                     actions.push(Action::SetNotifications(notifications));
                 }
                 let mut keep = app.settings.keep_running;
-                if ui.checkbox(&mut keep, "Keep running in the tray when the window closes").changed() {
+                if widgets::checkbox(ui, &palette, &mut keep, "Keep running in the tray when the window closes").changed() {
                     actions.push(Action::SetKeepRunning(keep));
                 }
                 ui.label(
@@ -581,7 +610,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     actions.push(Action::SetPresenceSession(session));
                 }
                 let mut perf = app.settings.perf_overlay;
-                if ui.checkbox(&mut perf, format!("Show the performance overlay ({})", super::keys::shortcut("⌘⇧P"))).changed() {
+                if widgets::checkbox(ui, &palette, &mut perf, format!("Show the performance overlay ({})", super::keys::shortcut("⌘⇧P"))).changed() {
                     actions.push(Action::TogglePerfOverlay);
                 }
                 ui.add_space(8.0);
@@ -653,7 +682,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
 
                 widgets::section_label(ui, &palette, "App updates");
                 let mut automatic = app.settings.automatic_updates;
-                if ui.checkbox(&mut automatic, "Automatically check for and download app updates").changed() {
+                if widgets::checkbox(ui, &palette, &mut automatic, "Automatically check for and download app updates").changed() {
                     actions.push(Action::SetAutomaticUpdates(automatic));
                 }
                 ui.label(egui::RichText::new("Checks GitHub once a day. Updates are verified before installation; you choose when to restart.").font(theme::regular(12.0)).color(palette.dim));
@@ -1075,15 +1104,19 @@ fn call_settings(
                             }
                         }
                     });
-                ui.checkbox(
+                widgets::checkbox(
+                    ui,
+                    &palette,
                     &mut calls.dock,
                     "Move Wren beside the call window during calls",
                 );
                 if app.accounts.len() > 1 || calls.profile_per_account {
-                    ui.checkbox(&mut calls.profile_per_account, "A separate browser profile for each account")
+                    widgets::checkbox(ui, &palette, &mut calls.profile_per_account, "A separate browser profile for each account")
                         .on_hover_text("Each account signs in to Microsoft in its own browser profile, so Teams on the web never asks which account to use.");
                 }
-                ui.checkbox(
+                widgets::checkbox(
+                    ui,
+                    &palette,
                     &mut calls.sign_out_browser,
                     format!(
                         "Signing out of Wren also signs {} out of Microsoft",

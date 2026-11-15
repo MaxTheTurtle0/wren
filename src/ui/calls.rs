@@ -98,15 +98,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         Frame::new().inner_margin(Margin::symmetric(32, 0)).show(ui, |ui| {
             ui.set_max_width(680.0f32.min(ui.available_width()));
             ui.label(egui::RichText::new("Calls and meetings").font(theme::bold(24.0)).color(palette.text));
-            ui.add_space(6.0);
-            let place = match app.opener() {
-                crate::calling::Opener::AppWindow(browser) => format!("Teams on the web, in its own {} window beside Wren", browser.kind.short()),
-                crate::calling::Opener::Browser => "Teams on the web, in your default browser".to_owned(),
-                crate::calling::Opener::TeamsApp => "the Microsoft Teams app".to_owned(),
-            };
-            ui.label(egui::RichText::new(format!("Calls and meetings open in {place}. The call itself runs in Microsoft's own client, so it costs nothing extra; Wren shows the meeting chat and follows the call. Change this in Settings.")).color(palette.secondary));
-            ui.add_space(18.0);
-
+            ui.add_space(16.0);
             // Join by link.
             let link_id = egui::Id::new("wren-join-link");
             let mut link: String = ui.ctx().data(|d| d.get_temp(link_id)).unwrap_or_default();
@@ -123,7 +115,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         let field = egui::TextEdit::singleline(&mut link)
                             .hint_text("Paste a Teams meeting link")
                             .desired_width(ui.available_width() - 90.0)
-                            .margin(Margin::symmetric(8, 6));
+                            .margin(Margin::symmetric(8, 6))
+                            .min_size(vec2(0.0, 32.0));
                         let response = ui.add(field);
                         let valid = crate::calling::is_teams_link(link.trim());
                         let join = ui.add_enabled_ui(valid, |ui| widgets::primary_button(ui, &palette, "Join")).inner;
@@ -136,6 +129,16 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 });
             ui.ctx().data_mut(|d| d.insert_temp(link_id, link));
             ui.add_space(18.0);
+
+            ui.label(egui::RichText::new("How calls work").font(theme::semibold(15.0)).color(palette.text));
+            ui.add_space(4.0);
+            let place = match app.opener() {
+                crate::calling::Opener::AppWindow(browser) => format!("Teams on the web, in its own {} window beside Wren", browser.kind.short()),
+                crate::calling::Opener::Browser => "Teams on the web, in your default browser".to_owned(),
+                crate::calling::Opener::TeamsApp => "the Microsoft Teams app".to_owned(),
+            };
+            ui.label(egui::RichText::new(format!("Calls and meetings open in {place}. The call itself runs in Microsoft's own client, so it costs nothing extra; Wren shows the meeting chat and follows the call. Change this in Settings.")).color(palette.secondary));
+            ui.add_space(16.0);
 
             ui.label(egui::RichText::new("What works today").font(theme::semibold(15.0)).color(palette.text));
             ui.add_space(6.0);

@@ -13,6 +13,7 @@ pub fn text_field<'a>(text: &'a mut String, hint: &str, font: egui::FontId) -> e
         .hint_text(egui::RichText::new(hint).font(font.clone()))
         .font(font)
         .margin(egui::Margin::symmetric(8, 6))
+        .min_size(vec2(0.0, 32.0))
         .desired_width(f32::INFINITY)
 }
 
@@ -93,10 +94,43 @@ pub fn avatar(
         let center = rect.right_bottom() - vec2(dot * 0.42, dot * 0.42);
         ui.painter()
             .circle_filled(center, dot / 2.0 + 1.5, palette.panel);
-        ui.painter()
-            .circle_filled(center, dot / 2.0, palette.presence(state.availability));
+        presence_dot(ui.painter(), palette, center, dot / 2.0, state.availability);
     }
     response
+}
+
+/// A presence dot. Shape tells the states apart as well as colour: Do not
+/// disturb carries a bar, Away and Be right back a hollow centre, Offline
+/// is a ring.
+pub fn presence_dot(
+    painter: &egui::Painter,
+    palette: &Palette,
+    center: egui::Pos2,
+    radius: f32,
+    availability: crate::model::Availability,
+) {
+    use crate::model::Availability::*;
+    let color = palette.presence(availability);
+    match availability {
+        Offline | Unknown => {
+            painter.circle_stroke(center, radius - 1.0, Stroke::new(2.0, color));
+        }
+        BeRightBack | Away => {
+            painter.circle_filled(center, radius, color);
+            painter.circle_filled(center, radius * 0.4, palette.panel);
+        }
+        DoNotDisturb => {
+            painter.circle_filled(center, radius, color);
+            painter.rect_filled(
+                egui::Rect::from_center_size(center, vec2(radius * 1.1, (radius * 0.4).max(1.5))),
+                CornerRadius::same(1),
+                Color32::WHITE,
+            );
+        }
+        Available | Busy => {
+            painter.circle_filled(center, radius, color);
+        }
+    }
 }
 
 /// A borderless icon button with a hover background and tooltip.
@@ -131,18 +165,35 @@ pub fn icon_button_sized(
         .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
-/// A filled accent button.
+/// A filled accent button. Disabled, it turns neutral so it still reads as
+/// a button.
 pub fn primary_button(ui: &mut Ui, palette: &Palette, text: &str) -> Response {
+    let enabled = ui.is_enabled();
+    let (fill, fg) = if enabled {
+        (palette.accent, palette.on_accent)
+    } else {
+        (palette.surface_active, palette.dim)
+    };
     let button = egui::Button::new(
         egui::RichText::new(text)
-            .color(palette.on_accent)
+            .color(fg)
             .font(theme::semibold(14.0)),
     )
-    .fill(palette.accent)
+    .fill(fill)
     .corner_radius(CornerRadius::same(8))
-    .min_size(vec2(0.0, 34.0));
-    ui.add(button)
-        .on_hover_cursor(egui::CursorIcon::PointingHand)
+    .min_size(vec2(0.0, 32.0));
+    // egui fades disabled widgets; this one has its own disabled colours.
+    let response = ui
+        .scope(|ui| {
+            ui.set_opacity(1.0);
+            ui.add(button)
+        })
+        .inner;
+    if enabled {
+        response.on_hover_cursor(egui::CursorIcon::PointingHand)
+    } else {
+        response
+    }
 }
 
 /// An outlined secondary button.
@@ -251,7 +302,9 @@ pub fn empty_state_with_action(
     ui.vertical_centered(|ui| {
         // Stay inside narrow panes instead of widening them.
         ui.set_max_width((ui.available_width() - 48.0).clamp(120.0, 360.0));
-        ui.add_space((ui.available_height() * 0.32 - 40.0).max(24.0));
+        // Centred, a little above the middle (optical centre).
+        let content = 128.0 + if action.is_some() { 48.0 } else { 0.0 };
+        ui.add_space(((ui.available_height() - content) / 2.0 - 24.0).max(24.0));
         let size = 32.0;
         let (rect, _) = ui.allocate_exact_size(Vec2::splat(56.0), Sense::hover());
         ui.painter()
@@ -280,6 +333,95 @@ pub fn empty_state_with_action(
         }
     });
     clicked
+}
+
+/// A square checkbox with a 3:1 edge, filled with the accent when on.
+/// Returns the response; `changed()` is set when it toggles.
+pub fn checkbox(
+    ui: &mut Ui,
+    palette: &Palette,
+    checked: &mut bool,
+    text: impl Into<egui::WidgetText>,
+) -> Response {
+    let text = text.into();
+    let box_size = 16.0;
+    let gap = 10.0;
+    let wrap_width = ui.available_width() - box_size - gap;
+    let galley = text.into_galley(
+        ui,
+        Some(egui::TextWrapMode::Wrap),
+        wrap_width,
+        egui::TextStyle::Body,
+    );
+    let height = galley.size().y.max(box_size).max(26.0);
+    let (rect, mut response) = ui.allocate_exact_size(
+        vec2(box_size + gap + galley.size().x, height),
+        Sense::click(),
+    );
+    if response.clicked() {
+        *checked = !*checked;
+        response.mark_changed();
+    }
+    response.widget_info(|| {
+        egui::WidgetInfo::selected(
+            egui::WidgetType::Checkbox,
+            ui.is_enabled(),
+            *checked,
+            galley.text(),
+        )
+    });
+    if ui.is_rect_visible(rect) {
+        let first_line = galley.rows.first().map_or(box_size, |row| row.height());
+        let top = rect.top() + ((height - galley.size().y) / 2.0).max(0.0);
+        let square = egui::Rect::from_min_size(
+            egui::pos2(rect.left(), top + (first_line - box_size) / 2.0),
+            Vec2::splat(box_size),
+        );
+        let hovered = response.hovered() || response.has_focus();
+        if *checked {
+            let fill = if hovered {
+                palette.accent_hover
+            } else {
+                palette.accent
+            };
+            ui.painter()
+                .rect_filled(square, CornerRadius::same(4), fill);
+            Icon::Check.image(palette.on_accent, 12.0).paint_at(
+                ui,
+                egui::Rect::from_center_size(square.center(), Vec2::splat(12.0)),
+            );
+        } else {
+            ui.painter()
+                .rect_filled(square, CornerRadius::same(4), palette.surface);
+            ui.painter().rect_stroke(
+                square,
+                CornerRadius::same(4),
+                Stroke::new(
+                    1.5,
+                    if hovered {
+                        palette.secondary
+                    } else {
+                        palette.control
+                    },
+                ),
+                egui::StrokeKind::Inside,
+            );
+        }
+        if response.has_focus() {
+            ui.painter().rect_stroke(
+                square.expand(2.0),
+                CornerRadius::same(6),
+                Stroke::new(2.0, palette.accent),
+                egui::StrokeKind::Outside,
+            );
+        }
+        ui.painter().galley(
+            egui::pos2(rect.left() + box_size + gap, top),
+            galley,
+            palette.text,
+        );
+    }
+    response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
 /// A label above a field or drop-down.

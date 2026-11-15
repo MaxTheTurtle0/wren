@@ -159,6 +159,37 @@ fn item(ui: &mut egui::Ui, app: &App, section: Section, badge: usize) -> egui::R
         .on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
+/// One row of the account menu: an icon column, then the label, aligned
+/// with the availability rows.
+fn menu_row(
+    ui: &mut egui::Ui,
+    palette: &crate::theme::Palette,
+    icon: Icon,
+    label: &str,
+    color: egui::Color32,
+) -> egui::Response {
+    let (rect, response) = ui.allocate_exact_size(vec2(268.0, 28.0), Sense::click());
+    if response.hovered() {
+        ui.painter()
+            .rect_filled(rect, CornerRadius::same(6), palette.surface_hover);
+    }
+    icon.image(palette.secondary, 14.0).paint_at(
+        ui,
+        egui::Rect::from_center_size(
+            egui::pos2(rect.left() + 16.0, rect.center().y),
+            egui::Vec2::splat(14.0),
+        ),
+    );
+    ui.painter().text(
+        egui::pos2(rect.left() + 32.0, rect.center().y),
+        egui::Align2::LEFT_CENTER,
+        label,
+        theme::regular(13.0),
+        color,
+    );
+    response.on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
 /// The avatar's menu: accounts, availability, status message, settings.
 fn account_menu(app: &mut App, avatar: &egui::Response) {
     let palette = app.palette;
@@ -213,19 +244,16 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                     };
                     ui.label(
                         egui::RichText::new(detail)
-                            .font(theme::regular(11.0))
-                            .color(palette.dim),
+                            .font(theme::regular(12.0))
+                            .color(palette.secondary),
                     );
                 });
                 child.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if active {
                         theme::icon(ui, Icon::Check, 16.0, palette.accent);
                     } else if account.unread_chats() > 0 {
-                        ui.label(
-                            egui::RichText::new(account.unread_chats().to_string())
-                                .font(theme::bold(11.0))
-                                .color(palette.accent),
-                        );
+                        let (spot, _) = ui.allocate_exact_size(vec2(24.0, 18.0), Sense::hover());
+                        widgets::badge(ui, &palette, spot.center(), account.unread_chats());
                     }
                 });
                 if response.clicked() && !active {
@@ -233,13 +261,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                     ui.close();
                 }
             }
-            if ui
-                .add(
-                    egui::Button::new(egui::RichText::new("+  Add account").color(palette.text))
-                        .frame(false),
-                )
-                .clicked()
-            {
+            if menu_row(ui, &palette, Icon::Plus, "Add account", palette.text).clicked() {
                 actions.push(Action::AddAccount);
                 ui.close();
             }
@@ -263,8 +285,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                 let dot = egui::pos2(rect.left() + 16.0, rect.center().y);
                 match availability {
                     Some(availability) => {
-                        ui.painter()
-                            .circle_filled(dot, 5.0, palette.presence(availability));
+                        widgets::presence_dot(ui.painter(), &palette, dot, 6.0, availability);
                     }
                     None => {
                         Icon::Refresh.image(palette.dim, 12.0).paint_at(
@@ -299,27 +320,20 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                 .as_ref()
                 .and_then(|p| p.status_message.clone())
                 .unwrap_or_else(|| "Set a status message".into());
-            if ui
-                .add(
-                    egui::Button::new(
-                        egui::RichText::new(format!("✎  {}", crate::html::truncate(&message, 34)))
-                            .color(palette.secondary),
-                    )
-                    .frame(false),
-                )
-                .clicked()
+            if menu_row(
+                ui,
+                &palette,
+                Icon::Pencil,
+                &crate::html::truncate(&message, 34),
+                palette.secondary,
+            )
+            .clicked()
             {
                 actions.push(Action::OpenStatusMessage);
                 ui.close();
             }
             ui.separator();
-            if ui
-                .add(
-                    egui::Button::new(egui::RichText::new("Settings…").color(palette.text))
-                        .frame(false),
-                )
-                .clicked()
-            {
+            if menu_row(ui, &palette, Icon::Settings, "Settings…", palette.text).clicked() {
                 actions.push(Action::OpenSettings);
                 ui.close();
             }

@@ -381,10 +381,33 @@ fn apply_page(app: &mut App, page: &str) {
                         .extend([Resource::Chats, Resource::Teams, Resource::Calendar]);
                 }
             }
-            "error" => app.toast(
-                wren::model::ToastKind::Error,
-                "Could not send: Microsoft refused the message (throttled). Retry in a moment.",
-            ),
+            // A message that failed to send, as the backend reports it.
+            "error" => {
+                if let Some(open) = app.open.clone() {
+                    let me = app.me().to_owned();
+                    let author = app
+                        .profile
+                        .as_ref()
+                        .map(|p| p.display_name.clone())
+                        .unwrap_or_default();
+                    if let Some(view) = app.conversations.get_mut(&open) {
+                        view.messages.push(wren::model::Message {
+                            id: "local-failed".into(),
+                            conversation: Some(open.clone()),
+                            author_id: Some(me),
+                            author,
+                            created: wren::time::now(),
+                            body: wren::html::RichText::plain("Here are the throttling numbers."),
+                            delivery: wren::model::Delivery::Failed,
+                            ..Default::default()
+                        });
+                    }
+                }
+                app.toast(
+                    wren::model::ToastKind::Error,
+                    "Not sent: Microsoft is limiting requests. Try again in a moment.",
+                );
+            }
             "consent" => {
                 app.overlay = Some(wren::app::Overlay::Consent(wren::auth::CHAT_CREATE_SCOPE));
             }

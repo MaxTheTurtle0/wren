@@ -38,6 +38,12 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
         )
         .show(ui, |ui| {
             let rect = ui.max_rect();
+            // A hairline under the header, so history scrolls beneath it.
+            ui.painter().hline(
+                rect.expand2(vec2(16.0, 0.0)).x_range(),
+                rect.bottom() - 0.5,
+                Stroke::new(1.0, palette.outline),
+            );
             widgets::window_drag(ui, rect, "header-drag");
             ui.painter().hline(
                 rect.x_range().expand(16.0),
@@ -231,6 +237,9 @@ fn estimate(message: &Message, width: f32, grouped: bool) -> f32 {
     height
 }
 
+/// The widest the message column grows, avatar gutter included.
+const MAX_HISTORY_WIDTH: f32 = 920.0;
+
 fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let palette = app.palette;
     let channel = conversation.is_channel();
@@ -301,7 +310,9 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         bottom: 12,
                     })
                     .show(ui, |ui| {
-                        let width = ui.available_width();
+                        // A readable measure on wide windows; the column stays
+                        // left-aligned with the header and composer.
+                        let width = ui.available_width().min(MAX_HISTORY_WIDTH);
                         ui.set_width(width);
                         ui.spacing_mut().item_spacing.y = 0.0;
                         if more {
@@ -745,14 +756,27 @@ fn body(
             );
         }
         Delivery::Failed => {
+            ui.add_space(2.0);
             ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 6.0;
+                theme::icon(ui, Icon::Alert, 14.0, palette.danger);
                 ui.label(
-                    egui::RichText::new("Not sent.")
-                        .font(theme::regular(12.0))
+                    egui::RichText::new("Not sent")
+                        .font(theme::semibold(12.0))
                         .color(palette.danger),
                 );
+                let retry = egui::Button::new(
+                    egui::RichText::new("Retry")
+                        .font(theme::semibold(12.0))
+                        .color(palette.text),
+                )
+                .fill(palette.surface)
+                .stroke(Stroke::new(1.0, palette.control))
+                .corner_radius(CornerRadius::same(6))
+                .min_size(vec2(0.0, 24.0));
                 if ui
-                    .link(egui::RichText::new("Retry").font(theme::semibold(12.0)))
+                    .add(retry)
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
                     .clicked()
                 {
                     actions.push(Action::RetrySend {
@@ -886,7 +910,13 @@ fn hover_toolbar(
     actions: &mut Vec<Action>,
 ) -> egui::Rect {
     let palette = &app.palette;
-    let buttons = QUICK_REACTIONS.len() as f32 + 2.0 + if mine { 2.0 } else { 0.0 };
+    // In a narrow pane, a shorter toolbar keeps the author line readable.
+    let reactions = if row.width() < 560.0 {
+        &QUICK_REACTIONS[..3]
+    } else {
+        &QUICK_REACTIONS[..]
+    };
+    let buttons = reactions.len() as f32 + 2.0 + if mine { 2.0 } else { 0.0 };
     let size = vec2(buttons * 28.0 + 12.0, 34.0);
     let min = egui::pos2(
         row.right() - size.x - 4.0,
@@ -915,7 +945,7 @@ fn hover_toolbar(
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 0.0;
-                    for emoji in QUICK_REACTIONS {
+                    for &emoji in reactions {
                         let on = reacted(emoji);
                         let response = ui.add_sized(
                             vec2(28.0, 26.0),
@@ -1330,9 +1360,15 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
         }))
         .show(ui, |ui| {
             composer_top = Some(ui.cursor().min);
+            // The field's edge reads as a control, and focus as a ring.
+            let edge = if ui.memory(|m| m.has_focus(id)) {
+                Stroke::new(2.0, palette.accent)
+            } else {
+                Stroke::new(1.0, palette.control)
+            };
             Frame::new()
                 .fill(palette.surface)
-                .stroke(Stroke::new(1.0, palette.outline))
+                .stroke(edge)
                 .corner_radius(CornerRadius::same(10))
                 .inner_margin(Margin {
                     left: 12,
@@ -1587,6 +1623,8 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                             vec2(width, max_editor_height),
                             Layout::top_down(Align::Min),
                             |ui| {
+                                // Show that a long draft scrolls.
+                                ui.spacing_mut().scroll.dormant_handle_opacity = 0.6;
                                 egui::ScrollArea::vertical()
                                     .id_salt(id.with("scroll"))
                                     .max_height(max_editor_height)
@@ -1613,7 +1651,8 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         if std::mem::take(&mut app.focus_composer) {
                             response.request_focus();
                         }
-                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        // Send and attach stay at the bottom of a tall draft.
+                        ui.with_layout(Layout::right_to_left(Align::Max), |ui| {
                             ui.spacing_mut().item_spacing.x = 2.0;
                             let ready = !draft.text.trim().is_empty() || !draft.files.is_empty() || !draft.images.is_empty();
                             let tint = if ready { palette.accent } else { palette.dim };

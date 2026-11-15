@@ -277,6 +277,8 @@ pub fn apply(ctx: &egui::Context, palette: &Palette) {
         // Also the focus ring of text fields.
         visuals.selection.stroke = Stroke::new(2.0, palette.accent);
         visuals.override_text_color = Some(palette.text);
+        // Placeholders and other weak text keep 4.5:1.
+        visuals.weak_text_color = Some(palette.dim);
         visuals.warn_fg_color = palette.warning;
         visuals.error_fg_color = palette.danger;
         let widgets = &mut visuals.widgets;

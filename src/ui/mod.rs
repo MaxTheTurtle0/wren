@@ -134,12 +134,23 @@ pub fn header_inset(ctx: &egui::Context, x: f32) -> f32 {
     (fastframe_titlebar::footprint(ctx, theme::HEADER_HEIGHT).left - x).max(0.0)
 }
 
+/// Below this window width the sidebar narrows, so the open conversation
+/// keeps room to read.
+const NARROW_WINDOW: f32 = 960.0;
+const NARROW_SIDEBAR: f32 = 232.0;
+
 fn sidebar(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
+    let narrow = ui.ctx().content_rect().width() < NARROW_WINDOW;
+    let range = if narrow {
+        220.0..=NARROW_SIDEBAR
+    } else {
+        220.0..=520.0
+    };
     let response = egui::Panel::left("sidebar")
-        .resizable(true)
+        .resizable(!narrow)
         .default_size(app.settings.sidebar_width)
-        .size_range(220.0..=520.0)
+        .size_range(range)
         .show_separator_line(false)
         .frame(Frame::new().fill(palette.panel))
         .show(ui, |ui| {
@@ -200,7 +211,10 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
             }
         });
     let width = response.response.rect.width();
-    if (width - app.settings.sidebar_width).abs() > 1.0 && !ui.ctx().input(|i| i.pointer.any_down())
+    // The narrow width is temporary; keep the width the person chose.
+    if !narrow
+        && (width - app.settings.sidebar_width).abs() > 1.0
+        && !ui.ctx().input(|i| i.pointer.any_down())
     {
         app.settings.sidebar_width = width;
         app.mark_settings_dirty();

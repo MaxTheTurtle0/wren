@@ -71,7 +71,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         app.actions.push(Action::StartDemo);
                     }
                     ui.add_space(24.0);
-                    ui.set_max_width(560.0f32.min(ui.available_width() - 32.0));
+                    ui.set_max_width(472.0f32.min(ui.available_width() - 32.0));
                     ui.label(
                         egui::RichText::new("Wren is an independent open-source project, not affiliated with Microsoft. It talks only to Microsoft's official APIs and keeps your data on this computer.")
                             .font(theme::regular(12.0))
@@ -302,17 +302,11 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
     ui.add_space(4.0);
     ui.horizontal(|ui| {
         let valid = crate::settings::is_guid(app.form_client_id.trim());
-        let save = ui.add_enabled(
-            valid,
-            egui::Button::new(
-                egui::RichText::new("Save")
-                    .color(palette.on_accent)
-                    .font(theme::semibold(13.0)),
-            )
-            .fill(palette.accent)
-            .corner_radius(CornerRadius::same(8))
-            .min_size(vec2(72.0, 32.0)),
-        );
+        let save = ui
+            .add_enabled_ui(valid, |ui| {
+                widgets::primary_button(ui, &palette, "  Save  ")
+            })
+            .inner;
         if save.clicked() {
             app.actions.push(Action::SaveAppRegistration {
                 client_id: app.form_client_id.clone(),

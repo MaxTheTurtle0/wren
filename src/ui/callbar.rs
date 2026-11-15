@@ -141,10 +141,10 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
         ));
     }
     buttons.push((
-        Icon::Check,
-        if elsewhere { "Dismiss" } else { "Done" },
+        Icon::Close,
+        "Close bar",
         Action::CallDone,
-        !elsewhere,
+        false,
         "Close the call bar. The call itself goes on in Teams until you leave it there.",
     ));
 
@@ -160,6 +160,9 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
         )));
     };
     if docked {
+        // Title and status read as one block.
+        ui.spacing_mut().interact_size.y = 18.0;
+        ui.spacing_mut().item_spacing.y = 2.0;
         ui.horizontal(|ui| {
             ui.add_space(inset);
             title(ui, (ui.available_width() - 20.0).max(60.0));
@@ -172,7 +175,7 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
                     .color(palette.secondary),
             );
         });
-        ui.add_space(6.0);
+        ui.add_space(8.0);
         ui.horizontal_wrapped(|ui| {
             ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
             for (icon, label, action, accent, tip) in buttons {
