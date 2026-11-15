@@ -22,6 +22,8 @@ use crate::theme::{self, Icon};
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let ctx = ui.ctx().clone();
+    // Set again by the main pane this frame; docked windows have none.
+    ctx.data_mut(|d| d.remove::<egui::Rect>(egui::Id::new(MAIN_PANE)));
     keys::handle(app, &ctx);
     if matches!(app.update, crate::updates::Status::Ready(_)) {
         egui::Panel::bottom("update-ready")
@@ -134,15 +136,28 @@ pub fn header_inset(ctx: &egui::Context, x: f32) -> f32 {
     (fastframe_titlebar::footprint(ctx, theme::HEADER_HEIGHT).left - x).max(0.0)
 }
 
+/// Below this window width the sidebar narrows, so the open conversation
+/// keeps room to read.
+const NARROW_WINDOW: f32 = 960.0;
+const NARROW_SIDEBAR: f32 = 232.0;
+
 fn sidebar(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
+    let narrow = ui.ctx().content_rect().width() < NARROW_WINDOW;
+    let range = if narrow {
+        220.0..=NARROW_SIDEBAR
+    } else {
+        220.0..=520.0
+    };
     let response = egui::Panel::left("sidebar")
-        .resizable(true)
+        .resizable(!narrow)
         .default_size(app.settings.sidebar_width)
-        .size_range(220.0..=520.0)
+        .size_range(range)
         .show_separator_line(false)
         .frame(Frame::new().fill(palette.panel))
         .show(ui, |ui| {
+            // Keep the panel's width when its list is empty.
+            ui.set_min_width(ui.max_rect().width());
             let header = egui::Rect::from_min_size(
                 ui.max_rect().min,
                 vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
@@ -160,26 +175,32 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                                 .color(palette.text),
                         );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            let refresh =
-                                widgets::icon_button(ui, &palette, Icon::Refresh, "Refresh (⌘R)");
+                            let refresh = widgets::icon_button(
+                                ui,
+                                &palette,
+                                Icon::Refresh,
+                                &format!("Refresh ({})", keys::shortcut("⌘R")),
+                            );
                             widgets::on_click(&refresh, &mut app.actions, Action::Refresh);
                             if app.section == Section::Chats {
                                 let search = widgets::icon_button(
                                     ui,
                                     &palette,
                                     Icon::Search,
-                                    "Search and jump (⌘K)",
+                                    &format!("Search and jump ({})", keys::shortcut("⌘K")),
                                 );
                                 widgets::on_click(&search, &mut app.actions, Action::OpenSwitcher);
                                 let new_chat = widgets::icon_button(
                                     ui,
                                     &palette,
                                     Icon::Compose,
-                                    "New chat (⌘N)",
+                                    &format!("New chat ({})", keys::shortcut("⌘N")),
                                 );
                                 widgets::on_click(&new_chat, &mut app.actions, Action::OpenNewChat);
                             }
-                            let busy = !app.loading.is_empty();
+                            // While the first list loads, the main pane shows progress.
+                            let busy = !app.loading.is_empty()
+                                && !(app.section == Section::Chats && app.chats.is_empty());
                             if busy {
                                 widgets::loading(ui, palette.dim, 14.0);
                             }
@@ -196,15 +217,19 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
             }
         });
     let width = response.response.rect.width();
-    if (width - app.settings.sidebar_width).abs() > 1.0 && !ui.ctx().input(|i| i.pointer.any_down())
+    // The narrow width is temporary; keep the width the person chose.
+    if !narrow
+        && (width - app.settings.sidebar_width).abs() > 1.0
+        && !ui.ctx().input(|i| i.pointer.any_down())
     {
         app.settings.sidebar_width = width;
         app.mark_settings_dirty();
     }
     // The line between the sidebar and the content.
     let rect = response.response.rect;
+    // Half a point inside the sidebar: the main pane paints over its edge.
     ui.painter().vline(
-        rect.right(),
+        rect.right() - 0.5,
         rect.y_range(),
         Stroke::new(1.0, palette.outline),
     );
@@ -214,29 +239,90 @@ fn main(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     egui::CentralPanel::no_frame()
         .frame(Frame::new().fill(palette.window))
-        .show(ui, |ui| match app.section {
-            Section::Chats | Section::Teams => match app.open.clone() {
-                Some(open) => conversation::show(app, ui, open),
-                None => {
-                    let header = egui::Rect::from_min_size(
-                        ui.max_rect().min,
-                        vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
-                    );
-                    widgets::window_drag(ui, header, "main-drag");
-                    let (title, text) = if app.section == Section::Chats {
-                        (
-                            "No chat open",
-                            "Pick a chat on the left, or press ⌘K to jump to anyone.",
-                        )
-                    } else {
-                        ("No channel open", "Pick a channel on the left.")
-                    };
-                    widgets::empty_state(ui, &palette, Icon::Chat, title, text);
-                }
-            },
-            Section::Calendar => calendar::detail(app, ui),
-            Section::Calls => calls::show(app, ui),
+        .show(ui, |ui| {
+            // Toasts centre on this pane, not the window.
+            let pane = ui.max_rect();
+            ui.ctx()
+                .data_mut(|d| d.insert_temp(egui::Id::new(MAIN_PANE), pane));
+            main_content(app, ui);
         });
+}
+
+const MAIN_PANE: &str = "wren-main-pane";
+
+fn main_content(app: &mut App, ui: &mut egui::Ui) {
+    match app.section {
+        Section::Chats | Section::Teams => match app.open.clone() {
+            Some(open) => conversation::show(app, ui, open),
+            None => {
+                let header = egui::Rect::from_min_size(
+                    ui.max_rect().min,
+                    vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
+                );
+                widgets::window_drag(ui, header, "main-drag");
+                empty_main(app, ui);
+            }
+        },
+        Section::Calendar => calendar::detail(app, ui),
+        Section::Calls => calls::show(app, ui),
+    }
+}
+
+/// The main pane when nothing is open: what to do next, or why there is
+/// nothing yet.
+fn empty_main(app: &mut App, ui: &mut egui::Ui) {
+    use crate::sync::Resource;
+    let palette = app.palette;
+    let chats = app.section == Section::Chats;
+    let (items_empty, resource) = if chats {
+        (app.chats.is_empty(), Resource::Chats)
+    } else {
+        (app.teams.is_empty(), Resource::Teams)
+    };
+    let loading = items_empty && app.loading.contains(&resource);
+    let jump = format!(
+        "Pick a chat on the left, or press {} to jump to anyone.",
+        keys::shortcut("⌘K")
+    );
+    let (icon, title, text, action) = match (chats, items_empty, loading) {
+        (true, _, true) => (
+            Icon::Loader,
+            "Loading your chats…",
+            "This takes a moment the first time.",
+            None,
+        ),
+        (true, true, false) => (
+            Icon::Compose,
+            "Start your first chat",
+            "Message anyone in your organisation.",
+            Some(("New chat", Action::OpenNewChat)),
+        ),
+        (true, false, false) => (Icon::Chat, "No chat open", jump.as_str(), None),
+        (false, _, true) => (Icon::Loader, "Loading your teams…", "", None),
+        (false, true, false) => (
+            Icon::Teams,
+            "No teams yet",
+            "Teams you join in Microsoft Teams show up here.",
+            None,
+        ),
+        (false, false, false) => (
+            Icon::Hash,
+            "No channel open",
+            "Pick a channel on the left.",
+            None,
+        ),
+    };
+    let clicked = widgets::empty_state_with_action(
+        ui,
+        &palette,
+        icon,
+        title,
+        text,
+        action.as_ref().map(|(label, _)| *label),
+    );
+    if clicked && let Some((_, action)) = action {
+        app.actions.push(action);
+    }
 }
 
 fn toasts(app: &mut App, ctx: &egui::Context) {
@@ -269,8 +355,17 @@ fn toasts(app: &mut App, ctx: &egui::Context) {
     times.retain(|id, _| app.toasts.iter().any(|t| t.id == *id));
     ctx.data_mut(|d| d.insert_temp(shown_id, times));
 
+    // At the top of the main pane, clear of the newest messages and the
+    // composer, where a failed message and its Retry button appear.
+    let pane = ctx
+        .data(|d| d.get_temp::<egui::Rect>(egui::Id::new(MAIN_PANE)))
+        .unwrap_or_else(|| ctx.content_rect());
     egui::Area::new(egui::Id::new("wren-toasts"))
-        .anchor(Align2::CENTER_BOTTOM, vec2(0.0, -96.0))
+        .pivot(Align2::CENTER_TOP)
+        .fixed_pos(egui::pos2(
+            pane.center().x,
+            pane.top() + theme::HEADER_HEIGHT + 12.0,
+        ))
         .order(egui::Order::Foreground)
         .interactable(true)
         .show(ctx, |ui| {
@@ -280,7 +375,7 @@ fn toasts(app: &mut App, ctx: &egui::Context) {
                     .stroke(Stroke::new(
                         1.0,
                         if toast.kind == ToastKind::Error {
-                            palette.danger.gamma_multiply(0.6)
+                            palette.danger
                         } else {
                             palette.outline
                         },

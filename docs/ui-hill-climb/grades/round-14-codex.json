@@ -1,0 +1,414 @@
+{
+  "overall": 8,
+  "dimensions": {
+    "contrast": 8,
+    "typography": 8,
+    "colour": 8.5,
+    "spacing": 8,
+    "hierarchy": 8
+  },
+  "blocks_9": [
+    "The bottom scroll fade is painted over a real result preview, making text fail WCAG 2.2 AA.",
+    "The narrow layout preserves too much navigation width and loses useful conversation or contact information.",
+    "The narrow calls list loses the visible video-call action.",
+    "Too much useful information uses the smallest text tiers.",
+    "Extreme-aspect attachment previews are too small to inspect.",
+    "Quoted lists lose their structure and become dense miniature paragraphs."
+  ],
+  "screens": {
+    "chats": {
+      "score": 8,
+      "issues": [
+        "Small timestamps and composer instructions compete with message detail.",
+        "Quoted list is compressed into a small inline paragraph."
+      ]
+    },
+    "chats-wide": {
+      "score": 8.5,
+      "issues": [
+        "Readable message column, but small metadata remains harder to scan than body text.",
+        "Quote flattens the original list into dense inline text."
+      ]
+    },
+    "chats-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Sidebar consumes 296 of 760 pixels and truncates several contact names.",
+        "Conversation and quoted text wrap heavily while timestamps retain their full width."
+      ]
+    },
+    "chat-no-selection": {
+      "score": 8.5,
+      "issues": [
+        "Clear empty state; chat names and previews in the sidebar still truncate early."
+      ]
+    },
+    "chat-filter-no-match": {
+      "score": 8.5,
+      "issues": [
+        "Useful clear-filter action; compact sidebar helper text and conversation metadata remain small."
+      ]
+    },
+    "group-chat": {
+      "score": 8.5,
+      "issues": [
+        "Mention treatment is clear, but light-mode mention text has almost no contrast margin above 4.5:1.",
+        "Small system-event text recedes strongly."
+      ]
+    },
+    "channel": {
+      "score": 8,
+      "issues": [
+        "Post and reply hierarchy is readable, but timestamps are very small.",
+        "Card boundaries are faint, especially in dark mode; grouping depends strongly on spacing."
+      ]
+    },
+    "channel-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Navigation consumes 296 of 760 pixels, forcing long posts into a narrow column.",
+        "Small reply metadata and crowded top-of-viewport content reduce scanability."
+      ]
+    },
+    "teams": {
+      "score": 8.5,
+      "issues": [
+        "Clear hierarchy and empty state; channel names and rail labels are fairly small."
+      ]
+    },
+    "calendar": {
+      "score": 8,
+      "issues": [
+        "Meeting list uses small, dense titles and time metadata.",
+        "Main invitation and explanatory copy form a weakly differentiated block."
+      ]
+    },
+    "calls": {
+      "score": 8,
+      "issues": [
+        "Explanatory prose takes more emphasis than the compact call actions.",
+        "Audio and video icons are small relative to the generous row height."
+      ]
+    },
+    "calls-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Video call icons visible at full width disappear in the narrow layout.",
+        "Long explanatory paragraph and capability text occupy much of the useful main-pane area."
+      ]
+    },
+    "composer-mention": {
+      "score": 8,
+      "issues": [
+        "Suggestion name, email, attachment size and insertion hint create several small text tiers in a tight area.",
+        "Popup covers the recent conversation, with no visual connection to the typed mention at the caret."
+      ]
+    },
+    "composer-long-draft": {
+      "score": 8,
+      "issues": [
+        "Draft viewport is usable, but its narrow scrollbar is the only indication that over a hundred lines precede the visible text.",
+        "Attachment and send actions sit beside the last draft line without a separate action band."
+      ]
+    },
+    "composer-images": {
+      "score": 7.5,
+      "issues": [
+        "Extreme-aspect images become strips too thin to inspect inside fixed thumbnail boxes.",
+        "Small dimension labels identify shape but do not help inspect the attachment."
+      ]
+    },
+    "image-preview": {
+      "score": 8.5,
+      "issues": [
+        "Clear preview controls; image dimensions and selected Fit underline are visually slight."
+      ]
+    },
+    "search-switcher": {
+      "score": 7,
+      "issues": [
+        "Bottom fade washes out the visible final result preview below 4.5:1 in both themes.",
+        "Search field has no compact visible title to distinguish jump navigation from message search."
+      ]
+    },
+    "new-chat": {
+      "score": 8.5,
+      "issues": [
+        "Strong action hierarchy; result emails and Enter-to-add hint are small."
+      ]
+    },
+    "settings": {
+      "score": 8,
+      "issues": [
+        "Long scrolling dialog lacks a strong fixed lower edge for actions or closure.",
+        "300-pixel select fields leave a different right edge from the much wider setting rows.",
+        "Section labels and zoom/account hints are small."
+      ]
+    },
+    "shortcuts": {
+      "score": 8.5,
+      "issues": [
+        "Readable grouping, but left-column shortcut descriptions are separated from most keycaps by a large gap.",
+        "Section labels are small."
+      ]
+    },
+    "status-message": {
+      "score": 8.5,
+      "issues": [
+        "Clear focused field and action hierarchy; secondary label and buttons are compact."
+      ]
+    },
+    "account-menu": {
+      "score": 8.5,
+      "issues": [
+        "Account and presence sections scan well; dense 12-13-point text leaves limited differentiation between account detail and actions."
+      ]
+    },
+    "permission-consent": {
+      "score": 8.5,
+      "issues": [
+        "Clear permission explanation and primary action; exact permission detail is small and visually recessed."
+      ]
+    },
+    "error-toast": {
+      "score": 8.5,
+      "issues": [
+        "Persistent inline failure and Retry are clear.",
+        "Failure reason uses small text despite ample horizontal room."
+      ]
+    },
+    "first-sync-loading": {
+      "score": 8.5,
+      "issues": [
+        "Clear loading explanation and skeletons; state title is modest relative to the otherwise empty pane."
+      ]
+    },
+    "first-sync-empty": {
+      "score": 8.5,
+      "issues": [
+        "Useful first-chat action; empty navigation column consumes a large share of the screen."
+      ]
+    },
+    "call-bar": {
+      "score": 8,
+      "issues": [
+        "Compact call controls work at 380 pixels.",
+        "System events and beginning-of-conversation spacing use a large share of the small transcript viewport."
+      ]
+    },
+    "call-docked": {
+      "score": 8,
+      "issues": [
+        "Large blank area above the first transcript event separates context from the conversation.",
+        "Meeting lifecycle events occupy substantial vertical space relative to the three short messages."
+      ]
+    },
+    "join-on-phone": {
+      "score": 9,
+      "issues": []
+    },
+    "setup": {
+      "score": 8,
+      "issues": [
+        "Tenant helper separates the label from its field, unlike the client-ID field.",
+        "Footer sits near the bottom edge and a full-height scrollbar makes a short form feel longer."
+      ]
+    },
+    "signin": {
+      "score": 8.5,
+      "issues": [
+        "Clear primary and fallback actions; hovered fallback tooltip overlaps the app-registration section."
+      ]
+    },
+    "signin-browser": {
+      "score": 8.5,
+      "issues": [
+        "Useful retry, copy and cancel controls; waiting text is fairly small."
+      ]
+    },
+    "signin-device-code": {
+      "score": 8.5,
+      "issues": [
+        "Strong code hierarchy; URL shares a small instruction line and requires careful scanning."
+      ]
+    },
+    "signin-finishing": {
+      "score": 8.5,
+      "issues": [
+        "Clear finishing state; large branding remains more prominent than the active task."
+      ]
+    },
+    "signin-expired": {
+      "score": 8.5,
+      "issues": [
+        "Account identity supports recovery; fallback tooltip overlaps the app-registration section."
+      ]
+    },
+    "signin-failed": {
+      "score": 8.5,
+      "issues": [
+        "Failure and recovery actions are clear; the large brand block dominates the comparatively small recovery card."
+      ]
+    }
+  },
+  "top_issues": [
+    {
+      "priority": 1,
+      "severity": "high",
+      "screens": [
+        "search-switcher"
+      ],
+      "mode": "both",
+      "dimension": "contrast",
+      "issue": "The bottom scroll fade is painted over a real result preview, making text fail WCAG 2.2 AA.",
+      "evidence": "Pillow samples in Dorothy Vaughan's preview: light (415,588) #87898e on #ffffff = 3.50:1; dark (419,588) #84878e on #25272b = 4.16:1. Even the darkest/lightest glyph pixels on row 587 reach only 3.69:1 light and 4.28:1 dark. Body text requires 4.5:1.",
+      "fix": "Keep the whole final visible result above the fade; clip partial rows cleanly or apply the fade only to empty padding. Use #62656d on white and #9c9ea8 on #26272c for full-opacity secondary text."
+    },
+    {
+      "priority": 2,
+      "severity": "medium",
+      "screens": [
+        "chats-narrow",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "The narrow layout preserves too much navigation width and loses useful conversation or contact information.",
+      "evidence": "At 760x640 the main pane starts at x296, leaving 464 pixels. Contact name begins near x128 and date near x244; Katherine Johnson and Margaret Hamilton truncate. Channel content has further card/avatar indents.",
+      "fix": "At widths below 800 points, offer a 200-point navigation pane including the rail, or collapse the list behind a back control. Put dates on the preview line to preserve name width."
+    },
+    {
+      "priority": 3,
+      "severity": "medium",
+      "screens": [
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "dimension": "other",
+      "issue": "The narrow calls list loses the visible video-call action.",
+      "evidence": "At 1280 pixels, each recent-person row has phone near x295 and video near x333. At 760 pixels, only phone near x267 remains; no visible overflow control replaces video.",
+      "fix": "Keep both 24-point action targets by moving them into a second row, or expose a 24-point overflow button with both call choices."
+    },
+    {
+      "priority": 4,
+      "severity": "medium",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "chats-narrow",
+        "channel",
+        "channel-narrow",
+        "calendar",
+        "settings",
+        "composer-mention",
+        "account-menu"
+      ],
+      "mode": "both",
+      "dimension": "typography",
+      "issue": "Too much useful information uses the smallest text tiers.",
+      "evidence": "Timestamp glyphs are roughly 9-10 pixels tall, rail labels roughly 8-9 pixels, and many section labels roughly 8 pixels. Main message glyphs are roughly 13-14 pixels tall. Composer hint is a separate small line across almost every transcript.",
+      "fix": "Use 13-point secondary text with an 18-point line height for timestamps, result emails and useful hints. Reserve 11 points for nonessential badges. Use 12-point medium-weight section labels."
+    },
+    {
+      "priority": 5,
+      "severity": "medium",
+      "screens": [
+        "composer-images"
+      ],
+      "mode": "both",
+      "dimension": "other",
+      "issue": "Extreme-aspect attachment previews are too small to inspect.",
+      "evidence": "Three boxes are about 144x96 pixels at x407,559,711 and y599. The 3072x256 image fits into about 144x12 pixels; the 256x3072 image becomes about 8x94 pixels.",
+      "fix": "Retain the full-image fit view, but provide a clearly visible 24-point inspect button and a crop/zoom preview on activation. Show a filename or attachment ordinal at 13 points alongside dimensions."
+    },
+    {
+      "priority": 6,
+      "severity": "medium",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "chats-narrow",
+        "composer-long-draft"
+      ],
+      "mode": "both",
+      "dimension": "typography",
+      "issue": "Quoted lists lose their structure and become dense miniature paragraphs.",
+      "evidence": "The quoted three-item list becomes inline bullet-separated text in a roughly 543x59-pixel block at standard width and a roughly 365x75-pixel block at narrow width. The original list has distinct lines and more vertical rhythm.",
+      "fix": "Preserve list line breaks in quotes, use 13-point text with 18-point leading, and show two lines plus an expand control when a compact quote is needed."
+    },
+    {
+      "priority": 7,
+      "severity": "medium",
+      "screens": [
+        "calls",
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "dimension": "hierarchy",
+      "issue": "The calls page gives explanatory prose more visual space than the actual call choices.",
+      "evidence": "In the narrow main pane, How calls work begins at y201 and its explanation/capability content extends to y405. The meeting form occupies y78-174, while recent-person actions remain tiny outline icons.",
+      "fix": "Keep the visible explanation to one 13-point sentence, put the full capability list under Details, and use 24-point phone/video icons with 32-point targets in recent-person rows."
+    },
+    {
+      "priority": 8,
+      "severity": "low",
+      "screens": [
+        "settings"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Settings mixes control widths and vertical rhythms in a tall scrolling surface.",
+      "evidence": "Dialog spans x359-920 and y49-722. Select fields span x384-684, while checkbox rows and descriptions run close to x882; the scrollbar sits at x894. The last visible row sits just above the bottom fade.",
+      "fix": "Use a common 24-point inset and a consistent 16-point section gap. Align selects to a shared content grid, and keep a 48-point footer with a visible Done button outside the scroll area."
+    },
+    {
+      "priority": 9,
+      "severity": "low",
+      "screens": [
+        "setup"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Setup uses inconsistent label-to-field spacing.",
+      "evidence": "Client-ID label appears around y357 and field y373. Tenant label is around y437, helper at y459-478 and field y490. The helper pushes the input far away from its label.",
+      "fix": "Place each label 8 points above its field, put helper copy 6 points below the field, and use 24 points between field groups. Keep at least 32 points below the footer at 800-point height."
+    },
+    {
+      "priority": 10,
+      "severity": "low",
+      "screens": [
+        "call-bar",
+        "call-docked"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Meeting system events consume excessive transcript height.",
+      "evidence": "In the 720x800 docked screen the header ends at y132, beginning-of-conversation text appears near y307, first message near y420, and subsequent system events occupy y598-670. The 380-pixel panel also spreads lifecycle entries across several separate rows.",
+      "fix": "Use 12-16-point spacing around compact event rows and reduce the empty lead-in above the first divider to 32 points. Group meeting start/end information where possible."
+    },
+    {
+      "priority": 11,
+      "severity": "low",
+      "screens": [
+        "composer-long-draft"
+      ],
+      "mode": "both",
+      "dimension": "other",
+      "issue": "A long draft has weak orientation feedback.",
+      "evidence": "The composer occupies y552-760 and shows only column_111 through column_119. A narrow scroll thumb near x1167,y713-751 is its only visible position cue.",
+      "fix": "Add a quiet 12-point line-count/position label above the action row, such as Lines 111-119 of 120, or a 24-point Expand composer action. Separate the action row with 8 points of padding."
+    },
+    {
+      "priority": 12,
+      "severity": "low",
+      "screens": [
+        "shortcuts"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "The shortcut table has uneven key-to-description spacing.",
+      "evidence": "Left keycaps begin at x198 and descriptions at x389, a 191-pixel column interval. Right keycaps start at x682 and descriptions at x776, a 94-pixel interval. Short left shortcuts have a conspicuous empty gap.",
+      "fix": "Use a consistent key column width of about 160 points on both sides, with a 16-point gutter, or align each description 16 points after its key group."
+    }
+  ]
+}

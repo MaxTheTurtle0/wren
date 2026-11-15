@@ -1,0 +1,509 @@
+{
+ "overall": 8.0,
+ "dimensions": {
+  "hierarchy": 8.0,
+  "spacing": 7.5,
+  "typography": 8.0,
+  "consistency": 7.5,
+  "contrast_accessibility": 8.5,
+  "feedback": 7.5,
+  "states": 8.5,
+  "navigation": 8.0
+ },
+ "screens": {
+  "chats": {
+   "score": 8.5,
+   "issues": [
+    "Accent orange #a9530f/#e88c3e carries too many meanings: own name, unread time, unread dot, selection bar, mention, primary button, focus ring, DEMO",
+    "Message hover background #f6f6f7 on #ffffff is 1.08:1 (dark 1.07:1); hover reads mostly through the toolbar",
+    "No divider between chat list and conversation; only a 1.08:1 background change"
+   ]
+  },
+  "chats-wide": {
+   "score": 8.0,
+   "issues": [
+    "Conversation column is centred at about 920pt, leaving a 320pt empty band on the right and a wide gap between list and header",
+    "Header identity (avatar and name at x=684) is detached from the list it belongs to",
+    "Rest matches chats.png"
+   ]
+  },
+  "chats-narrow": {
+   "score": 7.5,
+   "issues": [
+    "At 760pt the chat list keeps 232pt and leaves 464pt for the conversation; names truncate to 'Katherine Jo…', 'Design rev…', 'Grace Hop…'",
+    "Hover toolbar (7 actions) sits over the author row of a 464pt column and crowds the message",
+    "Top message is cut mid-line under the header with no fade"
+   ]
+  },
+  "chat-no-selection": {
+   "score": 8.5,
+   "issues": [
+    "Empty state is clear and offers Ctrl+K",
+    "Large empty pane; no secondary action button such as New chat"
+   ]
+  },
+  "chat-filter-no-match": {
+   "score": 8.0,
+   "issues": [
+    "Filter field holding 'zz' still shows the idle 1pt #8a8d95 border; no focus ring, unlike the composer's 2pt accent ring",
+    "No clear (x) inside the filter field; Clear filter is only in the empty state",
+    "Clear filter primary button has a 1pt grey #8a8d95 outline around the orange fill"
+   ]
+  },
+  "group-chat": {
+   "score": 8.5,
+   "issues": [
+    "Mention row tint #fdf1e5 plus accent bar works well",
+    "Mentioned name and own author name use the same orange as unread and primary actions",
+    "System line 'Ada Lovelace added…' is fine but has no icon to set it apart from timestamps"
+   ]
+  },
+  "channel": {
+   "score": 8.0,
+   "issues": [
+    "A full outlined Reply button under every thread is heavy; three repeated buttons compete with the content",
+    "Engineering and Contoso team tiles use the same magenta, which weakens the tree as a navigation aid",
+    "No unread markers in the team/channel tree"
+   ]
+  },
+  "channel-narrow": {
+   "score": 7.5,
+   "issues": [
+    "Hover toolbar pinned at y=56-90 collides with the clipped author row directly under the header",
+    "Team tree keeps 232pt at 760pt width; post text wraps to 3 lines",
+    "Composer placeholder drops '@ to mention' and footer drops the Markdown hint, so hints differ between widths"
+   ]
+  },
+  "teams": {
+   "score": 8.0,
+   "issues": [
+    "Empty state is clean but generic ('Pick a channel on the left.')",
+    "No unread or activity cues on channels",
+    "Private and shared channel icons (lock, people) have no legend or tooltip in the shot"
+   ]
+  },
+  "calendar": {
+   "score": 7.5,
+   "issues": [
+    "Detail card is 640pt wide and left-aligned in a 916pt pane; the actions sit 230pt to the right in the header, detached from the details",
+    "Location 'Teams' repeats Online 'Microsoft Teams meeting'; no attendees or agenda",
+    "Blue event dots (#1f63c6) introduce a second accent with no legend; hollow dot for Focus time is unexplained"
+   ]
+  },
+  "calls": {
+   "score": 7.5,
+   "issues": [
+    "Join button is 32pt tall beside a 28pt input; tops align, bottoms differ by 4pt",
+    "The page reads like documentation (How calls work, Works/Not possible) rather than a tool",
+    "Recent-people avatars are 32pt while chat-list avatars are 38pt"
+   ]
+  },
+  "calls-narrow": {
+   "score": 7.0,
+   "issues": [
+    "Names truncate to 'Katherine …', 'Ada Lovela…', 'Margaret …' because the call and video buttons always take 76pt",
+    "Join is 32pt beside a 28pt input",
+    "List keeps 232pt at 760pt width"
+   ]
+  },
+  "composer-mention": {
+   "score": 8.0,
+   "issues": [
+    "Mention popup and file chip are clear",
+    "No text caret visible in a focused composer",
+    "Popup is anchored 8pt left of the composer edge and holds only one row, with no 'no other matches' hint"
+   ]
+  },
+  "composer-long-draft": {
+   "score": 6.5,
+   "issues": [
+    "Scrolled draft shows clipped descender fragments of line 110 along the top edge (y≈557)",
+    "Composer scrollbar renders as a 4x14pt stub at x≈1180 beside the attach icon and looks like a stray glyph",
+    "No visible caret even though the composer is focused; no cue that 119 lines are hidden above"
+   ]
+  },
+  "composer-images": {
+   "score": 7.0,
+   "issues": [
+    "Thumbnails are centre-cropped: the 3072x256 strip shows 1.5 birds, the 256x3072 one shows fragments, so the preview misrepresents the attachment",
+    "Remove (x) buttons overlap the image corners; in dark mode they sit on bright white image content",
+    "Thumbnail row starts 10pt below the composer top border while text uses 12pt"
+   ]
+  },
+  "image-preview": {
+   "score": 8.0,
+   "issues": [
+    "Clear Fit/100% control and dimensions",
+    "No file name or actions (copy, save, open)",
+    "Large flat stage #ececee leaves the 12:1 image floating with 280pt of empty space above and below"
+   ]
+  },
+  "search-switcher": {
+   "score": 8.0,
+   "issues": [
+    "Result list stops at 8 rows with no scroll cue or count",
+    "No divider between the last result and the key-hint footer",
+    "Rows do not say what kind of result they are (chat, meeting, channel); the query field has no visible box or caret"
+   ]
+  },
+  "new-chat": {
+   "score": 8.0,
+   "issues": [
+    "Search field with 'ra' typed shows the idle 1pt #8a8d95 border; no focus ring or caret",
+    "First result highlighted #e4e4e8 at 1.17:1 against white, with no keyboard hint",
+    "Primary button has a grey 1pt outline around the orange fill"
+   ]
+  },
+  "settings": {
+   "score": 8.0,
+   "issues": [
+    "6pt scrollbar thumb #8a8d95 is visually heavy for a dialog",
+    "Theme choice uses three separate pills rather than one segmented control",
+    "Last row fades under the bottom edge; only the scrollbar shows there is more"
+   ]
+  },
+  "shortcuts": {
+   "score": 8.5,
+   "issues": [
+    "Dialog bottom sits 12pt from the window edge at 800pt height",
+    "About 100pt dead gap between key column and descriptions",
+    "Key caps vary in width; mixed caps and prose ('@ in the composer') in one column"
+   ]
+  },
+  "status-message": {
+   "score": 8.0,
+   "issues": [
+    "No 'clear after' duration, which Teams users expect",
+    "Placeholder #9c9ea8 is close to helper text #b4b6bf in dark mode and can read as a value",
+    "Otherwise clean, with Save correctly disabled"
+   ]
+  },
+  "account-menu": {
+   "score": 8.5,
+   "issues": [
+    "Two accounts with the same name rely on 11pt email lines to tell apart",
+    "Menu has no pointer or anchor to the avatar",
+    "Status glyphs for Away, Be right back and Offline are near-identical rings at 10pt"
+   ]
+  },
+  "permission-consent": {
+   "score": 8.0,
+   "issues": [
+    "Copy 'asked for only now that you use this' is awkward",
+    "Permission detail is 11pt grey and wraps to two lines",
+    "Good primary/secondary pairing"
+   ]
+  },
+  "error-toast": {
+   "score": 8.5,
+   "issues": [
+    "Inline failed state with Retry is clear",
+    "Error text #c42b2b on #fbeeee is 4.98:1, a narrow AA pass for 12pt",
+    "Retry button is smaller than the error text block and close to it (6pt)"
+   ]
+  },
+  "first-sync-loading": {
+   "score": 8.5,
+   "issues": [
+    "Skeleton rows plus spinner work well",
+    "Refresh icon in the header gives no loading cue",
+    "Skeleton bars #e4e4e8 on #f6f6f7 are 1.17:1 (decorative, acceptable)"
+   ]
+  },
+  "first-sync-empty": {
+   "score": 8.0,
+   "issues": [
+    "Chat list column is completely blank; no hint that it fills in",
+    "New chat primary button has a grey 1pt outline around the fill",
+    "Good single call to action"
+   ]
+  },
+  "call-bar": {
+   "score": 7.0,
+   "issues": [
+    "Meeting title appears twice (call bar and chat header) in a 380pt panel",
+    "No leave or hang-up control and no duration; 'Restore' and 'Close bar' are ambiguous",
+    "'Meeting ended: 58 min' sits 4pt under Alex's message, centred, so it reads as a caption of that message"
+   ]
+  },
+  "call-docked": {
+   "score": 7.5,
+   "issues": [
+    "Same duplicated title and ambiguous call-bar actions as call-bar",
+    "No navigation rail; no way back to other chats except Restore",
+    "Lower 220pt of the panel is empty"
+   ]
+  },
+  "join-on-phone": {
+   "score": 8.0,
+   "issues": [
+    "Clear QR dialog with a white plate in dark mode",
+    "Only one secondary action; no primary button",
+    "Dialog covers the call-bar buttons but they stay visible through a light scrim"
+   ]
+  },
+  "setup": {
+   "score": 7.5,
+   "issues": [
+    "'Open the registration guide' sits 10pt under the paragraph while other gaps are 16-24pt",
+    "Card is dense: four helper texts at 11-12pt in grey",
+    "Client ID field shows a darker #4a4d55 border (focus?) without the accent ring used elsewhere"
+   ]
+  },
+  "signin": {
+   "score": 8.5,
+   "issues": [
+    "Clean card and copy",
+    "Hover tooltip runs 245pt past the card's right edge",
+    "'Explore the demo' floats between card and footer with equal visual weight to the secondary sign-in"
+   ]
+  },
+  "signin-browser": {
+   "score": 8.5,
+   "issues": [
+    "Clear waiting state with spinner",
+    "Three buttons of different importance; 'Open the page again' as primary is debatable",
+    "Footer moves up 77pt compared with signin.png, so the layout shifts between steps"
+   ]
+  },
+  "signin-device-code": {
+   "score": 8.5,
+   "issues": [
+    "Large code is legible",
+    "Inter's wide hyphen makes 'F4KQ-9TZW' look like two words",
+    "Footer position shifts between sign-in states"
+   ]
+  },
+  "signin-finishing": {
+   "score": 8.0,
+   "issues": [
+    "No cancel or way out if finishing hangs",
+    "Card collapses to 120pt and the footer jumps up",
+    "Spinner is the only progress cue"
+   ]
+  },
+  "signin-expired": {
+   "score": 8.5,
+   "issues": [
+    "Explains why and which account",
+    "Account line is 11pt and low emphasis for the key fact",
+    "Same tooltip overflow as signin"
+   ]
+  },
+  "signin-failed": {
+   "score": 8.5,
+   "issues": [
+    "Error stated in red with icon",
+    "No detail or error code to report",
+    "Footer position shifts again"
+   ]
+  }
+ },
+ "top_issues": [
+  {
+   "priority": 1,
+   "severity": "high",
+   "screens": [
+    "composer-long-draft"
+   ],
+   "mode": "both",
+   "issue": "Long draft composer shows clipped glyph fragments at the top edge and a stray scrollbar stub beside the attach icon; no caret visible.",
+   "evidence": "Descender fragments of the previous line at y≈557 (composer top border at 553); scrollbar thumb 4x14pt at x≈1180,y≈738-752 next to the paperclip at x=1207.",
+   "fix": "Clip text to the inner padding rect (12pt inset) and add a 16pt fade at the top; give the text area its own scrollbar column 8pt wide on the right, full height of the text area, above the action row; draw the caret (2pt, accent colour) whenever focused."
+  },
+  {
+   "priority": 2,
+   "severity": "high",
+   "screens": [
+    "call-bar",
+    "call-docked"
+   ],
+   "mode": "both",
+   "issue": "Call bar duplicates the meeting title, has no leave/hang-up or duration, and the 'Restore' and 'Close bar' labels are ambiguous; the 'Meeting ended' line attaches to the preceding message.",
+   "evidence": "'Design review: Wren 0.2' at y=19 and again at y=112 in a 380pt panel; 'Meeting ended: 58 min · 11:12' sits 4pt below Alex's text, while messages are 20pt apart.",
+   "fix": "Merge into one header: title plus 'In meeting · 12:04' timer on one row, actions as icon+label 'Phone', 'Back to Wren', 'Leave' (Leave in danger red #c42b2b / #f27474). Give system lines 16pt above and below, matching date dividers."
+  },
+  {
+   "priority": 3,
+   "severity": "medium",
+   "screens": [
+    "chat-filter-no-match",
+    "new-chat",
+    "setup",
+    "search-switcher"
+   ],
+   "mode": "both",
+   "issue": "Text fields don't show focus. Only the composer gets the 2pt accent ring, so a field that is being typed in looks idle.",
+   "evidence": "Filter with 'zz' and New chat field with 'ra' both have 1pt #8a8d95 (dark #6e7179), the same as idle; composer focused is 2pt #a9530f / #e88c3e.",
+   "fix": "Apply the composer focus style to every text input: 2pt #a9530f (dark #e88c3e) border, or a 1pt border plus a 2pt 30% accent outer ring, and always draw the caret."
+  },
+  {
+   "priority": 4,
+   "severity": "medium",
+   "screens": [
+    "composer-images"
+   ],
+   "mode": "both",
+   "issue": "Pending-image thumbnails are centre-cropped, so wide or tall images are misrepresented, and remove buttons cover the image corners.",
+   "evidence": "3072x256 thumbnail shows about 1.5 of 12 birds; 256x3072 shows fragments; the x buttons sit inside the image at its top-right.",
+   "fix": "Letterbox with 'contain' on a #eeeef0 / #2c2d33 tile (144x96pt), keep the dimension caption, and place the remove button half outside the tile corner (20pt circle, 1pt border #dfdfe3 / #303137)."
+  },
+  {
+   "priority": 5,
+   "severity": "medium",
+   "screens": [
+    "chats-narrow",
+    "channel-narrow",
+    "calls-narrow"
+   ],
+   "mode": "both",
+   "issue": "At 760pt width the list pane keeps its full 232pt; names truncate heavily and the conversation gets only 464pt.",
+   "evidence": "'Katherine Jo…', 'Design rev…', 'Grace Hop…' in chats; 'Katherine …', 'Ada Lovela…' in calls, where call and video buttons take 76pt of every row.",
+   "fix": "Below 900pt shrink the list to 200pt and drop the avatar to 32pt; in Calls show the call and video buttons only on hover or selection, so names get the full width."
+  },
+  {
+   "priority": 6,
+   "severity": "medium",
+   "screens": [
+    "chats",
+    "group-chat",
+    "composer-mention",
+    "error-toast",
+    "channel"
+   ],
+   "mode": "both",
+   "issue": "The accent orange is overloaded and dilutes hierarchy: own author name, unread times, unread dots, mentions, selection bars, focus rings, primary buttons and the DEMO label all share #a9530f / #e88c3e.",
+   "evidence": "Up to 9 orange elements in chats.png at once; own name 'Alex Rivera' #a9530f reads like a mention or alert.",
+   "fix": "Render the person's own author name in the normal text colour #1b1c1f / #e9e9ec at semibold; keep orange for unread, mention and primary actions only; render DEMO as an 11pt neutral pill (#4a4d55 text on #e4e4e8)."
+  },
+  {
+   "priority": 7,
+   "severity": "medium",
+   "screens": [
+    "calls",
+    "calls-narrow"
+   ],
+   "mode": "both",
+   "issue": "Control heights are inconsistent: the meeting-link Join button is 32pt beside a 28pt input; header buttons are 28pt while dialog buttons are 32pt; the New chat input is 33pt.",
+   "evidence": "calls input y=125-152 (28pt) vs Join y=125-156 (32pt); calendar Copy link/Join 28pt; status dialog buttons 32pt; new-chat input 33pt.",
+   "fix": "Use one control height per density: 28pt for inline controls (inputs and the buttons next to them), 32pt for dialog footers. Make the Calls input and Join both 32pt and vertically centre them."
+  },
+  {
+   "priority": 8,
+   "severity": "medium",
+   "screens": [
+    "chat-filter-no-match",
+    "first-sync-empty",
+    "new-chat",
+    "signin",
+    "signin-browser",
+    "signin-failed",
+    "calendar",
+    "permission-consent"
+   ],
+   "mode": "both",
+   "issue": "Primary buttons draw a 1pt grey outline around the orange fill, giving them a muddy edge.",
+   "evidence": "first-sync-empty New chat: edge pixel #8a8d95 then fill #a9530f (dark #6e7179 then #e88c3e).",
+   "fix": "Make the primary border the fill colour, or a 1pt darker accent: #8f450c in light, #d07a30 in dark."
+  },
+  {
+   "priority": 9,
+   "severity": "medium",
+   "screens": [
+    "calendar"
+   ],
+   "mode": "both",
+   "issue": "Meeting detail is thin and poorly composed: a 640pt left-aligned card in a 916pt pane, actions far away in the header, redundant rows, no attendees.",
+   "evidence": "Card x=388-1028; Join at x=1199-1264; 'Location: Teams' duplicates 'Online: Microsoft Teams meeting'.",
+   "fix": "Put Join and Copy link directly under the title inside the content column; drop the Location row when it equals Teams; add an attendee row with 24pt avatars and RSVP state; cap the column at 720pt and centre it like the chat column."
+  },
+  {
+   "priority": 10,
+   "severity": "low",
+   "screens": [
+    "chats",
+    "chats-wide",
+    "calls",
+    "calendar",
+    "teams"
+   ],
+   "mode": "both",
+   "issue": "Pane and surface separation relies on near-identical backgrounds; cards and dividers sit at about 1.3:1.",
+   "evidence": "List #f6f6f7 vs main #ffffff = 1.08:1 (dark #1d1e22 vs #17181b = 1.07:1) with no divider; card border #dfdfe3 on white = 1.33:1; message hover #f6f6f7 = 1.08:1.",
+   "fix": "Add a 1pt #dfdfe3 / #303137 divider between list and main pane; raise the hover tint to #f0f0f2 (light) and #222328 (dark)."
+  },
+  {
+   "priority": 11,
+   "severity": "low",
+   "screens": [
+    "search-switcher"
+   ],
+   "mode": "both",
+   "issue": "Switcher results are cut at 8 rows with no scroll cue, no divider before the hint footer, and no result type.",
+   "evidence": "Last row 'Margaret Hamilton' ends at y≈585; hints at y=603-631 with no separator.",
+   "fix": "Add a 1pt #dfdfe3 / #303137 divider above the footer, a bottom fade when more rows exist, and a right-aligned 11pt type label (Chat, Meeting, Channel) in #62656d."
+  },
+  {
+   "priority": 12,
+   "severity": "low",
+   "screens": [
+    "channel",
+    "channel-narrow"
+   ],
+   "mode": "both",
+   "issue": "Every thread has a full outlined Reply button, which repeats heavy chrome; the hover toolbar collides with the clipped author row at narrow width.",
+   "evidence": "Three 72x28pt outlined Reply buttons in one view; channel-narrow toolbar y=56-90 over the author row at y=60-75.",
+   "fix": "Make Reply a 12pt text link with icon (#4a4d55, no border) inside the thread card's footer; clamp the hover toolbar so it never overlaps the header (min y = header bottom + 8pt)."
+  },
+  {
+   "priority": 13,
+   "severity": "low",
+   "screens": [
+    "settings"
+   ],
+   "mode": "both",
+   "issue": "The Settings scrollbar is heavy and the theme selector is three separate pills.",
+   "evidence": "Scrollbar thumb 6pt #8a8d95 on white at x=886-893; System/Light/Dark pills have separate borders 8pt apart.",
+   "fix": "Use a 4pt thumb in #c4c5c9 / #494b51 that widens on hover; render theme as one segmented control 28pt tall with a shared border."
+  },
+  {
+   "priority": 14,
+   "severity": "low",
+   "screens": [
+    "signin",
+    "signin-browser",
+    "signin-device-code",
+    "signin-finishing",
+    "signin-expired",
+    "signin-failed"
+   ],
+   "mode": "both",
+   "issue": "The sign-in flow shifts layout between steps as the card height changes, and the hover tooltip runs past the card.",
+   "evidence": "Footer y = 630, 553, 628, 477, 632, 596 across states; tooltip spans x=609-1118 against a card ending at x=874.",
+   "fix": "Give the card a 240pt minimum height and pin the footer to the window bottom (24pt margin); wrap tooltips at 320pt."
+  },
+  {
+   "priority": 15,
+   "severity": "low",
+   "screens": [
+    "account-menu",
+    "chats"
+   ],
+   "mode": "both",
+   "issue": "Presence badges for Away, Be right back and Offline are near-identical 10pt rings.",
+   "evidence": "Away is a brown ring #8a5a00 with a hollow centre, BRB a #8a5a00 clock, Offline a grey ring #a1a3a9; all about 10pt.",
+   "fix": "Use 12pt badges with distinct glyphs (Away: filled #c38a00 with a clock; BRB: arrow; Offline: grey ring with an x) and a 2pt background-coloured cutout."
+  },
+  {
+   "priority": 16,
+   "severity": "low",
+   "screens": [
+    "status-message"
+   ],
+   "mode": "dark",
+   "issue": "The status field placeholder is close in tone to the dialog's body text, and there is no expiry option.",
+   "evidence": "Placeholder #9c9ea8 vs helper text #b4b6bf (1.3:1 apart) on #25262b/#17181b.",
+   "fix": "Italicise or lighten the placeholder to #7c7f88 (still 4.5:1 on #17181b), and add a 'Clear after' select (Never, 1 hour, Today, This week)."
+  }
+ ]
+}

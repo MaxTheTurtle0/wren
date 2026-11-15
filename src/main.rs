@@ -39,9 +39,10 @@ struct Cli {
     /// Window size as WxH points, for screenshots.
     #[arg(long, value_name = "WxH")]
     size: Option<String>,
-    /// Demo view: `chats`, `channel`, `calendar`, `calls`, `signin`,
-    /// `settings`, `switcher`, `shortcuts`, plus `light` or `dark`, joined
-    /// with commas.
+    /// Demo view: `chats`, `channel`, `teams`, `calendar`, `calls`,
+    /// `signin`, `settings`, `switcher`, `shortcuts`, states such as
+    /// `loading`, `empty` or `error`, plus `light` or `dark`, joined with
+    /// commas. `apply_page` lists them all.
     #[arg(long)]
     page: Option<String>,
     /// Print the time to the first frame and quit.
@@ -236,6 +237,8 @@ fn apply_page(app: &mut App, page: &str) {
             "calendar" => {
                 app.section = Section::Calendar;
                 app.open = None;
+                // An online meeting shows every part of the detail page.
+                app.selected_meeting = Some("demo-design-review".into());
             }
             "calls" => {
                 app.section = Section::Calls;
@@ -330,6 +333,20 @@ fn apply_page(app: &mut App, page: &str) {
                 if part == "phone" {
                     app.actions.push(Action::JoinOnPhone);
                 }
+                // Today's session starts in the meeting chat, as Teams posts it.
+                let chat = ConversationId::Chat("19:meeting_demo-design-review@thread.v2".into());
+                if let Some(view) = app.conversations.get_mut(&chat) {
+                    let now = wren::time::now();
+                    view.messages.push(wren::model::Message {
+                        id: "demo-meeting-started-today".into(),
+                        conversation: Some(chat.clone()),
+                        created: now,
+                        modified: now,
+                        system: true,
+                        body: wren::html::RichText::plain("Meeting started"),
+                        ..Default::default()
+                    });
+                }
             }
             "signin" => {
                 app.demo = false;
@@ -340,6 +357,74 @@ fn apply_page(app: &mut App, page: &str) {
                 app.demo = false;
                 app.chats.clear();
                 app.auth = wren::backend::AuthStatus::NotConfigured;
+            }
+            // Sign-in steps and failures.
+            "signin-browser" | "signin-code" | "signin-wait" | "signin-expired"
+            | "signin-failed" => {
+                use wren::backend::AuthStatus;
+                app.demo = false;
+                app.chats.clear();
+                let url = "https://login.microsoftonline.com/".to_owned();
+                app.auth = match part {
+                    "signin-browser" => AuthStatus::WaitingForBrowser { url },
+                    "signin-code" => AuthStatus::DeviceCode {
+                        code: "F4KQ-9TZW".into(),
+                        url: "https://microsoft.com/devicelogin".into(),
+                    },
+                    "signin-wait" => AuthStatus::Finishing,
+                    "signin-expired" => AuthStatus::Expired {
+                        username: "alex@contoso.com".into(),
+                        reason: "The session expired after 90 days without use.".into(),
+                    },
+                    _ => AuthStatus::Failed("Microsoft did not answer in time.".into()),
+                };
+            }
+            "teams" => {
+                app.section = Section::Teams;
+                app.open = None;
+            }
+            "no-chat" => app.open = None,
+            "no-match" => app.chat_filter = "zz".into(),
+            // A first start: nothing synced yet, or nothing to sync.
+            "loading" | "empty" => {
+                use wren::sync::Resource;
+                app.chats.clear();
+                app.teams.clear();
+                app.meetings.clear();
+                app.open = None;
+                if part == "loading" {
+                    app.loading
+                        .extend([Resource::Chats, Resource::Teams, Resource::Calendar]);
+                }
+            }
+            // A message that failed to send, as the backend reports it.
+            "error" => {
+                if let Some(open) = app.open.clone() {
+                    let me = app.me().to_owned();
+                    let author = app
+                        .profile
+                        .as_ref()
+                        .map(|p| p.display_name.clone())
+                        .unwrap_or_default();
+                    if let Some(view) = app.conversations.get_mut(&open) {
+                        view.messages.push(wren::model::Message {
+                            id: "local-failed".into(),
+                            conversation: Some(open.clone()),
+                            author_id: Some(me),
+                            author,
+                            created: wren::time::now(),
+                            body: wren::html::RichText::plain("Here are the throttling numbers."),
+                            delivery: wren::model::Delivery::Failed,
+                            failure: Some(
+                                "Microsoft is limiting requests. Try again in a moment.".into(),
+                            ),
+                            ..Default::default()
+                        });
+                    }
+                }
+            }
+            "consent" => {
+                app.overlay = Some(wren::app::Overlay::Consent(wren::auth::CHAT_CREATE_SCOPE));
             }
             other => eprintln!("unknown page part: {other}"),
         }
@@ -403,6 +488,11 @@ impl Window {
 
 impl eframe::App for Window {
     fn raw_input_hook(&mut self, _ctx: &egui::Context, input: &mut egui::RawInput) {
+        // Screenshots show the window as it looks in use: focused, so focus
+        // rings and the caret draw (a headless display never focuses it).
+        if self.screenshot.is_some() {
+            input.focused = true;
+        }
         self.paste_input.prepare(input);
     }
     fn persist_egui_memory(&self) -> bool {

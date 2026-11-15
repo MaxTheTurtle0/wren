@@ -22,11 +22,20 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             widgets::window_drag(ui, header, "signin-drag");
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.add_space((ui.available_height() * 0.10).max(48.0));
-                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(160.0, 121.0)).tint(palette.text).alt_text("Wren"));
+                    // The logo, card and footer sit as one group near the middle.
+                    // One anchor for every sign-in step, so the mark and the
+                    // card do not move as the steps change: the tallest step
+                    // (setup) centred, with room above it.
+                    let height_id = egui::Id::new("signin-setup-height");
+                    let tallest: f32 = ui.ctx().data(|d| d.get_temp(height_id)).unwrap_or(620.0);
+                    let top = ((ui.available_height() - tallest) / 2.0).max(32.0);
+                    ui.add_space(top);
+                    let stack_top = ui.cursor().top();
+                    // One mark size on every step.
+                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(84.0, 64.0)).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
                     ui.label(
-                        egui::RichText::new("A fast, native client for Microsoft Teams chats, channels and meetings.")
+                        egui::RichText::new("A fast, native client for Microsoft Teams chats, channels and meetings.").line_height(Some(theme::leading(14.0)))
                             .font(theme::regular(14.0))
                             .color(palette.secondary),
                     );
@@ -49,24 +58,47 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                             });
                         });
                     ui.add_space(18.0);
-                    if let Some(previous) = app.adding_from().map(|account| account.label()) {
+                    let in_progress = matches!(
+                        app.auth,
+                        AuthStatus::Restoring
+                            | AuthStatus::Finishing
+                            | AuthStatus::WaitingForBrowser { .. }
+                            | AuthStatus::DeviceCode { .. }
+                    );
+                    if in_progress {
+                        // One task at a time: the demo returns once sign-in
+                        // finishes or is cancelled.
+                    } else if let Some(previous) = app.adding_from().map(|account| account.label()) {
                         // Adding a second account: the way back.
-                        if widgets::secondary_button(ui, &palette, &format!("  Back to {previous}  ")).clicked() {
+                        if widgets::secondary_button(ui, &palette, &format!("Back to {previous}")).clicked() {
                             app.actions.push(Action::CancelAddAccount);
                         }
-                    } else if widgets::secondary_button(ui, &palette, "  Explore the demo  ")
+                    } else if widgets::secondary_button(ui, &palette, "Explore the demo")
                         .on_hover_text("Sample chats, channels and meetings. Nothing leaves this computer.")
                         .clicked()
                     {
                         app.actions.push(Action::StartDemo);
                     }
                     ui.add_space(24.0);
-                    ui.label(
-                        egui::RichText::new("Wren is an independent open-source project, not affiliated with Microsoft. It talks only to Microsoft's official APIs and keeps your data on this computer.")
-                            .font(theme::regular(12.0))
-                            .color(palette.dim),
-                    );
+                    // A short measure: two or three lines, not one long one.
+                    let footer = 560.0f32.min(ui.available_width() - 32.0);
+                    ui.allocate_ui(vec2(footer, 0.0), |ui| {
+                        ui.set_max_width(footer);
+                        ui.add(
+                            egui::Label::new(
+                                egui::RichText::new("Wren is an independent open-source project, not affiliated with Microsoft. It talks only to Microsoft's official APIs and keeps your data on this computer.")
+                                    .line_height(Some(theme::leading(13.0)))
+                                    .font(theme::regular(13.0))
+                                    .color(palette.dim),
+                            )
+                            .wrap(),
+                        );
+                    });
                     ui.add_space(24.0);
+                    if matches!(app.auth, AuthStatus::NotConfigured) {
+                        let height = ui.cursor().top() - stack_top;
+                        ui.ctx().data_mut(|d| d.insert_temp(height_id, height));
+                    }
                 });
             });
         });
@@ -78,10 +110,22 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
     match app.auth.clone() {
         AuthStatus::NotConfigured => registration(app, ui, true),
         AuthStatus::Restoring | AuthStatus::Finishing => {
-            ui.vertical_centered(|ui| {
-                widgets::loading(ui, palette.accent, 22.0);
-                ui.label(egui::RichText::new("Signing in…").color(palette.secondary));
+            // The same title and body styles as the other sign-in cards.
+            ui.horizontal(|ui| {
+                widgets::loading(ui, palette.accent, 18.0);
+                ui.label(
+                    egui::RichText::new("Signing in…")
+                        .font(theme::semibold(18.0))
+                        .color(palette.text),
+                );
             });
+            ui.label(
+                egui::RichText::new(
+                    "Wren is finishing the sign-in with Microsoft. This takes a few seconds.",
+                )
+                .line_height(Some(theme::leading(14.0)))
+                .color(palette.secondary),
+            );
         }
         AuthStatus::WaitingForBrowser { url } => {
             ui.label(
@@ -90,12 +134,20 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     .color(palette.text),
             );
             ui.label(
-                egui::RichText::new("Sign in with your work or school account in the browser window Wren opened. You'll come back here automatically.")
+                egui::RichText::new("Sign in with your work or school account in the browser window Wren opened. You'll come back here automatically.").line_height(Some(theme::leading(14.0)))
                     .color(palette.secondary),
             );
+            ui.horizontal(|ui| {
+                widgets::loading(ui, palette.accent, 16.0);
+                ui.label(
+                    egui::RichText::new("Waiting for Microsoft…")
+                        .font(theme::regular(13.0))
+                        .color(palette.secondary),
+                );
+            });
             ui.add_space(6.0);
             ui.horizontal(|ui| {
-                if widgets::secondary_button(ui, &palette, "Open the page again").clicked() {
+                if widgets::primary_button(ui, &palette, "Open the page again").clicked() {
                     app.actions.push(Action::OpenUrl(url.clone()));
                 }
                 if widgets::secondary_button(ui, &palette, "Copy link").clicked() {
@@ -112,16 +164,51 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     .font(theme::semibold(18.0))
                     .color(palette.text),
             );
-            ui.label(
-                egui::RichText::new(format!("On any device, open {url} and enter:"))
-                    .color(palette.secondary),
-            );
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().item_spacing.x = 4.0;
+                ui.label(
+                    egui::RichText::new("On any device, go to")
+                        .line_height(Some(theme::leading(14.0)))
+                        .color(palette.secondary),
+                );
+                if ui
+                    .link(
+                        egui::RichText::new(&url)
+                            .line_height(Some(theme::leading(14.0)))
+                            .color(palette.link),
+                    )
+                    .clicked()
+                {
+                    app.actions.push(Action::OpenUrl(url.clone()));
+                }
+                ui.label(
+                    egui::RichText::new("and enter this code:")
+                        .line_height(Some(theme::leading(14.0)))
+                        .color(palette.secondary),
+                );
+            });
             ui.add_space(4.0);
             ui.vertical_centered(|ui| {
+                Frame::new()
+                    .fill(palette.panel)
+                    .stroke(Stroke::new(1.0, palette.outline))
+                    .corner_radius(CornerRadius::same(10))
+                    .inner_margin(Margin::symmetric(20, 8))
+                    .show(ui, |ui| {
+                        ui.label(
+                            egui::RichText::new(&code)
+                                .font(theme::semibold(30.0))
+                                .color(palette.text)
+                                .extra_letter_spacing(3.0),
+                        );
+                    });
+            });
+            ui.horizontal(|ui| {
+                widgets::loading(ui, palette.accent, 16.0);
                 ui.label(
-                    egui::RichText::new(&code)
-                        .font(theme::mono(28.0))
-                        .color(palette.accent),
+                    egui::RichText::new("Waiting for you to enter the code…")
+                        .font(theme::regular(13.0))
+                        .color(palette.secondary),
                 );
             });
             ui.add_space(4.0);
@@ -139,10 +226,7 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
         }
         status => {
             let (title, text) = match &status {
-                AuthStatus::Expired { username, reason } => (
-                    "Sign in again".to_owned(),
-                    if username.is_empty() { reason.clone() } else { format!("{reason} ({username})") },
-                ),
+                AuthStatus::Expired { reason, .. } => ("Sign in again".to_owned(), reason.clone()),
                 AuthStatus::Failed(reason) => ("Sign-in did not finish".to_owned(), reason.clone()),
                 _ => (
                     "Sign in".to_owned(),
@@ -154,20 +238,48 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     .font(theme::semibold(18.0))
                     .color(palette.text),
             );
-            ui.label(
-                egui::RichText::new(text).color(if matches!(status, AuthStatus::Failed(_)) {
-                    palette.danger
-                } else {
-                    palette.secondary
-                }),
-            );
+            if let AuthStatus::Failed(_) = status {
+                ui.horizontal_top(|ui| {
+                    theme::icon(ui, crate::theme::Icon::Alert, 16.0, palette.danger);
+                    ui.add(
+                        egui::Label::new(egui::RichText::new(&text).color(palette.danger)).wrap(),
+                    );
+                });
+            } else {
+                ui.label(
+                    egui::RichText::new(&text)
+                        .line_height(Some(theme::leading(14.0)))
+                        .color(palette.secondary),
+                );
+            }
+            if let AuthStatus::Expired { username, .. } = &status
+                && !username.is_empty()
+            {
+                ui.horizontal(|ui| {
+                    ui.label(
+                        egui::RichText::new("Account")
+                            .font(theme::medium(13.0))
+                            .color(palette.dim),
+                    );
+                    ui.label(
+                        egui::RichText::new(username)
+                            .font(theme::medium(13.0))
+                            .color(palette.text),
+                    );
+                });
+            }
             ui.add_space(6.0);
+            let label = if matches!(status, AuthStatus::Failed(_)) {
+                "Try again"
+            } else {
+                "Sign in with Microsoft"
+            };
             ui.horizontal(|ui| {
-                if widgets::primary_button(ui, &palette, "  Sign in with Microsoft  ").clicked() {
+                if widgets::primary_button(ui, &palette, label).clicked() {
                     app.actions.push(Action::SignIn);
                 }
                 if widgets::secondary_button(ui, &palette, "Use a code instead")
-                    .on_hover_text("Device code sign-in, for when the browser can't reach Wren. Needs 'Allow public client flows' on the app registration.")
+                    .on_hover_text("Sign in on any device with a short code, if the browser can't return to Wren.")
                     .clicked()
                 {
                     app.actions.push(Action::SignInWithCode);
@@ -181,6 +293,7 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     .color(palette.secondary),
             )
             .id_salt("registration")
+            .icon(widgets::disclosure_chevron(palette.secondary))
             .default_open(false)
             .show(ui, |ui| registration(app, ui, false));
         }
@@ -197,10 +310,18 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
                 .color(palette.text),
         );
         ui.label(
-            egui::RichText::new("Wren signs in through an Entra ID app registration that you or your administrator create. It takes about five minutes and needs no secrets.")
+            egui::RichText::new("Wren signs in through an Entra ID app registration that you or your administrator create. It takes about five minutes and needs no secrets.").line_height(Some(theme::leading(14.0)))
                 .color(palette.secondary),
         );
-        ui.add_space(4.0);
+        ui.add_space(2.0);
+        // The guide first: the fields below need what it produces.
+        if widgets::secondary_button(ui, &palette, "Open the registration guide")
+            .on_hover_text("Step by step, in your browser")
+            .clicked()
+        {
+            app.actions.push(Action::OpenUrl(DOCS.into()));
+        }
+        ui.add_space(8.0);
     }
     ui.label(
         egui::RichText::new("Application (client) ID")
@@ -209,9 +330,11 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
     );
     ui.add(widgets::text_field(
         &mut app.form_client_id,
-        "00000000-0000-0000-0000-000000000000",
-        theme::mono(13.0),
+        "Paste the application ID",
+        theme::regular(13.0),
     ));
+    // Field groups stand apart; a label stays close to its field.
+    ui.add_space(16.0);
     ui.label(
         egui::RichText::new("Tenant")
             .font(theme::medium(12.0))
@@ -221,7 +344,7 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
         egui::RichText::new(
             "Your tenant ID or domain. Use 'organizations' only for a multi-tenant registration.",
         )
-        .font(theme::regular(11.0))
+        .font(theme::regular(12.0))
         .color(palette.dim),
     );
     ui.add(widgets::text_field(
@@ -232,30 +355,63 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
     ui.add_space(4.0);
     ui.horizontal(|ui| {
         let valid = crate::settings::is_guid(app.form_client_id.trim());
-        let save = ui.add_enabled(
-            valid,
-            egui::Button::new(
-                egui::RichText::new("Save")
-                    .color(palette.on_accent)
-                    .font(theme::semibold(13.0)),
-            )
-            .fill(palette.accent)
-            .corner_radius(CornerRadius::same(8))
-            .min_size(vec2(72.0, 32.0)),
-        );
+        let save = ui
+            .add_enabled_ui(valid, |ui| {
+                widgets::primary_button(
+                    ui,
+                    &palette,
+                    if first_run {
+                        "Save and continue"
+                    } else {
+                        "Save"
+                    },
+                )
+            })
+            .inner;
         if save.clicked() {
             app.actions.push(Action::SaveAppRegistration {
                 client_id: app.form_client_id.clone(),
                 tenant: app.form_tenant.clone(),
             });
         }
-        if ui.link("How to register Wren").clicked() {
+        if !first_run
+            && ui
+                .link(egui::RichText::new("How to register Wren").color(palette.link))
+                .clicked()
+        {
             app.actions.push(Action::OpenUrl(DOCS.into()));
         }
     });
-    ui.label(
-        egui::RichText::new("Or start Wren with WREN_CLIENT_ID and WREN_TENANT set.")
-            .font(theme::regular(12.0))
-            .color(palette.dim),
-    );
+    if !crate::settings::is_guid(app.form_client_id.trim()) {
+        ui.label(
+            egui::RichText::new("Save needs the Application (client) ID from your registration.")
+                .font(theme::regular(12.0))
+                .color(palette.dim),
+        );
+    }
+    if first_run {
+        egui::CollapsingHeader::new(
+            egui::RichText::new("Advanced")
+                .font(theme::medium(13.0))
+                .color(palette.secondary),
+        )
+        .id_salt("registration-advanced")
+        .icon(widgets::disclosure_chevron(palette.secondary))
+        .default_open(false)
+        .show(ui, |ui| {
+            ui.label(
+                egui::RichText::new(
+                    "Managed installs can set WREN_CLIENT_ID and WREN_TENANT instead.",
+                )
+                .font(theme::regular(12.0))
+                .color(palette.secondary),
+            );
+        });
+    } else {
+        ui.label(
+            egui::RichText::new("Or start Wren with WREN_CLIENT_ID and WREN_TENANT set.")
+                .font(theme::regular(12.0))
+                .color(palette.dim),
+        );
+    }
 }

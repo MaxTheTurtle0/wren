@@ -11,12 +11,14 @@ use crate::theme::{self, Icon};
 pub fn list(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let now = crate::time::now();
-    let upcoming: Vec<Meeting> = app
+    let mut upcoming: Vec<Meeting> = app
         .meetings
         .iter()
         .filter(|m| m.end > now && !m.cancelled)
         .cloned()
         .collect();
+    // In time order, whatever order they arrived in.
+    upcoming.sort_by_key(|m| m.start);
     if upcoming.is_empty() {
         let (title, text) = if app.loading.contains(&crate::sync::Resource::Calendar) {
             ("Loading your calendar…", "")
@@ -89,20 +91,22 @@ fn row(
                 },
             );
         }
+        if selected {
+            widgets::selection_marker(ui, palette, inner);
+        }
+        // A dot for the kind of meeting: live, online, or neither. The
+        // accent bar stays the sign of selection, as in the other lists.
         let live = meeting.start <= now && meeting.end > now;
-        let bar = egui::Rect::from_min_size(inner.left_top() + vec2(8.0, 9.0), vec2(3.0, 34.0));
-        ui.painter().rect_filled(
-            bar,
-            CornerRadius::same(2),
-            if live {
-                palette.success
-            } else if meeting.join_url.is_some() {
-                palette.accent
-            } else {
-                palette.dim
-            },
-        );
-        let left = bar.right() + 10.0;
+        let dot = egui::pos2(inner.left() + 13.0, inner.top() + 17.0);
+        if live {
+            ui.painter().circle_filled(dot, 4.0, palette.success);
+        } else if meeting.join_url.is_some() {
+            ui.painter().circle_filled(dot, 4.0, palette.secondary);
+        } else {
+            ui.painter()
+                .circle_stroke(dot, 3.5, Stroke::new(1.5, palette.dim));
+        }
+        let left = inner.left() + 24.0;
         let title = super::chat_list::elided(
             ui,
             &meeting.subject,
@@ -140,6 +144,9 @@ fn row(
     response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
+/// The width of a detail page's content (Calendar, Calls), centred.
+pub const DETAIL_WIDTH: f32 = 720.0;
+
 pub fn detail(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     let header = egui::Rect::from_min_size(
@@ -163,30 +170,35 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
         return;
     };
     let now = crate::time::now();
-    ui.add_space(theme::HEADER_HEIGHT + 12.0);
-    Frame::new().inner_margin(Margin::symmetric(32, 0)).show(ui, |ui| {
-        ui.set_max_width(640.0);
-        ui.label(egui::RichText::new(&meeting.subject).font(theme::bold(24.0)).color(palette.text));
-        ui.add_space(6.0);
-        let when = format!(
-            "{} · {}",
-            crate::time::day_label(meeting.start, now),
-            crate::time::span_label(meeting.start, meeting.end, meeting.all_day)
-        );
-        ui.label(egui::RichText::new(when).font(theme::medium(14.0)).color(palette.secondary));
-        ui.add_space(16.0);
-        ui.horizontal(|ui| {
-            if let Some(url) = &meeting.join_url {
-                let join = widgets::pill(ui, &palette, Icon::Video, "Join", true);
-                widgets::on_click(&join, &mut app.actions, Action::JoinMeeting(url.clone()));
-                let copy = widgets::pill(ui, &palette, Icon::Copy, "Copy link", false);
-                widgets::on_click(&copy, &mut app.actions, Action::CopyText(url.clone()));
-            }
-            if let Some(web) = &meeting.web_link {
-                let open = widgets::pill(ui, &palette, Icon::ExternalLink, "Open in Outlook", false);
-                widgets::on_click(&open, &mut app.actions, Action::OpenUrl(web.clone()));
-            }
-        });
+    // When, with how soon it starts, in one line under the title.
+    let mut when = format!(
+        "{} · {}",
+        crate::time::day_label(meeting.start, now),
+        crate::time::span_label(meeting.start, meeting.end, meeting.all_day)
+    );
+    if meeting.start > now {
+        when.push_str(&format!(
+            " · {}",
+            crate::time::until_label(meeting.start, now)
+        ));
+    }
+    widgets::pane_header(ui, &palette, &meeting.subject, &when, |ui| {
+        // Right to left: the primary action ends up rightmost.
+        if let Some(url) = &meeting.join_url {
+            let join = widgets::pill(ui, &palette, Icon::Video, "Join", true);
+            widgets::on_click(&join, &mut app.actions, Action::JoinMeeting(url.clone()));
+            let copy = widgets::pill(ui, &palette, Icon::Copy, "Copy link", false);
+            widgets::on_click(&copy, &mut app.actions, Action::CopyText(url.clone()));
+        }
+        if let Some(web) = &meeting.web_link {
+            let open = widgets::pill(ui, &palette, Icon::ExternalLink, "Open in Outlook", false);
+            widgets::on_click(&open, &mut app.actions, Action::OpenUrl(web.clone()));
+        }
+    });
+    Frame::new().inner_margin(Margin::symmetric(0, 0)).show(ui, |ui| {
+        // The same column as Calls and as the header above.
+        let column = widgets::detail_column(ui.max_rect());
+        ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
         ui.add_space(20.0);
         Frame::new()
             .fill(palette.panel)
@@ -204,24 +216,39 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
                     if let Some(organizer) = &meeting.organizer {
                         fact(ui, "Organizer", organizer);
                     }
-                    if let Some(location) = &meeting.location {
+                    // "Teams" as a location only repeats the Online row.
+                    if let Some(location) = meeting.location.as_ref().filter(|l| {
+                        !(meeting.join_url.is_some()
+                            && ["teams", "microsoft teams meeting"]
+                                .contains(&l.trim().to_lowercase().as_str()))
+                    }) {
                         fact(ui, "Location", location);
                     }
-                    fact(ui, "Online", if meeting.join_url.is_some() { "Microsoft Teams meeting" } else { "No" });
-                    if meeting.start > now {
-                        fact(ui, "Starts", &crate::time::until_label(meeting.start, now));
+                    if meeting.join_url.is_some() {
+                        fact(ui, "Online", "Microsoft Teams meeting");
                     }
                 });
-                if let Some(preview) = &meeting.preview {
-                    ui.add_space(12.0);
-                    ui.label(egui::RichText::new(preview).color(palette.secondary));
-                }
             });
-        ui.add_space(14.0);
-        ui.label(
-            egui::RichText::new("Joining opens the meeting in Teams on the web beside Wren, with its chat here. Wren reminds you five minutes before online meetings start.")
-                .font(theme::regular(12.0))
-                .color(palette.dim),
-        );
+        // The invitation's own text, under its own label.
+        if let Some(preview) = &meeting.preview {
+            ui.add_space(16.0);
+            widgets::section_label(ui, &palette, "From the invitation");
+            ui.add_space(2.0);
+            ui.label(
+                egui::RichText::new(preview)
+                    .line_height(Some(theme::leading(14.0)))
+                    .color(palette.text),
+            );
+        }
+        // How joining works, only where there is something to join.
+        if meeting.join_url.is_some() {
+            ui.add_space(14.0);
+            ui.label(
+                egui::RichText::new("Joining opens the meeting in Teams on the web beside Wren, with its chat here. Wren reminds you five minutes before online meetings start.").line_height(Some(theme::leading(13.0)))
+                    .font(theme::regular(13.0))
+                    .color(palette.secondary),
+            );
+        }
     });
+});
 }

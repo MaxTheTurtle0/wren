@@ -69,7 +69,7 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
                     .color(palette.text),
             );
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                let restore = widgets::pill(ui, &palette, Icon::Monitor, "Restore", false);
+                let restore = widgets::pill(ui, &palette, Icon::Monitor, "Full window", false);
                 widgets::on_click(&restore, &mut actions, Action::DockWindow(false));
             });
         });
@@ -126,7 +126,7 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
     if docked {
         buttons.push((
             Icon::Monitor,
-            "Restore",
+            "Full window",
             Action::DockWindow(false),
             false,
             "Give Wren its full window back",
@@ -141,11 +141,11 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
         ));
     }
     buttons.push((
-        Icon::Check,
-        if elsewhere { "Dismiss" } else { "Done" },
+        Icon::EyeOff,
+        "Hide call bar",
         Action::CallDone,
-        !elsewhere,
-        "Close the call bar. The call itself goes on in Teams until you leave it there.",
+        false,
+        "Hide this bar. The meeting goes on in Teams until you leave it there.",
     ));
 
     let title = |ui: &mut egui::Ui, width: f32| {
@@ -160,23 +160,57 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
         )));
     };
     if docked {
-        ui.horizontal(|ui| {
-            ui.add_space(inset);
-            title(ui, (ui.available_width() - 20.0).max(60.0));
-        });
-        ui.horizontal(|ui| {
-            ui.add_space(inset + 18.0);
-            ui.label(
-                egui::RichText::new(&status)
-                    .font(theme::regular(12.0))
-                    .color(palette.secondary),
-            );
-        });
-        ui.add_space(6.0);
+        // Title and status read as one block.
+        ui.spacing_mut().interact_size.y = 18.0;
+        ui.spacing_mut().item_spacing.y = 2.0;
+        // Docked, the meeting chat sits right below and its header names the
+        // meeting; then the bar only says how the call is going.
+        let chat_below = call.chat.is_some();
+        if chat_below {
+            ui.horizontal(|ui| {
+                ui.add_space(inset);
+                let (rect, _) = ui.allocate_exact_size(vec2(10.0, 10.0), egui::Sense::hover());
+                ui.painter().circle_filled(rect.center(), 4.5, dot);
+                ui.label(
+                    egui::RichText::new(&status)
+                        .font(theme::semibold(13.0))
+                        .color(palette.text),
+                );
+            });
+        } else {
+            ui.horizontal(|ui| {
+                ui.add_space(inset);
+                title(ui, (ui.available_width() - 20.0).max(60.0));
+            });
+            ui.horizontal(|ui| {
+                ui.add_space(inset + 18.0);
+                ui.label(
+                    egui::RichText::new(&status)
+                        .font(theme::regular(12.0))
+                        .color(palette.secondary),
+                );
+            });
+        }
+        ui.add_space(8.0);
+        // A narrow panel keeps the actions on one row with short labels.
+        let compact = ui.available_width() < 480.0;
         ui.horizontal_wrapped(|ui| {
             ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
             for (icon, label, action, accent, tip) in buttons {
-                let response = widgets::pill(ui, &palette, icon, label, accent).on_hover_text(tip);
+                let response = if compact {
+                    let short = match label {
+                        "Join on phone" => "Phone",
+                        "Full window" => "Expand",
+                        "Hide call bar" => "Hide",
+                        "Meeting chat" => "Chat",
+                        "Show call" => "Call",
+                        other => other,
+                    };
+                    widgets::pill(ui, &palette, icon, short, accent)
+                        .on_hover_text(format!("{label}: {tip}"))
+                } else {
+                    widgets::pill(ui, &palette, icon, label, accent).on_hover_text(tip)
+                };
                 widgets::on_click(&response, &mut actions, action);
             }
         });

@@ -1,0 +1,511 @@
+{
+ "overall": 8.0,
+ "dimensions": {
+  "contrast": 8.5,
+  "typography": 8.0,
+  "colour": 7.5,
+  "spacing": 8.0,
+  "hierarchy": 8.0
+ },
+ "blocks_9": [
+  "History is hard-clipped under every header, slicing a text line in half on most chat screens",
+  "Surfaces are too flat: card, rail and list separation is 1.06-1.33:1, and dark cards are recessed rather than raised",
+  "Avatar and team-tile colours repeat (AL/AT, O/HL, Engineering/Contoso), and a team tile matches the accent",
+  "Selection and focus have no single language: solid accent, grey fill and the 2 px accent composer ring compete",
+  "Rough edges in secondary screens: settings bottom artefact, crowded meeting system lines, composer scrollbar, toolbar collisions",
+  "Calendar and Calls detail pages are sparse, with header actions floating mid-bar"
+ ],
+ "screens": {
+  "chats": {
+   "score": 8,
+   "issues": [
+    "first visible message line is sliced in half under the header at y~52 (hard cut, no fade)",
+    "rail (#e7e8eb) vs list (#f3f4f6) only 1.11:1 with no divider; dark 1.06:1",
+    "idle scrollbar always drawn (6 px, #747577) adds noise",
+    "persistent 'Enter to send...' hint plus '@ to mention' placeholder repeat help on every chat",
+    "AL and AT avatars share #4560c4; O and HL share #1f7a5c"
+   ]
+  },
+  "chats-wide": {
+   "score": 8.5,
+   "issues": [
+    "header bar spans 1556 px but its content is centred on the 860 px column, leaving a wide empty band left of the name",
+    "large empty gap (52-120 px) above 'This is the beginning'",
+    "avatar colour repeats (AL/AT, O/HL)"
+   ]
+  },
+  "chats-narrow": {
+   "score": 7.5,
+   "issues": [
+    "232 px list at 760 px truncates names hard ('Katherine Jo...', 'Grace Ho...', 'Margaret Hamil...')",
+    "main pane only 465 px; hover toolbar covers the message header row",
+    "first visible message line is sliced in half under the header at y~52 (hard cut, no fade)"
+   ]
+  },
+  "chat-no-selection": {
+   "score": 8.5,
+   "issues": [
+    "empty state is generic: no 'New chat' action, only a hint",
+    "rail and list surfaces nearly identical (1.11:1 light, 1.06:1 dark)"
+   ]
+  },
+  "chat-filter-no-match": {
+   "score": 8,
+   "issues": [
+    "empty state sits mid-column (y 370-540), detached from the filter field it answers",
+    "first visible message line is sliced in half under the header at y~52 (hard cut, no fade)",
+    "accent button is the strongest colour on screen for a minor action"
+   ]
+  },
+  "group-chat": {
+   "score": 8,
+   "issues": [
+    "focused composer's 2 px orange ring competes with the mention highlight for attention",
+    "mention row tint #fdf1e5 vs white is 1.11:1, so the 3 px bar carries the whole signal",
+    "large empty band above the first date separator"
+   ]
+  },
+  "channel": {
+   "score": 7.5,
+   "issues": [
+    "top post card is cut by the header; a stray pill fragment shows at y~46",
+    "hover toolbar straddles the card's right border (x 1096-1252 against edge 1252)",
+    "Engineering and Contoso tiles are both #c2416f; Product tile #b4581c is nearly the accent #b4530a",
+    "reply rows (12 pt author, 24 px avatar) sit very close to the 'Reply' affordance"
+   ]
+  },
+  "channel-narrow": {
+   "score": 7.5,
+   "issues": [
+    "hover toolbar collides with the clipped top of the card just under the header",
+    "composer placeholder truncated mid-phrase",
+    "same team-tile colour collisions"
+   ]
+  },
+  "teams": {
+   "score": 8,
+   "issues": [
+    "empty state offers no action",
+    "two teams share the same tile colour #c2416f",
+    "channel rows have no unread or activity signal, so the tree reads flat"
+   ]
+  },
+  "calendar": {
+   "score": 7.5,
+   "issues": [
+    "detail is sparse: no attendees or description structure, and 170 px of dead space right of the 720 px column",
+    "header actions float at x 1114 mid-header instead of the window edge",
+    "title cap starts 8 px from the top edge, tighter than other headers (11 px)",
+    "card fill #f3f4f6 on white is 1.10:1 (dark #141518 on #1a1b1f 1.06:1), so the card barely separates"
+   ]
+  },
+  "calls": {
+   "score": 8,
+   "issues": [
+    "14 repeated phone/video icon buttons create visual noise",
+    "Join card fill only 1.10:1 vs page; disabled Join reads like a secondary button",
+    "right half of the page is empty"
+   ]
+  },
+  "calls-narrow": {
+   "score": 8,
+   "issues": [
+    "'Not possible' line wraps with a lone 'window'",
+    "card and page surfaces barely differ"
+   ]
+  },
+  "composer-mention": {
+   "score": 8,
+   "issues": [
+    "mention popup has no visible caret or typed-match highlight on 'Mar'",
+    "popup covers the last message mid-line ('...g > Incidents channel')",
+    "attachment chip and text share tight vertical spacing"
+   ]
+  },
+  "composer-long-draft": {
+   "score": 7.5,
+   "issues": [
+    "composer scrollbar is a short bar at x 1167, jammed against the attach icon",
+    "composer grows to 200 px and pushes history up, with no top fade",
+    "first visible message line is sliced in half under the header at y~52 (hard cut, no fade)"
+   ]
+  },
+  "composer-images": {
+   "score": 8,
+   "issues": [
+    "thumbnail of the 3072x256 image renders as a thin strip that is hard to read",
+    "dimension captions (11 pt grey) are the only label: no file name or size"
+   ]
+  },
+  "image-preview": {
+   "score": 8,
+   "issues": [
+    "selected 'Fit' segment is only #e2e3e8 vs white (1.28:1), unlike the solid-accent selection in Settings",
+    "20 pt bold title is heavy for a utility overlay"
+   ]
+  },
+  "search-switcher": {
+   "score": 8.5,
+   "issues": [
+    "selected row uses grey plus an accent bar, while Settings uses a solid accent fill: two selection languages",
+    "long previews truncate at the same width, giving a ragged visual"
+   ]
+  },
+  "new-chat": {
+   "score": 8.5,
+   "issues": [
+    "'Enter to add' hint and the accent bar on the highlighted row duplicate each other",
+    "recipient chip ✕ is small (≈8 px glyph) and hard to hit"
+   ]
+  },
+  "settings": {
+   "score": 7.5,
+   "issues": [
+    "half-visible control band at the bottom edge (y 692-697) looks like an artefact",
+    "segmented control uses solid accent for 'Light'/'Dark', unlike other selected states",
+    "long single scroll with uppercase section labels only, no grouping surfaces"
+   ]
+  },
+  "shortcuts": {
+   "score": 8.5,
+   "issues": [
+    "right column ends at y 390, leaving a ragged empty block",
+    "keycap border #b9bcc4 on white is only 1.90:1 (decorative)"
+   ]
+  },
+  "status-message": {
+   "score": 8.5,
+   "issues": [
+    "no presets or clear-after option, so the dialog feels thin",
+    "disabled Save (#e2e3e8 fill) reads like a secondary button"
+   ]
+  },
+  "account-menu": {
+   "score": 8,
+   "issues": [
+    "two identical 'Alex Rivera' rows rely on 12 pt grey email only",
+    "Away and Be right back use the same #8f6a00 colour",
+    "menu floats over the list without a pointer to its anchor"
+   ]
+  },
+  "permission-consent": {
+   "score": 8.5,
+   "issues": [
+    "three text tiers (14/13/12 pt) in a small dialog feel fussy",
+    "lock icon is optically larger than the title cap height"
+   ]
+  },
+  "error-toast": {
+   "score": 8.5,
+   "issues": [
+    "the failed row uses tint, bar, red text and button together: heavy but clear",
+    "hover toolbar on a neighbouring row competes"
+   ]
+  },
+  "first-sync-loading": {
+   "score": 8,
+   "issues": [
+    "filter placeholder drops to 2.06:1 (light) / 2.62:1 (dark) while disabled",
+    "skeleton bars #e2e3e8 on #f3f4f6 are only 1.16:1, so they nearly vanish"
+   ]
+  },
+  "first-sync-empty": {
+   "score": 8,
+   "issues": [
+    "list column is completely blank (filter field removed), so it reads as broken",
+    "no secondary path such as joining a team or checking the account is offered"
+   ]
+  },
+  "call-bar": {
+   "score": 7.5,
+   "issues": [
+    "'Meeting ended' line sits 8 px under the previous message vs 24 px rhythm elsewhere",
+    "130 px empty band above the conversation start in a 380 px wide panel",
+    "the call bar has no leave or hang-up affordance, only Phone, Expand, Hide"
+   ]
+  },
+  "call-docked": {
+   "score": 8,
+   "issues": [
+    "'Meeting ended' crowds the message above (8 px)",
+    "large empty band (132-290 px) above the history"
+   ]
+  },
+  "join-on-phone": {
+   "score": 8,
+   "issues": [
+    "modal top overlaps the meeting header text at y~110",
+    "QR in light has no framed quiet zone, while dark has a white plate (parity)"
+   ]
+  },
+  "setup": {
+   "score": 8,
+   "issues": [
+    "dense card: title-to-body gap 8 px, and the guide button floats between copy and form",
+    "helper text above the Tenant field but none for App ID: inconsistent field anatomy"
+   ]
+  },
+  "signin": {
+   "score": 8.5,
+   "issues": [
+    "content block centred at y~335 rather than the optical centre (top-heavy)",
+    "card shadow plus hairline border doubles the edge in light"
+   ]
+  },
+  "signin-browser": {
+   "score": 8.5,
+   "issues": [
+    "three buttons of near-equal weight; 'Copy link' and 'Cancel' could be quieter"
+   ]
+  },
+  "signin-device-code": {
+   "score": 8.5,
+   "issues": [
+    "body line height jumps to 24 px around the inline link vs 20 px elsewhere",
+    "Inter's wide hyphen makes the code read 'F4KQ - 9TZW'"
+   ]
+  },
+  "signin-finishing": {
+   "score": 8.5,
+   "issues": [
+    "spinner beside the 18 pt title is slightly low on the baseline"
+   ]
+  },
+  "signin-expired": {
+   "score": 8.5,
+   "issues": [
+    "'Account' label (12 pt grey) and value are baseline-aligned but cramped"
+   ]
+  },
+  "signin-failed": {
+   "score": 8.5,
+   "issues": [
+    "error line uses red text with an icon only, no tinted container (fine but small)",
+    "Inter's hyphen gap in 'Sign-in' is visible at 18 pt"
+   ]
+  }
+ },
+ "top_issues": [
+  {
+   "priority": 1,
+   "severity": "medium",
+   "screens": [
+    "chats",
+    "chat-filter-no-match",
+    "account-menu",
+    "composer-long-draft",
+    "composer-images",
+    "error-toast",
+    "channel",
+    "channel-narrow",
+    "chats-narrow",
+    "status-message",
+    "permission-consent"
+   ],
+   "mode": "both",
+   "dimension": "other",
+   "issue": "Scrolled message history is hard-clipped under the header, slicing a text line or card in half",
+   "evidence": "'on focus, never in a loop.' glyphs cut at y≈52 directly under the header divider #dfdfe3 (light) / #303137 (dark); in channel a reaction pill fragment shows at y 46-52",
+   "fix": "Inset the scroll viewport 8 px below the header and add a 12 px fade from the page colour (#ffffff/#1a1b1f) to transparent at the top edge, or snap the restored scroll so a message starts at the top"
+  },
+  {
+   "priority": 2,
+   "severity": "medium",
+   "screens": [
+    "calendar",
+    "calls",
+    "calls-narrow",
+    "chats",
+    "teams",
+    "first-sync-loading"
+   ],
+   "mode": "both",
+   "dimension": "contrast",
+   "issue": "Surface ladder too flat: cards, rail, list and skeletons barely separate from their backgrounds",
+   "evidence": "card fill #f3f4f6 on #ffffff 1.10:1, card border #dfdfe3 1.33:1; dark card #141518 on #1a1b1f 1.06:1; rail #e7e8eb vs list #f3f4f6 1.11:1 (dark #0c0d0f vs #141518 1.06:1); skeleton #e2e3e8 on #f3f4f6 1.16:1",
+   "fix": "Light: card border #c9cbd1 (≈1.6:1), rail #e2e4e8 plus a 1 px #d5d7dc divider. Dark: card fill #212227 (raised, not recessed) with border #3a3b42, a rail/list divider #26272c, skeleton #2c2d33 on #141518"
+  },
+  {
+   "priority": 3,
+   "severity": "medium",
+   "screens": [
+    "chats",
+    "group-chat",
+    "channel",
+    "teams",
+    "search-switcher",
+    "calls"
+   ],
+   "mode": "both",
+   "dimension": "colour",
+   "issue": "Identity colours collide: avatars and team tiles repeat, and one tile matches the accent",
+   "evidence": "AL and AT both #4560c4; O and HL both #1f7a5c; Engineering and Contoso tiles both #c2416f; Product tile #b4581c vs accent #b4530a (ΔE tiny)",
+   "fix": "Hash into 10-12 distinct hues and drop orange from the identity palette (keep it for the accent), e.g. add #7a4fc2, #a1365a, #2f7f7a, #6b6f1f, #8c4a2f, all ≥4.5:1 with white"
+  },
+  {
+   "priority": 4,
+   "severity": "medium",
+   "screens": [
+    "image-preview",
+    "settings",
+    "search-switcher",
+    "chats",
+    "new-chat"
+   ],
+   "mode": "both",
+   "dimension": "hierarchy",
+   "issue": "Selection uses three visual languages",
+   "evidence": "Settings segmented: solid #b4530a fill with white text; image-preview segmented: #e2e3e8 fill on white (1.28:1); list rows: #e2e3e8 plus a 3 px accent bar",
+   "fix": "One rule: segmented controls get a raised #ffffff thumb on a #e7e8eb track (dark #34353c on #1f2025) with a 600 weight label; reserve solid accent fill for primary buttons only"
+  },
+  {
+   "priority": 5,
+   "severity": "medium",
+   "screens": [
+    "group-chat",
+    "channel",
+    "channel-narrow",
+    "composer-mention",
+    "composer-long-draft",
+    "call-bar",
+    "call-docked"
+   ],
+   "mode": "both",
+   "dimension": "hierarchy",
+   "issue": "The focused composer's 2 px accent ring is the loudest element and competes with mentions and unread states",
+   "evidence": "2 px #b4530a ring (light) / #e88c3e (dark) across 856 px wide, on screen by default in group-chat and channel",
+   "fix": "Use a 1 px accent border plus a 3 px 25%-alpha accent halo, or a 1.5 px #7c7f87→#4a4d55 border darkening on focus; keep full accent for keyboard focus only"
+  },
+  {
+   "priority": 6,
+   "severity": "low",
+   "screens": [
+    "settings"
+   ],
+   "mode": "both",
+   "dimension": "other",
+   "issue": "Bottom of the scrolling settings body shows a half-visible control band that looks like a glitch",
+   "evidence": "grey band y 692-697 at the modal bottom, cut by the 24 px modal padding",
+   "fix": "Add a 16 px bottom fade (#ffffff/#26272c to transparent) above the modal padding, or end the scroll area on a section boundary"
+  },
+  {
+   "priority": 7,
+   "severity": "low",
+   "screens": [
+    "call-bar",
+    "call-docked"
+   ],
+   "mode": "both",
+   "dimension": "spacing",
+   "issue": "Meeting system lines break the vertical rhythm",
+   "evidence": "'Meeting ended: 58 min · 14:44' baseline 8 px under the previous message text (566→597) vs 24-28 px between messages",
+   "fix": "Give system lines 16 px top and bottom margin, matching the date separators"
+  },
+  {
+   "priority": 8,
+   "severity": "low",
+   "screens": [
+    "calendar",
+    "calls"
+   ],
+   "mode": "both",
+   "dimension": "spacing",
+   "issue": "Detail pages use a fixed 720 px column with header actions floating mid-bar",
+   "evidence": "Copy link/Join end at x=1114 in a 916 px pane; 166 px dead space on the right; calendar title cap at y=8 vs 11 for chat headers",
+   "fix": "Pin header actions to the pane edge (24 px inset) or centre the 720 column; give two-line headers 10 px top padding"
+  },
+  {
+   "priority": 9,
+   "severity": "low",
+   "screens": [
+    "chats-narrow",
+    "channel-narrow"
+   ],
+   "mode": "both",
+   "dimension": "spacing",
+   "issue": "At 760 px the 232 px list truncates most names",
+   "evidence": "'Katherine Jo...', 'Grace Ho...', 'Margaret Hamil...' while time stamps hold 50 px",
+   "fix": "Below 820 px drop the rail labels (rail 48 px) or let the list collapse to avatars plus names, and move times under names"
+  },
+  {
+   "priority": 10,
+   "severity": "low",
+   "screens": [
+    "account-menu",
+    "chats"
+   ],
+   "mode": "both",
+   "dimension": "colour",
+   "issue": "Away and Be right back share one colour; the amber is near the orange accent family",
+   "evidence": "both #8f6a00 (light) / #e3b341 (dark); accent #b4530a/#e88c3e",
+   "fix": "Keep away amber #8f6a00 but render BRB as an amber clock with no fill, or shift the accent away from orange (e.g. #3b5bdb/#8fa8ff) so status colours stand alone"
+  },
+  {
+   "priority": 11,
+   "severity": "low",
+   "screens": [
+    "first-sync-loading"
+   ],
+   "mode": "both",
+   "dimension": "contrast",
+   "issue": "Disabled filter placeholder and skeletons nearly vanish while loading",
+   "evidence": "placeholder #aaacb1 on #f3f4f6 2.06:1; dark #5a5b62 on #17181c 2.62:1",
+   "fix": "Keep the placeholder at #62656d/#9c9ea8 (5.3:1/6.4:1) and show 'Loading...' text in the list"
+  },
+  {
+   "priority": 12,
+   "severity": "low",
+   "screens": [
+    "first-sync-empty",
+    "teams",
+    "chat-no-selection"
+   ],
+   "mode": "both",
+   "dimension": "hierarchy",
+   "issue": "Empty states leave whole columns blank or offer no action",
+   "evidence": "first-sync-empty: list column 64-363 px empty with no message; teams and chat no-selection have hint text only",
+   "fix": "Add a 13 pt grey 'No chats yet' line in the list and a secondary 'New chat' button in no-selection states"
+  },
+  {
+   "priority": 13,
+   "severity": "low",
+   "screens": [
+    "chats",
+    "group-chat",
+    "channel",
+    "composer-mention",
+    "error-toast"
+   ],
+   "mode": "both",
+   "dimension": "hierarchy",
+   "issue": "Composer helper text is always on and duplicates the placeholder",
+   "evidence": "'Enter to send · Shift+Enter for a new line · Markdown formatting works' in 12 pt #62656d under every composer, plus '· @ to mention' in the placeholder",
+   "fix": "Show the hint only while the composer is focused and not empty, or move it to the shortcuts overlay"
+  },
+  {
+   "priority": 14,
+   "severity": "low",
+   "screens": [
+    "composer-long-draft"
+   ],
+   "mode": "both",
+   "dimension": "other",
+   "issue": "Composer scrollbar is jammed beside the attach button",
+   "evidence": "40 px scrollbar thumb at x≈1167, y 712-751, 10 px from the paperclip",
+   "fix": "Run the scrollbar the full text-area height at the text area's right edge, with 8 px clearance from the action icons"
+  },
+  {
+   "priority": 15,
+   "severity": "low",
+   "screens": [
+    "channel",
+    "channel-narrow"
+   ],
+   "mode": "both",
+   "dimension": "spacing",
+   "issue": "Hover toolbar collides with post card borders",
+   "evidence": "toolbar x 1096-1252 overlaps the card's right border at x 1252-1255 and sits 3 px under the card top",
+   "fix": "Anchor the toolbar inside the card: 8 px from its right edge, centred on the -16 px top border like chat rows"
+  }
+ ]
+}

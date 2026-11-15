@@ -1,0 +1,392 @@
+{
+  "overall": 8,
+  "dimensions": {
+    "hierarchy": 8,
+    "spacing": 7.5,
+    "typography": 8,
+    "consistency": 8.5,
+    "contrast_accessibility": 8.5,
+    "feedback": 7.5,
+    "states": 8.5,
+    "navigation": 8
+  },
+  "screens": {
+    "chats": {
+      "score": 8,
+      "issues": [
+        "Hover action strip gives reactions more prominence than reply; secondary timestamps and composer help are small."
+      ]
+    },
+    "chats-wide": {
+      "score": 7.5,
+      "issues": [
+        "Conversation column ends near x=1308 while its header spans 1920 px, leaving about 612 px unused on the right.",
+        "Composer is visually detached from the full-width header."
+      ]
+    },
+    "chats-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Persistent 296 px navigation area leaves only 464 px for conversation.",
+        "Names and previews truncate heavily; hover toolbar competes with author row."
+      ]
+    },
+    "chat-no-selection": {
+      "score": 8.5,
+      "issues": [
+        "Clear empty-state guidance, but starting a chat remains an icon-only header action."
+      ]
+    },
+    "chat-filter-no-match": {
+      "score": 8.5,
+      "issues": [
+        "Clear recovery action; filter has no inline clear affordance, requiring the separated empty-state button."
+      ]
+    },
+    "group-chat": {
+      "score": 8,
+      "issues": [
+        "Member count is visually plain and offers weak wayfinding to the people in the group.",
+        "Hover toolbar has many equally weighted emoji actions."
+      ]
+    },
+    "channel": {
+      "score": 8,
+      "issues": [
+        "Reply buttons repeat without a visible reply count; parent/reply hierarchy depends mainly on avatar size and indentation."
+      ]
+    },
+    "channel-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Navigation uses 296 of 760 px.",
+        "Composer destination text runs close to attachment controls; post action toolbar crowds the author row."
+      ]
+    },
+    "teams": {
+      "score": 8.5,
+      "issues": [
+        "Clear no-selection state; long team/channel lists have no visible filter or jump affordance within this pane."
+      ]
+    },
+    "calendar": {
+      "score": 8,
+      "issues": [
+        "Meeting detail and supporting explanation use very different line lengths.",
+        "Large detail panel has little hierarchy between organizer, location, online type and start time."
+      ]
+    },
+    "calls": {
+      "score": 8,
+      "issues": [
+        "Explanatory copy dominates the content pane while calling actions are small unlabeled icons in the sidebar."
+      ]
+    },
+    "calls-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Recent-person names are truncated even when the main pane has extensive empty space.",
+        "Long explanatory copy wraps into a dense paragraph."
+      ]
+    },
+    "composer-mention": {
+      "score": 8,
+      "issues": [
+        "Suggestion popup has no visible keyboard acceptance hint.",
+        "Attachment removal glyph is very small relative to the chip."
+      ]
+    },
+    "composer-long-draft": {
+      "score": 7,
+      "issues": [
+        "Long draft occupies x=380..1263, y=553..761 and exposes no send or attach controls.",
+        "Top visible draft line is partially clipped; no visible draft length or position cue beyond the scrollbar."
+      ]
+    },
+    "composer-images": {
+      "score": 7.5,
+      "issues": [
+        "Uniform landscape crops obscure the contents of both the very wide and very tall images.",
+        "Dimensions alone are weak attachment identification; removal glyphs are small."
+      ]
+    },
+    "image-preview": {
+      "score": 8,
+      "issues": [
+        "Preview heading is generic and shows dimensions without a filename or attachment identity.",
+        "Fit canvas retains extensive empty space around a very wide image."
+      ]
+    },
+    "search-switcher": {
+      "score": 8.5,
+      "issues": [
+        "Long recent-message snippets are cut off; secondary text and bottom help are visually dense.",
+        "Recent result types are not explicitly labeled."
+      ]
+    },
+    "new-chat": {
+      "score": 7.5,
+      "issues": [
+        "Barbara's full-row highlight competes with Grace's selected-recipient chip while the primary button still names Grace.",
+        "Helper sentence sits tightly beside the primary action."
+      ]
+    },
+    "settings": {
+      "score": 7.5,
+      "issues": [
+        "Long 12 px explanatory copy makes the behaviour section dense.",
+        "Lower call settings reach the bottom of the viewport, with more settings hidden by scrolling."
+      ]
+    },
+    "shortcuts": {
+      "score": 8.5,
+      "issues": [
+        "Long key labels and descriptions nearly fill both columns; section labels are small."
+      ]
+    },
+    "status-message": {
+      "score": 8.5,
+      "issues": [
+        "Concise dialog, but the text field relies on an example placeholder rather than a persistent field label."
+      ]
+    },
+    "account-menu": {
+      "score": 8,
+      "issues": [
+        "Popup is approximately 484 px tall and mixes account management, presence and application settings.",
+        "Several presence options differ only by small icon details and adjacent wording."
+      ]
+    },
+    "permission-consent": {
+      "score": 8,
+      "issues": [
+        "Generic 'One more permission' heading makes the feature purpose secondary.",
+        "Permission details use small print across two lines."
+      ]
+    },
+    "error-toast": {
+      "score": 8,
+      "issues": [
+        "Toast at x=575..1069, y=64..112 covers the first visible message.",
+        "Toast and inline failed-message treatment compete for attention, although retry is clear."
+      ]
+    },
+    "first-sync-loading": {
+      "score": 8.5,
+      "issues": [
+        "Loading state is clear; no visible stage or amount of work distinguishes first sync from a slow connection."
+      ]
+    },
+    "first-sync-empty": {
+      "score": 8.5,
+      "issues": [
+        "Good first-chat CTA; empty sidebar and repeated new-chat header affordance create slight redundancy."
+      ]
+    },
+    "call-bar": {
+      "score": 8,
+      "issues": [
+        "Call status plus repeated meeting title occupy the top 148 px in a 380 px-wide window.",
+        "Restore and Close bar labels require interpretation."
+      ]
+    },
+    "call-docked": {
+      "score": 8,
+      "issues": [
+        "Same 148 px stacked call header persists at 720 px width.",
+        "Meeting name is duplicated; call-state controls are separated from the meeting header."
+      ]
+    },
+    "join-on-phone": {
+      "score": 8.5,
+      "issues": [
+        "QR is legible with a quiet zone; dialog does not repeat the meeting name, reducing confirmation context."
+      ]
+    },
+    "setup": {
+      "score": 7.5,
+      "issues": [
+        "Setup requires technical app-registration decisions but the guide looks subordinate to explanatory text.",
+        "Save is a generic action label; 12 px technical helper text and environment variables add density."
+      ]
+    },
+    "signin": {
+      "score": 8,
+      "issues": [
+        "Hovered code-sign-in tooltip covers the registration area and stretches outside the card.",
+        "Tooltip exposes public-client-flow configuration jargon at the point of choosing a sign-in method."
+      ]
+    },
+    "signin-browser": {
+      "score": 8.5,
+      "issues": [
+        "Clear waiting state and recovery actions; browser page identity is not shown beyond generic Microsoft wording."
+      ]
+    },
+    "signin-device-code": {
+      "score": 8,
+      "issues": [
+        "Code is prominent and copyable, but no visible expiry or remaining-time information accompanies the waiting state."
+      ]
+    },
+    "signin-finishing": {
+      "score": 8.5,
+      "issues": [
+        "Clear progress wording; finishing card is much shorter than preceding authentication cards, shifting the footer upward."
+      ]
+    },
+    "signin-expired": {
+      "score": 8,
+      "issues": [
+        "Hovered code-sign-in tooltip obscures the registration section and contains app-registration jargon.",
+        "Account identity is less prominent than the repeated brand block."
+      ]
+    },
+    "signin-failed": {
+      "score": 8.5,
+      "issues": [
+        "Reason and retry are clear; failure guidance gives no next step beyond retry or switching methods."
+      ]
+    }
+  },
+  "top_issues": [
+    {
+      "priority": 1,
+      "severity": "high",
+      "screens": [
+        "composer-long-draft"
+      ],
+      "mode": "both",
+      "issue": "Long draft hides the send and attachment controls.",
+      "evidence": "Composer spans x=380..1263, y=553..761. Its lower-right corner contains a scrollbar, while the paperclip and send icons visible in ordinary composers are absent. The first visible line is also cut at y=561.",
+      "fix": "Keep a fixed 36 px action footer below a separately scrolling draft editor; use 28x28 px attachment and send buttons with 8 px spacing and 12 px outer padding. Keep the editor viewport at a maximum of 160 px high."
+    },
+    {
+      "priority": 2,
+      "severity": "medium",
+      "screens": [
+        "chats-narrow",
+        "calls-narrow",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "issue": "Narrow layout preserves too much navigation width and truncates important identities.",
+      "evidence": "At 760 px width, the rail plus sidebar consumes x=0..296, leaving 464 px for the active pane. Calls shows names such as 'Katherine ...', 'Grace Hop...' and 'Margaret ...'; chat names also truncate.",
+      "fix": "At widths below 900 px, offer a 40 px collapse control and reduce the list pane to 200 px excluding the 64 px rail. In Calls, reserve at least 140 px for names and move call actions into a trailing 56 px cluster."
+    },
+    {
+      "priority": 3,
+      "severity": "medium",
+      "screens": [
+        "composer-images"
+      ],
+      "mode": "both",
+      "issue": "Attachment crops make extreme-aspect images hard to recognize.",
+      "evidence": "Three roughly 144x96 px thumbnails at x=394,546,698 show equal landscape crops, although their labels are 3072x256, 256x256 and 256x3072. The tall image shows disconnected fragments rather than its full extent.",
+      "fix": "Fit each entire image inside a 144x96 px frame using contain scaling; use #EEEEF0 in light mode and #2C2D33 in dark mode for letterboxing. Add a 12 pt filename below each frame and keep dimensions secondary."
+    },
+    {
+      "priority": 4,
+      "severity": "medium",
+      "screens": [
+        "chats-wide"
+      ],
+      "mode": "both",
+      "issue": "Wide conversation is left-heavy and its header does not align with its content column.",
+      "evidence": "At 1920x1080, the sidebar ends at x=364, the conversation and composer end around x=1308, and about 612 px remain empty to the right. Header actions remain near the far window edge.",
+      "fix": "Center a maximum 960 px conversation column within the available pane, then align the header title, actions and composer to that column with 16 px horizontal insets."
+    },
+    {
+      "priority": 5,
+      "severity": "medium",
+      "screens": [
+        "setup"
+      ],
+      "mode": "both",
+      "issue": "Technical setup lacks a strong guided action hierarchy.",
+      "evidence": "The 470 px-wide card at x=405..875 includes registration explanation, a text-style guide at y=353, GUID and tenant fields, generic Save, and two technical helper lines. The person must infer that the guide precedes the form.",
+      "fix": "Use two numbered groups, '1. Register Wren' and '2. Connect your account', in 15 pt semibold with 16 px gaps. Promote the guide to a 32 px-high outlined button. Rename Save to 'Save and continue', and move environment-variable instructions into a disclosure."
+    },
+    {
+      "priority": 6,
+      "severity": "medium",
+      "screens": [
+        "settings",
+        "permission-consent",
+        "search-switcher"
+      ],
+      "mode": "both",
+      "issue": "Dense small supporting copy weakens scanning.",
+      "evidence": "Settings behaviour guidance occupies three closely spaced lines at y=436..472; permission details occupy y=265..285; switcher help is packed into y=617..650. Their glyphs are approximately 12 px high at 1x.",
+      "fix": "Use 13 pt supporting text with 18 px line height and at least 8 px separation from controls. Reduce settings guidance to two short sentences and put relay explanation behind a labeled 'Instant alerts' disclosure. Preserve #62656D on white and #9C9EA8 on #25262B, which measure 5.83:1 and 5.66:1."
+    },
+    {
+      "priority": 7,
+      "severity": "medium",
+      "screens": [
+        "signin",
+        "signin-expired"
+      ],
+      "mode": "both",
+      "issue": "Code-sign-in hover explanation is oversized and exposes configuration jargon.",
+      "evidence": "The visible tooltip at approximately x=609..1118, y=458..506 crosses the right edge of the x=405..875 sign-in card and obscures the App registration area. It mentions 'Allow public client flows'. This is a captured hover state, not evidence of a permanent overlay.",
+      "fix": "Limit the tooltip to 300 px width with 12 px padding, 13 pt text and 18 px line height. Use 'Use a code if browser sign-in cannot return to Wren.' Place configuration instructions inside App registration."
+    },
+    {
+      "priority": 8,
+      "severity": "medium",
+      "screens": [
+        "new-chat"
+      ],
+      "mode": "both",
+      "issue": "Keyboard result highlight competes with committed recipient selection.",
+      "evidence": "Grace Hopper is selected in a chip at y=158..189 and in the orange 'Chat with Grace Hopper' button. Barbara Liskov simultaneously receives a full-width gray result highlight at y=269..313 without a visible cue explaining the difference.",
+      "fix": "Mark committed recipients with a check icon and accent chip outline. Give the active search result a 2 px focus outline, #A9530F in light mode and #E88C3E in dark mode, rather than the same full-row selection fill. Add 'Enter to add' at 12 pt in the result footer."
+    },
+    {
+      "priority": 9,
+      "severity": "medium",
+      "screens": [
+        "call-bar",
+        "call-docked"
+      ],
+      "mode": "both",
+      "issue": "Duplicated meeting identity consumes vertical space in the docked conversation.",
+      "evidence": "The meeting name appears around y=20 and y=113, separated by the call-control row. Header content consumes 148 of 800 px even in the 380 px-wide view.",
+      "fix": "Consolidate meeting identity and status into one 52 px block, retain a 36 px controls row, and start messages below y=100. Rename Restore to 'Expand Wren' and Close bar to 'Hide call bar' where space permits; use concise tooltips at 380 px."
+    },
+    {
+      "priority": 10,
+      "severity": "low",
+      "screens": [
+        "image-preview"
+      ],
+      "mode": "both",
+      "issue": "Image preview lacks attachment identity.",
+      "evidence": "The header says only 'Image preview' at x=176,y=55 and dimensions 3072x256 at x=306,y=92. No filename or source message identifies which attachment is open.",
+      "fix": "Show the filename in 15 pt semibold beside the heading and dimensions in 12 pt secondary text. If no filename exists, show 'Image from Ada Lovelace' or an equivalent known sender label; reserve 40 px for close."
+    },
+    {
+      "priority": 11,
+      "severity": "low",
+      "screens": [
+        "account-menu"
+      ],
+      "mode": "both",
+      "issue": "Account menu is tall and gives many secondary presence actions equal visual weight.",
+      "evidence": "Popup spans roughly x=56..337, y=304..788, with two accounts, Add account, seven presence/reset rows, status message and settings. Presence rows are spaced about 30 px apart and occupy most of the popup.",
+      "fix": "Keep account switching visible, then show current presence as a 36 px row opening a presence submenu. Keep status message and settings in a separate group with 8 px vertical separation. Target a primary popup height below 320 px."
+    },
+    {
+      "priority": 12,
+      "severity": "low",
+      "screens": [
+        "error-toast"
+      ],
+      "mode": "both",
+      "issue": "Global error toast obscures conversation content despite an already clear inline failure.",
+      "evidence": "Toast occupies x=575..1069, y=64..112 and covers part of the first message. The failed message has its own tinted surface, 'Not sent' label and Retry at y=605..700.",
+      "fix": "Put the global error in a reserved 44 px banner beneath the conversation header, shifting content below it, or show the rate-limit explanation beside the inline Retry. Keep 12 px padding and a 28x28 px dismiss button."
+    }
+  ]
+}

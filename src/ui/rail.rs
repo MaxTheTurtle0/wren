@@ -70,7 +70,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui,
                     &palette,
                     Icon::Settings,
-                    "Settings (⌘,)",
+                    &format!("Settings ({})", super::keys::shortcut("⌘,")),
                     36.0,
                     20.0,
                     palette.secondary,
@@ -81,7 +81,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui.label(
                         egui::RichText::new("DEMO")
                             .font(theme::bold(11.0))
-                            .color(palette.accent),
+                            .color(palette.secondary),
                     )
                     .on_hover_text("Sample data. Nothing is sent anywhere.");
                 }
@@ -95,15 +95,23 @@ fn item(ui: &mut egui::Ui, app: &App, section: Section, badge: usize) -> egui::R
     let active = app.section == section;
     if ui.is_rect_visible(rect) {
         if active || response.hovered() {
-            ui.painter().rect_filled(
-                rect.shrink2(vec2(2.0, 0.0)),
-                CornerRadius::same(10),
-                if active {
-                    palette.surface_active
-                } else {
-                    palette.surface_hover
-                },
-            );
+            // The light rail is already grey: the chosen tile is raised to
+            // white with an edge, as visible as the dark mode's lighter tile.
+            let tile = rect.shrink2(vec2(2.0, 0.0));
+            let fill = match (active, palette.dark) {
+                (true, true) => palette.surface_active,
+                (true, false) => palette.surface,
+                (false, _) => palette.surface_hover,
+            };
+            ui.painter().rect_filled(tile, CornerRadius::same(10), fill);
+            if active && !palette.dark {
+                ui.painter().rect_stroke(
+                    tile,
+                    CornerRadius::same(10),
+                    egui::Stroke::new(1.0, palette.card_edge),
+                    egui::StrokeKind::Inside,
+                );
+            }
         }
         if active {
             let bar = egui::Rect::from_min_size(
@@ -151,8 +159,20 @@ fn item(ui: &mut egui::Ui, app: &App, section: Section, badge: usize) -> egui::R
         Section::Calls => "⌘4",
     };
     response
-        .on_hover_text(format!("{} ({shortcut})", section.label()))
+        .on_hover_text(format!(
+            "{} ({})",
+            section.label(),
+            super::keys::shortcut(shortcut)
+        ))
         .on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
+/// A group heading in the account menu, aligned with the rows' text.
+fn menu_heading(ui: &mut egui::Ui, palette: &crate::theme::Palette, text: &str) {
+    ui.horizontal(|ui| {
+        ui.add_space(8.0);
+        widgets::section_label(ui, palette, text);
+    });
 }
 
 /// The avatar's menu: accounts, availability, status message, settings.
@@ -166,6 +186,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
         .show(|ui| {
             ui.spacing_mut().item_spacing.y = 2.0;
             // Accounts.
+            menu_heading(ui, &palette, "Accounts");
             for (index, account) in app.accounts.iter().enumerate() {
                 let active = index == app.active;
                 let (rect, response) = ui.allocate_exact_size(vec2(268.0, 46.0), Sense::click());
@@ -209,19 +230,16 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                     };
                     ui.label(
                         egui::RichText::new(detail)
-                            .font(theme::regular(11.0))
-                            .color(palette.dim),
+                            .font(theme::regular(13.0))
+                            .color(palette.secondary),
                     );
                 });
                 child.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if active {
                         theme::icon(ui, Icon::Check, 16.0, palette.accent);
                     } else if account.unread_chats() > 0 {
-                        ui.label(
-                            egui::RichText::new(account.unread_chats().to_string())
-                                .font(theme::bold(11.0))
-                                .color(palette.accent),
-                        );
+                        let (spot, _) = ui.allocate_exact_size(vec2(24.0, 18.0), Sense::hover());
+                        widgets::badge(ui, &palette, spot.center(), account.unread_chats());
                     }
                 });
                 if response.clicked() && !active {
@@ -229,11 +247,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                     ui.close();
                 }
             }
-            if ui
-                .add(
-                    egui::Button::new(egui::RichText::new("+  Add account").color(palette.text))
-                        .frame(false),
-                )
+            if widgets::menu_row(ui, &palette, 268.0, Icon::Plus, "Add account", palette.text)
                 .clicked()
             {
                 actions.push(Action::AddAccount);
@@ -241,6 +255,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
             }
             ui.separator();
             // Availability.
+            menu_heading(ui, &palette, "Status");
             let current = app.my_presence.as_ref().map(|p| p.availability);
             for (availability, label) in [
                 (Some(Availability::Available), "Available"),
@@ -259,8 +274,7 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                 let dot = egui::pos2(rect.left() + 16.0, rect.center().y);
                 match availability {
                     Some(availability) => {
-                        ui.painter()
-                            .circle_filled(dot, 5.0, palette.presence(availability));
+                        widgets::presence_dot(ui.painter(), &palette, dot, 6.0, availability);
                     }
                     None => {
                         Icon::Refresh.image(palette.dim, 12.0).paint_at(
@@ -295,26 +309,29 @@ fn account_menu(app: &mut App, avatar: &egui::Response) {
                 .as_ref()
                 .and_then(|p| p.status_message.clone())
                 .unwrap_or_else(|| "Set a status message".into());
-            if ui
-                .add(
-                    egui::Button::new(
-                        egui::RichText::new(format!("✎  {}", crate::html::truncate(&message, 34)))
-                            .color(palette.secondary),
-                    )
-                    .frame(false),
-                )
-                .clicked()
+            if widgets::menu_row(
+                ui,
+                &palette,
+                268.0,
+                Icon::Pencil,
+                &crate::html::truncate(&message, 34),
+                palette.secondary,
+            )
+            .clicked()
             {
                 actions.push(Action::OpenStatusMessage);
                 ui.close();
             }
             ui.separator();
-            if ui
-                .add(
-                    egui::Button::new(egui::RichText::new("Settings…").color(palette.text))
-                        .frame(false),
-                )
-                .clicked()
+            if widgets::menu_row(
+                ui,
+                &palette,
+                268.0,
+                Icon::Settings,
+                "Settings…",
+                palette.text,
+            )
+            .clicked()
             {
                 actions.push(Action::OpenSettings);
                 ui.close();

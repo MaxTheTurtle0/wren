@@ -2,7 +2,6 @@
 
 use egui::{CornerRadius, Sense, vec2};
 
-use super::widgets;
 use crate::app::App;
 use crate::model::{Action, ChannelKind, ConversationId};
 use crate::theme::{self, Icon};
@@ -10,15 +9,10 @@ use crate::theme::{self, Icon};
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     if app.teams.is_empty() {
-        let (title, text) = if app.loading.contains(&crate::sync::Resource::Teams) {
-            (
-                "Loading teams…",
-                "Your teams appear here as soon as Microsoft answers.",
-            )
-        } else {
-            ("No teams", "Teams you're a member of show up here.")
-        };
-        widgets::empty_state(ui, &palette, Icon::Teams, title, text);
+        // The main pane explains; the list stays quiet.
+        if app.loading.contains(&crate::sync::Resource::Teams) {
+            super::chat_list::skeleton(ui, &palette);
+        }
         return;
     }
     let mut actions = Vec::new();
@@ -104,7 +98,7 @@ fn team_row(ui: &mut egui::Ui, app: &App, name: &str, expanded: bool) -> egui::R
             tile.center(),
             egui::Align2::CENTER_CENTER,
             theme::initials(name),
-            theme::bold(11.0),
+            theme::bold(12.0),
             egui::Color32::WHITE,
         );
         let galley = super::chat_list::elided(
@@ -151,6 +145,9 @@ fn channel_row(
                     palette.surface_hover
                 },
             );
+        }
+        if selected {
+            super::widgets::selection_marker(ui, palette, inner);
         }
         let icon = match kind {
             ChannelKind::Private => Icon::Lock,

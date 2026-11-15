@@ -133,7 +133,8 @@ fn header_drag_and_double_click_work_with_native_decorations() {
             h.size.x = width;
             h.app.settings.theme = theme;
             h.frames(3);
-            let header = egui::pos2(220.0, 24.0);
+            // Between the sidebar's title and its buttons, at any width.
+            let header = egui::pos2(160.0, 24.0);
             let press = egui::Event::PointerButton {
                 pos: header,
                 button: egui::PointerButton::Primary,
@@ -207,7 +208,7 @@ fn search_fields_keep_their_layout_when_typing_and_clearing() {
             for switcher in [false, true] {
                 let mut h = Harness::new();
                 h.size.x = width;
-                h.app.settings.theme = theme.clone();
+                h.app.settings.theme = theme;
                 let me = h.app.me().to_owned();
                 h.app.chats.retain(|chat| {
                     chat.peer(&me)
@@ -406,7 +407,7 @@ fn large_pasted_text_stays_scrollable_and_sendable_inside_the_composer() {
                 for separator in ["\n", " "] {
                     let mut h = Harness::new();
                     h.size = egui::vec2(width, height);
-                    h.app.settings.theme = theme.clone();
+                    h.app.settings.theme = theme;
                     h.app.focus_composer = separator == " ";
                     h.frames(4);
                     let chat = h.app.open.clone().unwrap();
@@ -484,7 +485,8 @@ fn large_pasted_text_stays_scrollable_and_sendable_inside_the_composer() {
                         "buttons have their own space"
                     );
                     let count = h.app.conversations[&chat].messages.len();
-                    h.click(egui::pos2(surface.right() - 24.0, surface.center().y));
+                    // Send sits at the bottom right of a tall draft.
+                    h.click(egui::pos2(surface.right() - 24.0, surface.bottom() - 21.0));
                     let messages = &h.app.conversations[&chat].messages;
                     assert_eq!(
                         messages.len(),
@@ -578,7 +580,7 @@ fn clicking_received_images_opens_the_shared_viewer_at_their_original_size() {
             for format in [image::ImageFormat::Png, image::ImageFormat::Jpeg] {
                 let mut h = Harness::new();
                 h.size.x = width;
-                h.app.settings.theme = theme.clone();
+                h.app.settings.theme = theme;
                 h.frames(3);
                 let chat = h.app.open.clone().unwrap();
                 let url = "https://graph.microsoft.com/v1.0/chats/fixture/messages/1/hostedContents/1/$value";
@@ -723,7 +725,7 @@ fn composer_images_have_usable_thumbnails_and_open_full_previews() {
             for (w, height) in [(2000, 20), (20, 2000), (320, 240)] {
                 let mut h = Harness::new();
                 h.size.x = width;
-                h.app.settings.theme = theme.clone();
+                h.app.settings.theme = theme;
                 h.frames(3);
                 let chat = h.app.open.clone().unwrap();
                 let image =
@@ -742,11 +744,14 @@ fn composer_images_have_usable_thumbnails_and_open_full_previews() {
                 h.wait_for_images();
                 let thumbnail = image_shapes(&h, &image)[0];
                 let rect = thumbnail.rect;
-                assert_eq!(rect.size(), egui::vec2(144.0, 96.0));
+                // The image fits its 144 x 96 tile and is never thinner than
+                // 12 pt, so a panorama does not shrink into a line.
+                assert!(rect.width() <= 144.5 && rect.height() <= 96.5, "{rect:?}");
+                assert!(rect.width() >= 11.5 && rect.height() >= 11.5, "{rect:?}");
                 let uv = thumbnail.brush.as_ref().unwrap().uv;
-                let cropped_aspect = uv.width() * w as f32 / (uv.height() * height as f32);
+                let shown_aspect = uv.width() * w as f32 / (uv.height() * height as f32);
                 assert!(
-                    (cropped_aspect - 1.5).abs() < 0.001,
+                    (shown_aspect - rect.width() / rect.height()).abs() < 0.02 * shown_aspect,
                     "thumbnail preserves proportions"
                 );
                 assert!(uv.min.x >= 0.0 && uv.min.y >= 0.0 && uv.max.x <= 1.0 && uv.max.y <= 1.0);
@@ -806,11 +811,13 @@ fn composer_images_have_usable_thumbnails_and_open_full_previews() {
                 h.frames(3);
                 assert!(h.app.overlay.is_none());
                 assert_eq!(h.app.drafts[&chat].images, vec![image.clone()]);
-                let thumbnail = image_shapes(&h, &image)[0].rect;
-                let remove = egui::pos2(
-                    thumbnail.right() + h.ctx.global_style().spacing.item_spacing.x + 11.0,
-                    thumbnail.center().y,
+                // The remove control sits on the top-right corner of the tile
+                // around the image.
+                let tile = egui::Rect::from_center_size(
+                    image_shapes(&h, &image)[0].rect.center(),
+                    egui::vec2(144.0, 96.0),
                 );
+                let remove = tile.right_top() + egui::vec2(-14.0, 14.0);
                 h.click(remove);
                 assert!(
                     h.app
@@ -856,15 +863,12 @@ fn multiple_pasted_images_wrap_without_clipping() {
             let mut rects = Vec::new();
             for image in images {
                 let (rect, clip) = image_clips(&h, image)[0];
-                assert_eq!(rect.size(), egui::vec2(144.0, 96.0));
+                assert!(rect.width() <= 144.5 && rect.height() <= 96.5, "{rect:?}");
                 assert!(
                     clip.contains_rect(rect),
                     "all thumbnails must remain visible at width {width}"
                 );
-                assert!(
-                    rect.right() + 30.0 <= width,
-                    "the remove control must fit too"
-                );
+                assert!(rect.right() <= width, "the remove control must fit too");
                 rects.push(rect);
             }
             for (index, rect) in rects.iter().enumerate() {
@@ -886,7 +890,7 @@ fn mention_completion_keeps_space_and_typing_in_the_composer() {
                 for (query, name) in [("@", "Ada Lovelace"), ("@Gra", "Grace Hopper")] {
                     let mut h = Harness::new();
                     h.size.x = width;
-                    h.app.settings.theme = theme.clone();
+                    h.app.settings.theme = theme;
                     h.act(Action::OpenConversation(ConversationId::Chat(
                         "19:demo-launch@thread.v2".into(),
                     )));
@@ -1147,11 +1151,7 @@ fn every_screen_draws() {
         assert!(h.app.overlay.is_some());
         h.act(Action::CloseOverlay);
     }
-    for theme in [
-        ThemeChoice::Light,
-        ThemeChoice::Dark,
-        ThemeChoice::Palette("Nord.json".into()),
-    ] {
+    for theme in [ThemeChoice::Light, ThemeChoice::Dark, ThemeChoice::System] {
         h.act(Action::SetTheme(theme));
     }
 }
@@ -1644,4 +1644,32 @@ fn an_evicted_draft_image_reopens_at_original_resolution_without_losing_the_draf
             .any(|(_, meta)| meta.name == image.uri() && meta.size == [1200, 800])
     );
     assert_eq!(h.app.drafts[&chat].images.len(), 1);
+}
+
+#[test]
+fn settings_checkboxes_toggle_from_their_label() {
+    for theme in [ThemeChoice::Light, ThemeChoice::Dark] {
+        let mut h = Harness::new();
+        h.app.settings.theme = theme;
+        h.frames(2);
+        h.act(Action::OpenSettings);
+        h.frames(3);
+        let label = "Keep running in the tray when the window closes";
+        let find = |h: &Harness| {
+            painted_shapes(h)
+                .into_iter()
+                .find_map(|shape| match shape {
+                    egui::epaint::Shape::Text(text) if text.galley.job.text == label => {
+                        Some(text.pos + text.galley.size() / 2.0)
+                    }
+                    _ => None,
+                })
+                .expect("the checkbox label is painted")
+        };
+        let before = h.app.settings.keep_running;
+        let spot = find(&h);
+        h.click(spot);
+        h.frames(2);
+        assert_eq!(h.app.settings.keep_running, !before);
+    }
 }

@@ -46,7 +46,12 @@ fn job(
         let color = if style.link.is_some() {
             palette.link
         } else if style.mention {
-            palette.accent
+            // A darker orange on the mention tint, for contrast headroom.
+            if palette.dark {
+                palette.accent
+            } else {
+                palette.accent_hover
+            }
         } else {
             look.color
         };
@@ -321,7 +326,12 @@ pub fn quote_block(
     width: f32,
 ) -> egui::Response {
     egui::Frame::new()
-        .fill(palette.surface_hover)
+        // A step darker than a hovered message row, so it never blends in.
+        .fill(if palette.dark {
+            palette.surface_hover
+        } else {
+            palette.surface_active
+        })
         .corner_radius(CornerRadius::same(6))
         .inner_margin(Margin {
             left: 10,
@@ -369,7 +379,8 @@ pub fn quote_block(
                     ne: 0,
                     se: 0,
                 },
-                palette.accent,
+                // Quote bars are structure, not a signal: neutral.
+                palette.control,
             );
         })
         .response

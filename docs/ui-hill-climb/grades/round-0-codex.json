@@ -1,0 +1,575 @@
+{
+  "overall": 6.5,
+  "dimensions": {
+    "hierarchy": 7,
+    "spacing": 6,
+    "typography": 6.5,
+    "consistency": 7.5,
+    "contrast_accessibility": 4,
+    "feedback": 6,
+    "states": 6.5,
+    "navigation": 6.5
+  },
+  "screens": {
+    "chats": {
+      "score": 7,
+      "issues": [
+        "Timestamp and formatting-help text fail 4.5:1 in both themes.",
+        "Light orange sender names fail 4.5:1.",
+        "Hover toolbar is visually detached from the message at the far right."
+      ]
+    },
+    "chats-wide": {
+      "score": 6.5,
+      "issues": [
+        "Unbounded message measure and far-right hover toolbar weaken message/action association.",
+        "Large unused gap above the full-width composer.",
+        "Muted timestamps and light orange sender text fail 4.5:1."
+      ]
+    },
+    "chats-narrow": {
+      "score": 5.5,
+      "issues": [
+        "Rail plus sidebar consume 364 of 760 px, leaving a cramped conversation.",
+        "Hover toolbar obscures the next sender row.",
+        "Quoted reply truncates source context.",
+        "Muted metadata and light orange sender text fail contrast."
+      ]
+    },
+    "chat-no-selection": {
+      "score": 7,
+      "issues": [
+        "Sidebar dates fail body-text contrast.",
+        "Empty-state shortcut uses Command while the shortcuts overlay uses Ctrl."
+      ]
+    },
+    "chat-filter-no-match": {
+      "score": 6.5,
+      "issues": [
+        "No visible clear-filter control or recovery action.",
+        "Sidebar grows from 300 to 360 px compared with the populated chat view.",
+        "Timestamps and light orange sender text fail contrast."
+      ]
+    },
+    "group-chat": {
+      "score": 7,
+      "issues": [
+        "Membership event and timestamps fail text contrast.",
+        "Light mention text on the peach highlight fails 4.5:1.",
+        "Hover actions float far from their sender."
+      ]
+    },
+    "channel": {
+      "score": 7,
+      "issues": [
+        "Thread timestamps fail text contrast.",
+        "Composer boundary is too faint in both themes.",
+        "Reply links are visually quiet relative to thread content."
+      ]
+    },
+    "channel-narrow": {
+      "score": 5.5,
+      "issues": [
+        "Fixed sidebar leaves only about 380 px for threaded content.",
+        "Hover toolbar covers part of the sender heading.",
+        "Thread timestamps and composer help fail text contrast."
+      ]
+    },
+    "teams": {
+      "score": 7,
+      "issues": [
+        "Light DEMO text fails 4.5:1 against the rail.",
+        "Generic chat-bubble empty-state icon does not reinforce channels."
+      ]
+    },
+    "calendar": {
+      "score": 7,
+      "issues": [
+        "Organizer/location labels and joining explanation fail text contrast.",
+        "Small pill actions feel undersized beneath the large meeting heading."
+      ]
+    },
+    "calls": {
+      "score": 6.5,
+      "issues": [
+        "Light Works text fails 4.5:1; muted footer fails in both modes.",
+        "Dense capability/legal explanation competes with the join task.",
+        "Join input has a faint boundary."
+      ]
+    },
+    "calls-narrow": {
+      "score": 3.5,
+      "issues": [
+        "Join button is outside the right edge of the screenshot.",
+        "Intro, capability explanations and footer are horizontally clipped.",
+        "Fixed people sidebar consumes almost half the window.",
+        "Shared muted-text and light green-text contrast failures."
+      ]
+    },
+    "composer-mention": {
+      "score": 6.5,
+      "issues": [
+        "Suggestion email on selected background fails text contrast.",
+        "Attachment size and composer help are too faint.",
+        "Typed draft has no clearly visible focus ring."
+      ]
+    },
+    "composer-long-draft": {
+      "score": 6,
+      "issues": [
+        "Focused long draft has no distinct focus outline.",
+        "Top draft line is cut and internal scroll position has no visible scrollbar.",
+        "Send and attach actions sit halfway up the tall composer.",
+        "Shared timestamp/help contrast failures."
+      ]
+    },
+    "composer-images": {
+      "score": 5.5,
+      "issues": [
+        "Pasted-image previews crop portraits and panoramas into hard-to-recognize fragments.",
+        "Remove controls are small and loosely associated with each preview.",
+        "Attachment area lacks labels or dimensions.",
+        "Shared metadata contrast failures."
+      ]
+    },
+    "image-preview": {
+      "score": 7,
+      "issues": [
+        "Image dimensions fail text contrast.",
+        "Fit selection is faint in light mode.",
+        "No filename to identify the previewed attachment."
+      ]
+    },
+    "search-switcher": {
+      "score": 6.5,
+      "issues": [
+        "Keyboard instructions and RECENT heading fail text contrast.",
+        "Selected result is distinguished mainly by a subtle gray fill.",
+        "Long footer wraps into a crowded second line."
+      ]
+    },
+    "new-chat": {
+      "score": 6.5,
+      "issues": [
+        "Result emails fail contrast on selected and unselected backgrounds.",
+        "Light primary-button text fails 4.5:1.",
+        "Search input has no persistent descriptive label.",
+        "Recipient selection and result highlight can be confused."
+      ]
+    },
+    "settings": {
+      "score": 6,
+      "issues": [
+        "Help copy and section headings fail text contrast.",
+        "Help line reaches the right clipping edge at the scrollbar.",
+        "Unchecked controls are almost indistinguishable from the panel.",
+        "Open in and Browser labels follow their controls, weakening scan order."
+      ]
+    },
+    "shortcuts": {
+      "score": 6.5,
+      "issues": [
+        "Light shortcut keys fail 4.5:1.",
+        "Ctrl shortcuts conflict with Command hints elsewhere.",
+        "No visible close button or explicit close instruction."
+      ]
+    },
+    "status-message": {
+      "score": 7,
+      "issues": [
+        "Light Save button text fails 4.5:1.",
+        "Light placeholder is marginally below 4.5:1.",
+        "No visible character limit or status-expiry setting."
+      ]
+    },
+    "account-menu": {
+      "score": 6.5,
+      "issues": [
+        "Account email identifiers fail contrast, especially on the dark panel.",
+        "Tiny account unread count is easy to miss.",
+        "Reset status and Set a status message have weak visual affordances."
+      ]
+    },
+    "permission-consent": {
+      "score": 7,
+      "issues": [
+        "Light Continue in browser label fails 4.5:1.",
+        "Important permission explanation is compressed into small text."
+      ]
+    },
+    "error-toast": {
+      "score": 6,
+      "issues": [
+        "Toast covers the latest message and offers no visible Retry action.",
+        "Failed message is not visibly distinguished in the conversation.",
+        "Shared metadata/help contrast failures."
+      ]
+    },
+    "first-sync-loading": {
+      "score": 6.5,
+      "issues": [
+        "Main pane asks the user to pick a chat before any chats exist.",
+        "Two large repeated empty-state symbols compete with the small loading indicator.",
+        "Loading explanation nearly touches the sidebar right edge.",
+        "Light DEMO text fails contrast."
+      ]
+    },
+    "first-sync-empty": {
+      "score": 6,
+      "issues": [
+        "Two empty panes repeat essentially the same state.",
+        "No prominent Start a chat action despite the new-chat icon in the header.",
+        "Copy sends users to Teams rather than exposing the app action.",
+        "Light DEMO text fails contrast."
+      ]
+    },
+    "call-bar": {
+      "score": 6.5,
+      "issues": [
+        "Current in-meeting status conflicts with Meeting ended in the visible history.",
+        "Done is ambiguous about ending the call versus leaving the docked view.",
+        "Meeting title is truncated despite room for an additional line.",
+        "System events/timestamps fail contrast."
+      ]
+    },
+    "call-docked": {
+      "score": 7,
+      "issues": [
+        "Current in-meeting status and historical Meeting ended are insufficiently differentiated.",
+        "Done action is ambiguous.",
+        "System events and composer help fail text contrast."
+      ]
+    },
+    "join-on-phone": {
+      "score": 8,
+      "issues": [
+        "Copy-link secondary button has a very faint boundary in dark mode.",
+        "No visible fallback meeting address beside the QR code."
+      ]
+    },
+    "setup": {
+      "score": 6.5,
+      "issues": [
+        "Tenant explanation and privacy footer fail text contrast.",
+        "Registration guidance is a small link beneath a form that requires external setup.",
+        "Disabled Save has no adjacent explanation of what remains required."
+      ]
+    },
+    "signin": {
+      "score": 7,
+      "issues": [
+        "Light primary-button label fails 4.5:1.",
+        "Privacy footer fails contrast in both themes."
+      ]
+    },
+    "signin-browser": {
+      "score": 7,
+      "issues": [
+        "Privacy footer fails text contrast.",
+        "Waiting state has no visible progress indicator; all three actions have equal emphasis."
+      ]
+    },
+    "signin-device-code": {
+      "score": 7,
+      "issues": [
+        "Light primary-button label and both privacy footers fail contrast.",
+        "No visible code expiry or waiting-for-confirmation indication."
+      ]
+    },
+    "signin-finishing": {
+      "score": 6.5,
+      "issues": [
+        "Privacy footer fails text contrast.",
+        "Signing-in state has no visible cancellation or recovery control.",
+        "Active demo action competes with the ongoing sign-in task."
+      ]
+    },
+    "signin-expired": {
+      "score": 7,
+      "issues": [
+        "Light primary-button label and privacy footer fail contrast.",
+        "Expiry reason and account identity share one undifferentiated body block."
+      ]
+    },
+    "signin-failed": {
+      "score": 7,
+      "issues": [
+        "Light primary-button label and privacy footer fail contrast.",
+        "Failure recovery repeats the normal sign-in button without an explicit Try again label."
+      ]
+    }
+  },
+  "top_issues": [
+    {
+      "priority": 1,
+      "severity": "high",
+      "screens": [
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "issue": "Narrow Calls layout clips its primary task.",
+      "evidence": "760x640: content starts x396; join card extends past x759 and its Join button is absent. Table explanation column starts about x741 and is cut off.",
+      "fix": "Below 1000 pt window width collapse the 300 pt people sidebar; make join card width min(680 pt, available width); stack table rows into title/status/description with 16 pt side padding."
+    },
+    {
+      "priority": 2,
+      "severity": "high",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "chats-narrow",
+        "chat-no-selection",
+        "chat-filter-no-match",
+        "group-chat",
+        "channel",
+        "channel-narrow",
+        "calendar",
+        "calls",
+        "calls-narrow",
+        "composer-mention",
+        "composer-long-draft",
+        "composer-images",
+        "image-preview",
+        "search-switcher",
+        "new-chat",
+        "settings",
+        "account-menu",
+        "call-bar",
+        "call-docked",
+        "setup",
+        "signin",
+        "signin-browser",
+        "signin-device-code",
+        "signin-finishing",
+        "signin-expired",
+        "signin-failed"
+      ],
+      "mode": "both",
+      "issue": "Muted informational text repeatedly fails the 4.5:1 text requirement.",
+      "evidence": "Pillow sampled chats timestamp pixel (552,179): #8C8E96 on #FFFFFF = 3.27:1; dark (540,179): #6D6F78 on #17181B = 3.55:1. Calendar labels #8C8E96/#F6F6F7 = 3.03:1; dark #6D6F78/#1D1E22 = 3.33:1. Image dimensions and settings help #6D6F78/#25262B = 3.02:1. New-chat selected email #8C8E96/#E4E4E8 = 2.58:1; dark #6D6F78/#34353C = 2.44:1.",
+      "fix": "Use #626570 for light secondary text and #B1B4BF for dark secondary text, including selected rows. These yield 5.81:1 on white, 5.38:1 on #F6F6F7 and 5.90:1 on #34353C. Set instructions to at least 12 pt."
+    },
+    {
+      "priority": 3,
+      "severity": "high",
+      "screens": [
+        "new-chat",
+        "status-message",
+        "permission-consent",
+        "signin",
+        "signin-expired",
+        "signin-failed",
+        "signin-device-code",
+        "calendar",
+        "call-bar",
+        "call-docked"
+      ],
+      "mode": "light",
+      "issue": "White text on orange primary buttons fails body-text contrast.",
+      "evidence": "Sampled new-chat label ROI x410-560,y420-432: #FFFFFF over #C26318 = 4.12:1. Same pair sampled in signin x432-610,y385-412. Labels are small body text, not large text.",
+      "fix": "Darken light primary fill to #B45309 with #FFFFFF labels, yielding 5.02:1. Preserve dark-theme dark text on orange, measured 7.24:1."
+    },
+    {
+      "priority": 4,
+      "severity": "high",
+      "screens": [
+        "chats-narrow",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "issue": "Fixed sidebar and hover action placement compromise message reading.",
+      "evidence": "760 px screenshots: rail 64 px plus sidebar 300 px leaves x364-759 for conversation; chats hover toolbar x444-732,y267-305 crosses the sender row; channel toolbar x506-738,y333-371 crosses Hedy Lamarr heading.",
+      "fix": "At widths below 960 pt offer a collapsible 240 pt sidebar or single-pane conversation with Back. Reserve 40 pt above hovered message for toolbar; constrain it within the message gutter without covering text."
+    },
+    {
+      "priority": 5,
+      "severity": "medium",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "chats-narrow",
+        "group-chat",
+        "chat-filter-no-match",
+        "composer-mention",
+        "composer-long-draft",
+        "composer-images",
+        "call-bar",
+        "call-docked",
+        "shortcuts",
+        "teams",
+        "first-sync-loading",
+        "first-sync-empty"
+      ],
+      "mode": "light",
+      "issue": "Orange small text fails contrast on white and tinted surfaces.",
+      "evidence": "Sender/shortcut pixels #C26318 on #FFFFFF = 4.12:1; mention pixel (436,381) #C26318 over #FDF1E5; DEMO pixel (17,688) #C26318 over #ECECEE. The latter surfaces further reduce contrast.",
+      "fix": "Use #9A4608 for small orange text, including names, shortcut keys, mentions and DEMO. Keep the accent tint for decorative surfaces, rather than text."
+    },
+    {
+      "priority": 6,
+      "severity": "medium",
+      "screens": [
+        "settings",
+        "status-message",
+        "setup",
+        "calls",
+        "composer-long-draft",
+        "composer-mention"
+      ],
+      "mode": "both",
+      "issue": "Inputs, unchecked checkboxes and focused drafts lack sufficient visual distinction.",
+      "evidence": "Chat composer top border #DFDFE3 against #FFFFFF = 1.33:1; dark #303137 against #25262B = 1.16:1. Settings unchecked checkbox center #EEEEF0 on white; dark #2C2D33 on #25262B. Long-draft screenshot shows no distinct focus ring.",
+      "fix": "Use #858995 for essential light control boundaries and #9195A1 for dark boundaries. Add a 2 pt #B45309 light / #E88C3E dark focus ring with 2 pt offset; give checkboxes a 16 pt outline and clear checkmark."
+    },
+    {
+      "priority": 7,
+      "severity": "medium",
+      "screens": [
+        "composer-images"
+      ],
+      "mode": "both",
+      "issue": "Attachment thumbnails obscure the attached images.",
+      "evidence": "Preview row x393-891,y622-718 shows tall images split/cropped at the row boundaries and panoramic content reduced to fragments. Remove marks lie around x556,738,920.",
+      "fix": "Fit each entire image inside a 96x96 pt tile using contain, with a neutral backdrop. Put a 24x24 pt remove button at each tile top-right and filename or dimensions below in 12 pt text."
+    },
+    {
+      "priority": 8,
+      "severity": "medium",
+      "screens": [
+        "error-toast"
+      ],
+      "mode": "both",
+      "issue": "Failed-send feedback is detached from a recoverable failed message.",
+      "evidence": "Toast x370-910,y638-692 covers latest conversation content. No failed-message marker or Retry control is visible in the shot.",
+      "fix": "Place a persistent 12 pt Failed to send label and Retry button below the failed message; keep the draft/message visible. Anchor optional toast above the composer with 12 pt clearance and an explicit Retry action."
+    },
+    {
+      "priority": 9,
+      "severity": "medium",
+      "screens": [
+        "first-sync-loading",
+        "first-sync-empty"
+      ],
+      "mode": "both",
+      "issue": "Initial states give contradictory or unhelpful directions.",
+      "evidence": "Both screens repeat a chat-bubble state at sidebar center x244,y330 and main pane x852,y260. Main pane says Pick a chat on the left while sidebar is loading or has no chats.",
+      "fix": "During first sync show one main 18 pt Loading your chats heading with a 20 pt spinner and 14 pt explanation. For empty accounts replace the main instruction with a 32 pt-high Start a chat button; remove duplicate sidebar illustration."
+    },
+    {
+      "priority": 10,
+      "severity": "medium",
+      "screens": [
+        "settings"
+      ],
+      "mode": "both",
+      "issue": "Settings copy clips at the scrollbar and form labels scan backwards.",
+      "evidence": "Help around y442 runs to x890 directly under/against scrollbar x892-898. Open in follows its dropdown around x690,y603; Browser follows its dropdown around x521,y640.",
+      "fix": "Reserve a 16 pt scrollbar gutter and 24 pt panel padding; wrap all help to available width. Put 13 pt labels above each dropdown with 6 pt label/control and 16 pt row gaps."
+    },
+    {
+      "priority": 11,
+      "severity": "medium",
+      "screens": [
+        "shortcuts",
+        "chat-no-selection",
+        "first-sync-loading",
+        "first-sync-empty",
+        "settings"
+      ],
+      "mode": "both",
+      "issue": "Shortcut notation is inconsistent across the screenshots.",
+      "evidence": "Shortcuts overlay says Ctrl K and Ctrl R; empty-chat states show Command-K and settings show Command-R. This is a visible cross-screen inconsistency, independent of actual keyboard behavior.",
+      "fix": "Use one platform-specific shortcut formatter throughout. Show Ctrl on Windows/Linux and Command glyphs on macOS; use matching 12 pt keycaps and add a 24 pt close control to the shortcuts dialog."
+    },
+    {
+      "priority": 12,
+      "severity": "medium",
+      "screens": [
+        "composer-long-draft"
+      ],
+      "mode": "both",
+      "issue": "Tall draft lacks a visible internal scroll cue and convenient action alignment.",
+      "evidence": "Composer extends y551-765 with a partially cut line at its top. Attach and Send remain around y657, centered vertically rather than near the final line.",
+      "fix": "Keep the 200 pt draft height cap, add a visible 6 pt internal scrollbar and 8 pt vertical padding; bottom-align 28x28 pt attach/send buttons with 12 pt bottom inset."
+    },
+    {
+      "priority": 13,
+      "severity": "medium",
+      "screens": [
+        "call-bar",
+        "call-docked"
+      ],
+      "mode": "both",
+      "issue": "Call status and completion action are ambiguous.",
+      "evidence": "Top reads In the meeting and just joined; visible history says Meeting ended. Top Done button is presented with a checkmark and no explanation of whether it ends or leaves the call.",
+      "fix": "Label the action Close call panel if that is its function. Place historical meeting events in a 12 pt dated separator and label active status Current call in 13 pt text; keep an 8 pt gap between status and actions."
+    },
+    {
+      "priority": 14,
+      "severity": "medium",
+      "screens": [
+        "calls",
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "issue": "Calling page gives excessive explanation before a compact primary task.",
+      "evidence": "1280 screenshot: introductory paragraph spans y109-154, capability table y330-530; join input is a single short row at y227. License and billing language occupies multiple table lines.",
+      "fix": "Lead with the 18 pt Join a meeting title and 32 pt-high input/button. Follow with one 14 pt line explaining that calls open in Teams; move the detailed capability text under a collapsed Calling limitations disclosure."
+    },
+    {
+      "priority": 15,
+      "severity": "medium",
+      "screens": [
+        "calls",
+        "calls-narrow"
+      ],
+      "mode": "light",
+      "issue": "Positive status text fails body-text contrast.",
+      "evidence": "Works label sampled at x652-694,y336-350: #1F8F4C on #FFFFFF = 4.12:1. The labels are small text.",
+      "fix": "Use #15803D for light positive-status text, yielding 5.02:1, and add a 16 pt check icon so the status also has a shape cue."
+    },
+    {
+      "priority": 16,
+      "severity": "low",
+      "screens": [
+        "chats-wide",
+        "chats",
+        "group-chat"
+      ],
+      "mode": "both",
+      "issue": "Message actions drift far from their content in wide windows.",
+      "evidence": "1920 screenshot: conversation text begins x432; hovered reaction toolbar is x1660-1899 around y478, while the corresponding message is near the left margin.",
+      "fix": "Cap readable message column at 840 pt and place hover actions within 16 pt of that column edge; keep composer aligned to the same reading column."
+    },
+    {
+      "priority": 17,
+      "severity": "low",
+      "screens": [
+        "setup",
+        "signin",
+        "signin-browser",
+        "signin-device-code",
+        "signin-finishing",
+        "signin-expired",
+        "signin-failed"
+      ],
+      "mode": "both",
+      "issue": "Onboarding footers are faint, long lines and secondary actions have inconsistent emphasis.",
+      "evidence": "Privacy line spans approximately x212-1069, rendered #8C8E96/#F6F6F7 = 3.03:1 in light and #6D6F78/#1D1E22 = 3.33:1 in dark. Browser waiting screen has three equally styled buttons.",
+      "fix": "Wrap footer to a 560 pt column at 12 pt using accessible secondary colors. In browser waiting state make Open the page again primary, Copy link secondary and Cancel tertiary; keep 8 pt action gaps."
+    },
+    {
+      "priority": 18,
+      "severity": "low",
+      "screens": [
+        "search-switcher",
+        "new-chat",
+        "account-menu"
+      ],
+      "mode": "both",
+      "issue": "Secondary identity and keyboard help are too small for dependable scanning.",
+      "evidence": "New-chat emails are about 13 px high; account emails about 11 px; search footer x354-925,y604-631 wraps instructions across two lines. Muted contrast compounds the small scale.",
+      "fix": "Use 13 pt emails and 12 pt help text with 16 pt line height. Give search keyboard help a separate 32 pt footer; use 2 pt accent selection indicators alongside selected-row fill."
+    }
+  ]
+}

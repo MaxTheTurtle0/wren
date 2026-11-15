@@ -53,7 +53,17 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                 );
                 widgets::avatar(&mut child, app, Some(user), name, 32.0, true);
                 child.add_space(8.0);
-                let label_width = (child.available_width() - 72.0).max(40.0);
+                // A narrow list keeps the audio call visible and shows the
+                // video call on the row under the pointer, so names keep room.
+                let compact = width < 260.0;
+                let video_shown = !compact || response.hovered();
+                let label_width = (child.available_width()
+                    - match (compact, video_shown) {
+                        (false, _) => 72.0,
+                        (true, true) => 56.0,
+                        (true, false) => 30.0,
+                    })
+                .max(40.0);
                 child.add(egui::Label::new(super::chat_list::elided(
                     &child,
                     name,
@@ -62,16 +72,36 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                     label_width,
                 )));
                 child.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let video = widgets::icon_button(ui, &palette, Icon::Video, "Video call");
-                    widgets::on_click(
-                        &video,
-                        &mut actions,
-                        Action::StartCall {
-                            users: vec![email.clone()],
-                            video: true,
-                        },
+                    // Narrow lists use tighter buttons, so names keep room.
+                    let button = if compact { 26.0 } else { 30.0 };
+                    if video_shown {
+                        let video = widgets::icon_button_sized(
+                            ui,
+                            &palette,
+                            Icon::Video,
+                            "Video call",
+                            button,
+                            16.0,
+                            palette.secondary,
+                        );
+                        widgets::on_click(
+                            &video,
+                            &mut actions,
+                            Action::StartCall {
+                                users: vec![email.clone()],
+                                video: true,
+                            },
+                        );
+                    }
+                    let audio = widgets::icon_button_sized(
+                        ui,
+                        &palette,
+                        Icon::Phone,
+                        "Audio call",
+                        button,
+                        16.0,
+                        palette.secondary,
                     );
-                    let audio = widgets::icon_button(ui, &palette, Icon::Phone, "Audio call");
                     widgets::on_click(
                         &audio,
                         &mut actions,
@@ -93,20 +123,17 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
     );
     widgets::window_drag(ui, header, "calls-drag");
-    ui.add_space(theme::HEADER_HEIGHT + 12.0);
+    widgets::pane_header(
+        ui,
+        &palette,
+        "Calls and meetings",
+        "Join by link, or call someone from the list",
+        |_| {},
+    );
     egui::ScrollArea::vertical().id_salt("calls-page").auto_shrink([false, false]).show(ui, |ui| {
-        Frame::new().inner_margin(Margin::symmetric(32, 0)).show(ui, |ui| {
-            ui.set_max_width(680.0);
-            ui.label(egui::RichText::new("Calls and meetings").font(theme::bold(24.0)).color(palette.text));
-            ui.add_space(6.0);
-            let place = match app.opener() {
-                crate::calling::Opener::AppWindow(browser) => format!("Teams on the web, in a {} window beside Wren", browser.kind.short()),
-                crate::calling::Opener::Browser => "Teams on the web, in your default browser".to_owned(),
-                crate::calling::Opener::TeamsApp => "the Microsoft Teams app".to_owned(),
-            };
-            ui.label(egui::RichText::new(format!("Calls and meetings open in {place}. The call itself runs in Microsoft's own client, so it costs nothing extra; Wren shows the meeting chat and follows the call. Change this in Settings.")).color(palette.secondary));
-            ui.add_space(18.0);
-
+        Frame::new().inner_margin(Margin { left: 0, right: 0, top: 20, bottom: 0 }).show(ui, |ui| {
+            let column = widgets::detail_column(ui.max_rect());
+            ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
             // Join by link.
             let link_id = egui::Id::new("wren-join-link");
             let mut link: String = ui.ctx().data(|d| d.get_temp(link_id)).unwrap_or_default();
@@ -120,13 +147,12 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui.label(egui::RichText::new("Join a meeting").font(theme::semibold(15.0)).color(palette.text));
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
-                        let field = egui::TextEdit::singleline(&mut link)
-                            .hint_text("Paste a Teams meeting link")
-                            .desired_width(ui.available_width() - 90.0)
-                            .margin(Margin::symmetric(8, 6));
+                        let field = widgets::text_field(&mut link, "Paste a Teams meeting link", theme::regular(13.0))
+                            // The field runs up to the Join button (about 54 pt plus the gap).
+                            .desired_width(ui.available_width() - 64.0);
                         let response = ui.add(field);
                         let valid = crate::calling::is_teams_link(link.trim());
-                        let join = ui.add_enabled(valid, egui::Button::new("Join").min_size(vec2(72.0, 30.0)));
+                        let join = ui.add_enabled_ui(valid, |ui| widgets::primary_button(ui, &palette, "Join")).inner;
                         let enter = response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
                         if valid && (join.clicked() || enter) {
                             app.actions.push(Action::JoinMeeting(link.trim().to_owned()));
@@ -137,27 +163,70 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             ui.ctx().data_mut(|d| d.insert_temp(link_id, link));
             ui.add_space(18.0);
 
-            ui.label(egui::RichText::new("What works today").font(theme::semibold(15.0)).color(palette.text));
-            ui.add_space(6.0);
-            egui::Grid::new("call-capabilities").num_columns(3).spacing(vec2(16.0, 10.0)).striped(false).show(ui, |ui| {
-                for capability in CAPABILITIES {
-                    ui.label(egui::RichText::new(capability.name).font(theme::medium(13.0)).color(palette.text));
-                    let color = match capability.status {
-                        "Works" => palette.success,
-                        "Not possible" => palette.danger,
-                        _ => palette.warning,
-                    };
-                    ui.label(egui::RichText::new(capability.status).font(theme::semibold(12.0)).color(color));
-                    ui.add(egui::Label::new(egui::RichText::new(capability.detail).font(theme::regular(12.0)).color(palette.secondary)).wrap());
-                    ui.end_row();
+            ui.label(egui::RichText::new("How calls work").font(theme::semibold(15.0)).color(palette.text));
+            ui.add_space(4.0);
+            let place = match app.opener() {
+                crate::calling::Opener::AppWindow(browser) => format!("Teams on the web, in its own {} window beside Wren", browser.kind.short()),
+                crate::calling::Opener::Browser => "Teams on the web, in your default browser".to_owned(),
+                crate::calling::Opener::TeamsApp => "the Microsoft Teams app".to_owned(),
+            };
+            ui.label(egui::RichText::new(format!("Calls open in {place}. Microsoft's own client runs the call, so it costs nothing extra; Wren shows the meeting chat and follows the call.")).line_height(Some(theme::leading(14.0))).color(palette.secondary));
+            ui.add_space(10.0);
+            // What works, at a glance; the details on request.
+            for (status, color, icon) in [("Works", palette.success, Icon::Check), ("Not possible", palette.secondary, Icon::Close)] {
+                // "Join meetings, start audio or video calls, call status"
+                let names: Vec<String> = CAPABILITIES
+                    .iter()
+                    .filter(|c| c.status == status)
+                    .enumerate()
+                    .map(|(index, c)| {
+                        let mut chars = c.name.chars();
+                        match chars.next() {
+                            Some(first) if index > 0 => first.to_lowercase().chain(chars).collect(),
+                            _ => c.name.to_owned(),
+                        }
+                    })
+                    .collect();
+                if names.is_empty() {
+                    continue;
                 }
-            });
-            ui.add_space(14.0);
-            ui.label(
-                egui::RichText::new("Calls open in Teams. Use the Teams window for audio, video and call controls.")
-                    .font(theme::regular(12.0))
-                    .color(palette.dim),
-            );
+                // Icon in its own column; wrapped lines hang under the text.
+                ui.horizontal_top(|ui| {
+                    ui.spacing_mut().item_spacing.x = 8.0;
+                    theme::icon(ui, icon, 14.0, color);
+                    let mut job = egui::text::LayoutJob::default();
+                    job.append(&format!("{status}: "), 0.0, egui::TextFormat::simple(theme::semibold(13.0), color));
+                    job.append(&names.join(", "), 0.0, egui::TextFormat::simple(theme::regular(13.0), palette.text));
+                    ui.add(egui::Label::new(job).wrap());
+                });
+            }
+            ui.add_space(4.0);
+            egui::CollapsingHeader::new(egui::RichText::new("Details").font(theme::medium(13.0)).color(palette.secondary))
+                .id_salt("call-capabilities")
+                .icon(widgets::disclosure_chevron(palette.secondary))
+                .default_open(false)
+                .show(ui, |ui| {
+                    for capability in CAPABILITIES {
+                        let (color, icon) = match capability.status {
+                            "Works" => (palette.success, Icon::Check),
+                            "Not possible" => (palette.danger, Icon::Close),
+                            _ => (palette.warning, Icon::Info),
+                        };
+                        Frame::new()
+                            .inner_margin(Margin::symmetric(0, 6))
+                            .show(ui, |ui| {
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.label(egui::RichText::new(capability.name).font(theme::semibold(13.0)).color(palette.text));
+                                    ui.add_space(4.0);
+                                    theme::icon(ui, icon, 14.0, color);
+                                    ui.label(egui::RichText::new(capability.status).font(theme::semibold(12.0)).color(color));
+                                });
+                                ui.add(egui::Label::new(egui::RichText::new(capability.detail).font(theme::regular(13.0)).color(palette.secondary)).wrap());
+                            });
+                    }
+                });
+            ui.add_space(24.0);
         });
+});
     });
 }

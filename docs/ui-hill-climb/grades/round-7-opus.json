@@ -1,0 +1,512 @@
+{
+ "overall": 8.0,
+ "dimensions": {
+  "hierarchy": 8.5,
+  "spacing": 7.5,
+  "typography": 8.5,
+  "consistency": 7.5,
+  "contrast_accessibility": 8.5,
+  "feedback": 8.5,
+  "states": 8,
+  "navigation": 8
+ },
+ "screens": {
+  "chats": {
+   "score": 8.5,
+   "issues": [
+    "Chat list and conversation separated only by tint: #f6f6f7 vs #ffffff is 1.08:1 (dark #1d1e22 vs #17181b 1.07:1), no divider line",
+    "Hover toolbar covers the right of the hovered message's header row",
+    "Composer hint line (12pt grey) repeats on every chat; it adds noise once learnt"
+   ]
+  },
+  "chats-wide": {
+   "score": 7.5,
+   "issues": [
+    "Messages anchor to the top: about 150pt of dead space between the last message (y≈835) and the composer (y≈997) at 1920x1080",
+    "Chat list stays 300pt wide while the reading column floats centred, so about 300pt of blank canvas sits on each side of the column",
+    "Header icons (x≈1585) align to the column, but the header divider runs full width"
+   ]
+  },
+  "chats-narrow": {
+   "score": 7.5,
+   "issues": [
+    "At 760pt the list keeps 232pt and truncates names to 'Katherine Jo…', 'Grace Hop…', 'Margaret Hamil…' because 'Yesterday' takes about 60pt",
+    "Hover toolbar overlaps the author/time row of the hovered message",
+    "Hint line drops 'Markdown formatting works' silently (fine), but the composer placeholder loses '@ to mention'"
+   ]
+  },
+  "chat-no-selection": {
+   "score": 8.5,
+   "issues": [
+    "Empty state is well centred but small (icon 56pt, 13pt subtitle) on a 900pt-wide blank pane; nothing to do here except the shortcut hint",
+    "No 'New chat' button in the empty pane, unlike first-sync-empty"
+   ]
+  },
+  "chat-filter-no-match": {
+   "score": 8.5,
+   "issues": [
+    "Filter field has no inline clear (×) control; the only way out is the button below",
+    "Primary button 'Clear filter' carries a grey 1pt stroke (#8a8d95) around the accent fill"
+   ]
+  },
+  "group-chat": {
+   "score": 8.5,
+   "issues": [
+    "Mention highlight works (#a9530f on #fdf1e5, 4.81:1) but the tint's 3pt left bar and the selected-chat bar use the same accent, so the mention reads like selection",
+    "Composer focus ring and the hover toolbar are both accent orange, competing for attention"
+   ]
+  },
+  "channel": {
+   "score": 8.5,
+   "issues": [
+    "Card borders #dfdfe3 on white (1.33:1) are faint; thread cards separate mostly by whitespace",
+    "Reply buttons are outlined 26pt pills that repeat on every card, heavier than needed",
+    "No channel description or members count in the header (only the team name)"
+   ]
+  },
+  "channel-narrow": {
+   "score": 7.5,
+   "issues": [
+    "Hover toolbar is clipped against the header edge (y≈56) and covers the author/time row 'Ada Lovelace 06:27'",
+    "Team tree keeps 232pt of the 760pt window; posts wrap at about 380pt",
+    "Composer placeholder loses '@ to mention' with no other cue"
+   ]
+  },
+  "teams": {
+   "score": 8.5,
+   "issues": [
+    "Empty pane offers no action (for example, the most recent channel) beyond 'Pick a channel on the left'",
+    "Team avatar tiles (26pt) are larger than channel icons (14pt), creating uneven indent rhythm (97 vs 108pt)"
+   ]
+  },
+  "calendar": {
+   "score": 7,
+   "issues": [
+    "Detail card fixed at about 640pt and left-aligned, leaving about 250pt blank on the right at 1280pt",
+    "Redundant rows: Location 'Teams' and Online 'Microsoft Teams meeting'; no attendees or agenda shown",
+    "Header 'Copy link' and 'Join' are 24pt fully rounded pills, unlike the 32pt, 6pt-radius buttons everywhere else",
+    "'Join on your computer, mobile app or room device.' inside the card reads like an instruction but has no action"
+   ]
+  },
+  "calls": {
+   "score": 7.5,
+   "issues": [
+    "Join button is 32pt tall beside a 28pt input (input y125–153, button y125–157), so their bottoms don't line up",
+    "'How calls work' body copy is about 15pt with grey #4a4d55, larger than the 14pt body text elsewhere",
+    "Content column caps at about 680pt and is left-aligned, leaving the right third empty",
+    "Call actions (phone, video) are bare 16pt icons with no labels or tooltips visible"
+   ]
+  },
+  "calls-narrow": {
+   "score": 7,
+   "issues": [
+    "Video-call button silently disappears at 760pt; only the phone remains",
+    "Names truncate ('Katherine Johns…', 'Margaret Hamilt…') although the dropped button freed space",
+    "Join button 32pt vs input 28pt misalignment persists"
+   ]
+  },
+  "composer-mention": {
+   "score": 8,
+   "issues": [
+    "The mention popup overlaps the last message and cuts the glyphs of 'The throttling review…' mid-line",
+    "Only one suggestion is shown; no hint that Enter or Tab picks it",
+    "Attachment chip × is about 8pt, a small hit target"
+   ]
+  },
+  "composer-long-draft": {
+   "score": 7.5,
+   "issues": [
+    "Composer grows to about 200pt (9 lines) with no visible scrollbar or cue that 110 more lines sit above",
+    "The tall composer hides most of the conversation; no cap or collapse",
+    "Long draft is not visually distinguished as a code block although it is SQL"
+   ]
+  },
+  "composer-images": {
+   "score": 7,
+   "issues": [
+    "Extreme-aspect images are centre-cropped into unrecognisable fragments (3072×256 shows two clipped birds)",
+    "Remove (×) buttons overlap the image edges; in dark mode white image edges butt against the card (thumbnail border 1.16:1)",
+    "Dimension captions (3072 × 256) are shown instead of file names or sizes"
+   ]
+  },
+  "image-preview": {
+   "score": 7.5,
+   "issues": [
+    "Described as full-window but rendered as a 960×745 modal over a light grey scrim; much of the stage is empty grey around a 64pt-tall image",
+    "No sender, file name, save, copy or open actions; only Fit/100%",
+    "Light scrim (#a2a2a2 behind) leaves the background chat legible and busy"
+   ]
+  },
+  "search-switcher": {
+   "score": 8,
+   "issues": [
+    "Last result row (Margaret, ends y≈588) runs into the key-hint footer (y≈604) with no divider or padding",
+    "Kbd chips have 1.16–1.33:1 outlines and look flat in dark mode",
+    "No visible result-type labels (chat vs person vs channel) apart from avatars"
+   ]
+  },
+  "new-chat": {
+   "score": 8,
+   "issues": [
+    "Primary button sits left beside helper text, with no Cancel; the dialog's action layout differs from status-message (right-aligned Cancel/Save)",
+    "Selected person chip × is about 8pt and its chip border is 1.16:1",
+    "Highlighted first row isn't distinguishable as keyboard focus vs hover"
+   ]
+  },
+  "settings": {
+   "score": 7.5,
+   "issues": [
+    "Scroll area clips a row mid-glyph at the bottom ('Move Wren beside the call window…', y≈713), with no fade or bottom padding",
+    "Help text 'New messages arrive when…' sits under 'Keep running in the tray' but explains notifications, so it reads as attached to the wrong option",
+    "Long single-column scroll with 4 sections and no section navigation"
+   ]
+  },
+  "shortcuts": {
+   "score": 7.5,
+   "issues": [
+    "Modal isn't vertically centred: 90pt top margin vs 13pt bottom margin (ends at y≈787 of 800)",
+    "Section header-to-row spacing varies: NAVIGATION→first row 28pt, MESSAGES→first row 22pt",
+    "Two-column layout leaves a 100pt gutter between keys and descriptions; descriptions not aligned to a baseline grid with keys"
+   ]
+  },
+  "status-message": {
+   "score": 8.5,
+   "issues": [
+    "Dark mode placeholder (#9c9ea8) in a focused field reads like entered text",
+    "No 'clear after' duration, which Teams users expect next to a status message",
+    "Disabled Save is #62656d on #e4e4e8 (4.60:1); fine, but barely distinct from Cancel at a glance"
+   ]
+  },
+  "account-menu": {
+   "score": 8.5,
+   "issues": [
+    "Both accounts show the same name 'Alex Rivera'; only 12pt emails differ",
+    "'Be right back' and 'Appear away' use near-identical amber glyphs at 10pt",
+    "No hover highlight visible on menu rows in the shot"
+   ]
+  },
+  "permission-consent": {
+   "score": 8.5,
+   "issues": [
+    "Fine print 'Permission: Chat.Create (Microsoft Graph), asked for only now that you use this.' is awkward and 12pt grey",
+    "Primary button has a grey 1pt stroke around the accent fill"
+   ]
+  },
+  "error-toast": {
+   "score": 8.5,
+   "issues": [
+    "Retry button border #8a8d95 on the #fbeeee failure tint is 2.94:1, below 3:1 (light)",
+    "No Discard or Copy option for the failed message",
+    "Hover toolbar on the message above competes with the failure row"
+   ]
+  },
+  "first-sync-loading": {
+   "score": 8,
+   "issues": [
+    "Filter field disappears while loading, then appears when content arrives, so the layout shifts",
+    "Skeleton bars are 1.17:1 on the pane, very faint (acceptable as decorative)",
+    "Main pane spinner and skeleton both shown; no progress or count"
+   ]
+  },
+  "first-sync-empty": {
+   "score": 7.5,
+   "issues": [
+    "Chat list column is entirely blank, with no 'No chats yet' text and no filter",
+    "Primary 'New chat' has a grey stroke around the accent fill",
+    "Empty state sits about 30pt higher than the other empty states (title y=370 vs 394)"
+   ]
+  },
+  "call-bar": {
+   "score": 8,
+   "issues": [
+    "No leave/hang-up, mute state or elapsed time in the call bar (call runs in the browser, but the bar could show duration)",
+    "'Restore' is ambiguous; it doesn't say what is restored",
+    "No navigation back to other chats besides Restore"
+   ]
+  },
+  "call-docked": {
+   "score": 8,
+   "issues": [
+    "At 720pt the call bar buttons stay left with a large empty right side",
+    "Same ambiguity of 'Restore' and missing leave action"
+   ]
+  },
+  "join-on-phone": {
+   "score": 8.5,
+   "issues": [
+    "QR code has no visible quiet-zone frame in light mode (relies on the white dialog)",
+    "Only 'Copy the link' action, left-aligned with no Done/close button beside it"
+   ]
+  },
+  "setup": {
+   "score": 8,
+   "issues": [
+    "Card copy leading is tight: body ends at y≈320, button starts at y≈338, while field labels get 14pt gaps",
+    "The GUID example sits in the field as a monospace placeholder that looks like a value",
+    "Two helper lines under the disabled button read as fine print; the reason Save is disabled should sit under the field"
+   ]
+  },
+  "signin": {
+   "score": 8,
+   "issues": [
+    "Primary 'Sign in with Microsoft' has a grey 1pt stroke (#8a8d95) around the #a9530f fill",
+    "Tooltip spills 245pt outside the card",
+    "Content stack starts at y≈120 and isn't vertically centred; about 160pt of empty space below"
+   ]
+  },
+  "signin-browser": {
+   "score": 8,
+   "issues": [
+    "The emphasised primary action is a fallback ('Open the page again') while the real state is waiting",
+    "Card height differs from other sign-in steps, so the footer jumps (y=553 vs 630)",
+    "Cancel has the same weight as Copy link"
+   ]
+  },
+  "signin-device-code": {
+   "score": 8.5,
+   "issues": [
+    "Paragraph leading here (23pt) differs from other cards (17pt)",
+    "No countdown for code expiry"
+   ]
+  },
+  "signin-finishing": {
+   "score": 7.5,
+   "issues": [
+    "Spinner card is top-anchored; about 320pt of empty space below the footer",
+    "Footer jumps to y=477 from 630 on the previous step, a visible layout shift between steps",
+    "No cancel or escape if finishing hangs"
+   ]
+  },
+  "signin-expired": {
+   "score": 8,
+   "issues": [
+    "Tooltip overflows the card again",
+    "'Account' key/value row uses 12pt grey key with 13pt value, slightly cramped against the buttons (14pt gap)"
+   ]
+  },
+  "signin-failed": {
+   "score": 8,
+   "issues": [
+    "Error states the cause but gives no next step or detail (for example, network vs Microsoft outage)",
+    "Card shrinks again, so the 'Explore the demo' and footer positions shift"
+   ]
+  }
+ },
+ "top_issues": [
+  {
+   "priority": 1,
+   "severity": "medium",
+   "screens": [
+    "signin",
+    "signin-browser",
+    "signin-device-code",
+    "signin-expired",
+    "signin-failed",
+    "chat-filter-no-match",
+    "first-sync-empty",
+    "permission-consent",
+    "new-chat",
+    "settings"
+   ],
+   "mode": "both",
+   "issue": "Primary (accent) buttons carry the neutral control stroke around the accent fill, so their edge reads muddy; the calendar header Join pill has no stroke, so primaries are inconsistent.",
+   "evidence": "signin x=430,y=438: #ffffff | #8a8d95 | #a9530f…; dark: #25262b | #6e7179 | #e88c3e. calendar Join x=1199: #ffffff | #ae5c1b | #a9530f (no grey stroke).",
+   "fix": "For filled buttons draw the 1pt stroke in the fill colour or a darker shade: light #8f4509 on #a9530f, dark #d47a2c on #e88c3e. Keep #8a8d95/#6e7179 only for secondary outlines."
+  },
+  {
+   "priority": 2,
+   "severity": "medium",
+   "screens": [
+    "chats-narrow",
+    "channel-narrow",
+    "calls-narrow"
+   ],
+   "mode": "both",
+   "issue": "Narrow (760pt) layouts keep a 232pt side pane, truncating names and wrapping posts at about 380pt. Calls silently drops the video button and the hover toolbar collides with header rows.",
+   "evidence": "'Katherine Jo…', 'Grace Hop…', 'Margaret Hamil…' in chats-narrow; 'Katherine Johns…' in calls-narrow; channel-narrow toolbar at y≈56–90 overlaps 'Ada Lovelace 06:27'.",
+   "fix": "Below 900pt shrink the list to 208pt and use compact dates ('Yest.', '14 Nov', 11pt), or collapse the list to avatars (56pt). Keep both call buttons and drop the name to 1 line instead. Place the hover toolbar at y = message top - 16pt, clamped to at least 8pt below the header."
+  },
+  {
+   "priority": 3,
+   "severity": "medium",
+   "screens": [
+    "chats-wide"
+   ],
+   "mode": "both",
+   "issue": "At 1920x1080 the conversation is top-anchored, leaving a large dead gap above the composer; chat apps bottom-anchor short histories.",
+   "evidence": "Last message baseline y≈835, composer top y≈997: about 160pt empty. The column is centred at 920pt wide with about 300pt blank either side.",
+   "fix": "Bottom-align the message stack when it is shorter than the viewport (fill the top with spacing), so the latest message sits 16pt above the composer."
+  },
+  {
+   "priority": 4,
+   "severity": "medium",
+   "screens": [
+    "settings"
+   ],
+   "mode": "both",
+   "issue": "The settings scroll area cuts a row mid-glyph at the bottom edge, and the background-refresh help paragraph is attached to the tray option instead of notifications.",
+   "evidence": "Row 'Move Wren beside the call window during calls' clipped at y≈713–720 of a 742pt dialog. The help text at y 430–477 sits directly under 'Keep running in the tray…'.",
+   "fix": "Give the scroll area 16pt bottom padding plus a 24pt fade (#ffffff/#25262b to transparent). Move the help paragraph under 'Desktop notifications…', indented 26pt with 4pt top spacing, 12pt."
+  },
+  {
+   "priority": 5,
+   "severity": "medium",
+   "screens": [
+    "calendar"
+   ],
+   "mode": "both",
+   "issue": "Meeting detail is thin and oddly placed: a fixed 640pt left-aligned card, redundant Location/Online rows, no attendees, and header buttons in a different shape and size from the app's buttons.",
+   "evidence": "Card x 388–1028 on a 916pt pane (250pt empty right). Copy link and Join are 24pt tall fully rounded pills; other buttons are 32pt with 6pt radius.",
+   "fix": "Use the standard 32pt/6pt-radius buttons in the header. Merge Location+Online into one 'Where' row; add Attendees (avatars 20pt, max 8 + '+n') and the body preview. Let the card fill the column up to 760pt."
+  },
+  {
+   "priority": 6,
+   "severity": "medium",
+   "screens": [
+    "signin",
+    "signin-browser",
+    "signin-device-code",
+    "signin-finishing",
+    "signin-expired",
+    "signin-failed",
+    "setup"
+   ],
+   "mode": "both",
+   "issue": "The sign-in stack is top-anchored and the card height changes per step, so the footer and demo button jump between steps and short steps leave a large empty bottom.",
+   "evidence": "Footer y: signin 630, browser 553, device-code 628, finishing 477, failed 596. Logo always at y≈124.",
+   "fix": "Vertically centre logo+card+footer as one group in the window, or give the card a 236pt min-height so the footer is stable. Pin the disclaimer 24pt above the window bottom."
+  },
+  {
+   "priority": 7,
+   "severity": "medium",
+   "screens": [
+    "composer-images"
+   ],
+   "mode": "both",
+   "issue": "Pasted-image thumbnails centre-crop extreme aspect ratios into unrecognisable fragments; remove buttons overlap image content; dark thumbnails have no visible edge.",
+   "evidence": "3072×256 tile shows 2 clipped birds; 256×3072 shows partial shapes. Thumbnail border #303137 on #25262b is 1.16:1.",
+   "fix": "Letterbox (fit) images inside a 144×96pt tile on #eeeef0 / #2c2d33 with a 1pt #c4c5c9 / #494b51 border. Inset the × 4pt from the tile corner on a 20pt circle with a 2pt ring in the card colour. Caption: file name (12pt) instead of pixel dimensions."
+  },
+  {
+   "priority": 8,
+   "severity": "low",
+   "screens": [
+    "calls",
+    "calls-narrow"
+   ],
+   "mode": "both",
+   "issue": "The Join button and meeting-link input differ in height, and 'How calls work' uses an off-scale larger body size.",
+   "evidence": "Input y 125–153 (28pt), button y 125–157 (32pt). Body copy ≈15pt with 17pt leading vs 14pt body elsewhere.",
+   "fix": "Make inputs and buttons both 32pt tall (or both 28pt) and vertically centre them in the row. Set the explainer to 14pt/20pt #4a4d55 / #b4b6bf."
+  },
+  {
+   "priority": 9,
+   "severity": "low",
+   "screens": [
+    "chats",
+    "chats-wide",
+    "chat-no-selection",
+    "group-chat",
+    "channel",
+    "teams",
+    "calendar",
+    "calls"
+   ],
+   "mode": "both",
+   "issue": "The side pane and main pane are separated only by a near-identical tint with no divider.",
+   "evidence": "#f6f6f7 vs #ffffff = 1.08:1 (light); #1d1e22 vs #17181b = 1.07:1 (dark).",
+   "fix": "Add a 1pt divider at the pane edge: #dfdfe3 (light) / #303137 (dark), matching the header bottom border."
+  },
+  {
+   "priority": 10,
+   "severity": "low",
+   "screens": [
+    "shortcuts"
+   ],
+   "mode": "both",
+   "issue": "The shortcuts modal isn't vertically centred and nearly touches the window bottom; section spacing is uneven.",
+   "evidence": "Modal y 90–787 in an 800pt window (13pt bottom margin). NAVIGATION→row gap 28pt, MESSAGES/APP→row gap 22pt.",
+   "fix": "Centre the modal (equal 24pt min margins) and cap height at window − 48pt with internal scroll. Use 8pt header-to-row and 16pt section-to-section spacing, or split into two columns (Navigation+App | Messages) at widths of 1100pt and above."
+  },
+  {
+   "priority": 11,
+   "severity": "low",
+   "screens": [
+    "search-switcher"
+   ],
+   "mode": "both",
+   "issue": "The results list runs into the key-hint footer with no separation, and kbd chips are nearly invisible as shapes.",
+   "evidence": "Last row ends y≈588, footer chips start y≈604, no divider. Kbd chip outline 1.33:1 (light) and 1.16:1 (dark).",
+   "fix": "Add a 1pt #dfdfe3 / #303137 divider with 8pt padding above the footer. Give kbd chips a #c4c5c9 / #494b51 1pt border plus a 1pt bottom shadow."
+  },
+  {
+   "priority": 12,
+   "severity": "low",
+   "screens": [
+    "first-sync-empty",
+    "first-sync-loading"
+   ],
+   "mode": "both",
+   "issue": "While loading and when there are no chats, the filter field disappears (layout shift) and the empty list column is completely blank.",
+   "evidence": "Loading/empty: no filter at y 58–86, skeleton starts at y 68. Empty: list column x 64–364 has no content. Empty-state title at y=370 vs 394 on other empty states.",
+   "fix": "Keep the filter field (disabled while loading). In the empty list show 13pt grey 'No chats yet' 24pt below the filter. Align all empty states to the same vertical centre."
+  },
+  {
+   "priority": 13,
+   "severity": "low",
+   "screens": [
+    "composer-long-draft"
+   ],
+   "mode": "both",
+   "issue": "A long draft grows the composer to about 200pt with no scrollbar or overflow cue and hides most of the conversation.",
+   "evidence": "Composer y 553–761 showing lines 111–119 of 119, with no thumb visible.",
+   "fix": "Cap the composer at 8 lines (about 160pt), show a 4pt scrollbar thumb (#c4c5c9 / #494b51) while overflowing, and add a 12pt top fade."
+  },
+  {
+   "priority": 14,
+   "severity": "low",
+   "screens": [
+    "composer-mention"
+   ],
+   "mode": "both",
+   "issue": "The mention popup overlaps and slices through the last message's text line.",
+   "evidence": "Popup y 614–664 covers the 'The throttling review…' line at y≈606–620, so glyph tops are visible above it.",
+   "fix": "Anchor the popup 8pt above the composer and give it a 1pt #dfdfe3 / #303137 border plus a shadow. Clip the message underneath cleanly or scroll the history up by the popup height."
+  },
+  {
+   "priority": 15,
+   "severity": "low",
+   "screens": [
+    "error-toast"
+   ],
+   "mode": "light",
+   "issue": "The Retry button outline falls below 3:1 on the failure tint, and the failed message offers no discard option.",
+   "evidence": "Retry border #8a8d95 on #fbeeee = 2.94:1 (dark #6e7179 on #281f22 = 3.29:1).",
+   "fix": "On tinted rows use border #6b6e76 (≥4:1 on #fbeeee). Add a 'Discard' text button (12pt) after Retry."
+  },
+  {
+   "priority": 16,
+   "severity": "low",
+   "screens": [
+    "image-preview"
+   ],
+   "mode": "both",
+   "issue": "The image preview is a modal rather than full-window, with mostly empty grey stage and no actions beyond Fit/100%.",
+   "evidence": "Modal x 159–1120, y 24–770; the image occupies y 402–469 only. The light scrim leaves the chat behind readable.",
+   "fix": "Make the preview fill the window with a #000000 at 80% scrim (both themes). Show sender, time and file name top-left (13pt), and Save/Copy/Open buttons top-right next to close."
+  },
+  {
+   "priority": 17,
+   "severity": "low",
+   "screens": [
+    "new-chat",
+    "status-message",
+    "join-on-phone"
+   ],
+   "mode": "both",
+   "issue": "Dialog footers are inconsistent: new-chat puts the primary on the left beside helper text with no Cancel, status-message right-aligns Cancel/Save, and join-on-phone has a lone left button.",
+   "evidence": "new-chat 'Chat with Grace Hopper' at x 400–571; status-message Cancel/Save at x 704–840.",
+   "fix": "Use one footer pattern: helper text left (12pt), actions right-aligned with Cancel before the primary, 8pt gap, 20pt from the dialog edge."
+  }
+ ]
+}

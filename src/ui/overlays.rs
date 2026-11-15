@@ -28,8 +28,9 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
 fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
     let palette = app.palette;
     let viewport = ctx.content_rect();
-    let width = (viewport.width() - 32.0).clamp(240.0, 960.0);
-    let height = (viewport.height() - 152.0).max(120.0);
+    // A viewer, not a dialog: the window less a 32 pt inset all round.
+    let width = (viewport.width() - 64.0).max(240.0);
+    let height = (viewport.height() - 64.0 - 104.0).max(120.0);
     let zoom_id = egui::Id::new("image-preview-actual-size").with(uri);
     // Both draft and message images are already in egui's local byte cache.
     // Use decoded dimensions, not the message HTML's thumbnail dimensions.
@@ -37,73 +38,79 @@ fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
         .load_for_size(ctx, vec2(width - 32.0, height));
     let mut actual_size = ctx.data(|d| d.get_temp::<bool>(zoom_id)).unwrap_or(false);
     let mut actions = Vec::new();
-    let close = modal(palette, ctx, "image-preview", width, 24.0, |ui| {
-        ui.set_height(height + 96.0);
-        Frame::new().inner_margin(Margin::same(16)).show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new("Image preview")
-                        .font(theme::semibold(15.0))
-                        .color(palette.text),
-                );
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close =
-                        widgets::icon_button(ui, &palette, Icon::Close, "Close preview (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
-            });
-            ui.horizontal(|ui| {
-                ui.selectable_value(&mut actual_size, false, "Fit");
-                ui.selectable_value(&mut actual_size, true, "100%");
-                if let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded {
+    // Media sits on a darker scrim than dialogs do.
+    let scrim = egui::Color32::from_black_alpha(if palette.dark { 204 } else { 184 });
+    let close = modal_with(
+        palette,
+        ctx,
+        "image-preview",
+        width,
+        Some(32.0),
+        scrim,
+        |ui| {
+            ui.set_height(height + 96.0);
+            Frame::new().inner_margin(Margin::same(16)).show(ui, |ui| {
+                ui.horizontal(|ui| {
                     ui.label(
-                        egui::RichText::new(format!(
-                            "{} × {}",
-                            texture.size.x as u32, texture.size.y as u32
-                        ))
-                        .font(theme::regular(12.0))
-                        .color(palette.dim),
+                        egui::RichText::new("Image preview")
+                            .font(theme::bold(20.0))
+                            .color(palette.text),
                     );
-                }
-            });
-            ui.add_space(8.0);
-            egui::ScrollArea::both()
-                .id_salt(("image-preview-scroll", uri, actual_size))
-                .max_height(height)
-                .auto_shrink([false, false])
-                .show_viewport(ui, |ui, viewport| {
-                    let available = viewport.size();
-                    let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded else {
-                        let (canvas, _) = ui.allocate_exact_size(available, Sense::hover());
-                        ui.painter().text(
-                            canvas.center(),
-                            egui::Align2::CENTER_CENTER,
-                            if loaded.is_err() {
-                                "Image unavailable"
-                            } else {
-                                "Loading image…"
-                            },
-                            theme::regular(14.0),
-                            palette.dim,
-                        );
-                        return;
-                    };
-                    let natural = texture.size;
-                    let scale = if actual_size {
-                        1.0
-                    } else {
-                        (available.x / natural.x)
-                            .min(available.y / natural.y)
-                            .min(1.0)
-                    };
-                    let size = natural * scale;
-                    let (canvas, _) = ui.allocate_exact_size(size.max(available), Sense::hover());
-                    ui.painter().rect_filled(canvas, 6, palette.window);
-                    egui::Image::from_texture(*texture)
-                        .paint_at(ui, egui::Rect::from_center_size(canvas.center(), size));
                 });
-        });
-    });
+                ui.horizontal(|ui| {
+                    widgets::segmented(ui, &palette, &mut actual_size, "Fit", "100%");
+                    ui.add_space(8.0);
+                    if let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded {
+                        ui.label(
+                            egui::RichText::new(format!(
+                                "{} × {}",
+                                texture.size.x as u32, texture.size.y as u32
+                            ))
+                            .font(theme::regular(12.0))
+                            .color(palette.dim),
+                        );
+                    }
+                });
+                ui.add_space(8.0);
+                egui::ScrollArea::both()
+                    .id_salt(("image-preview-scroll", uri, actual_size))
+                    .max_height(height)
+                    .auto_shrink([false, false])
+                    .show_viewport(ui, |ui, viewport| {
+                        let available = viewport.size();
+                        let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded else {
+                            let (canvas, _) = ui.allocate_exact_size(available, Sense::hover());
+                            ui.painter().text(
+                                canvas.center(),
+                                egui::Align2::CENTER_CENTER,
+                                if loaded.is_err() {
+                                    "Image unavailable"
+                                } else {
+                                    "Loading image…"
+                                },
+                                theme::regular(14.0),
+                                palette.dim,
+                            );
+                            return;
+                        };
+                        let natural = texture.size;
+                        let scale = if actual_size {
+                            1.0
+                        } else {
+                            (available.x / natural.x)
+                                .min(available.y / natural.y)
+                                .min(1.0)
+                        };
+                        let size = natural * scale;
+                        let (canvas, _) =
+                            ui.allocate_exact_size(size.max(available), Sense::hover());
+                        ui.painter().rect_filled(canvas, 6, palette.surface_hover);
+                        egui::Image::from_texture(*texture)
+                            .paint_at(ui, egui::Rect::from_center_size(canvas.center(), size));
+                    });
+            });
+        },
+    );
     ctx.data_mut(|d| d.insert_temp(zoom_id, actual_size));
     if close {
         actions.push(Action::CloseOverlay);
@@ -116,15 +123,42 @@ fn modal(
     ctx: &egui::Context,
     id: &str,
     width: f32,
-    top: f32,
+    top: Option<f32>,
     content: impl FnOnce(&mut egui::Ui),
 ) -> bool {
+    modal_with(palette, ctx, id, width, top, palette.overlay, content)
+}
+
+fn modal_with(
+    palette: theme::Palette,
+    ctx: &egui::Context,
+    id: &str,
+    width: f32,
+    top: Option<f32>,
+    backdrop: egui::Color32,
+    content: impl FnOnce(&mut egui::Ui),
+) -> bool {
+    // A dialog sits a little above the middle of the window, by its height
+    // last frame. Dialogs whose height follows what is typed (search, people,
+    // zoom) keep a fixed top instead, so their fields never move.
+    let height_id = egui::Id::new(id).with("height");
+    let height: f32 = ctx.data(|d| d.get_temp(height_id)).unwrap_or(360.0);
+    let window = ctx.content_rect();
+    let top = top.unwrap_or_else(|| (window.height() * 0.4 - height / 2.0).max(48.0));
     let response = egui::Modal::new(egui::Id::new(id))
-        .backdrop_color(palette.overlay)
+        .backdrop_color(backdrop)
         .frame(
             Frame::new()
                 .fill(palette.surface)
-                .stroke(Stroke::new(1.0, palette.outline))
+                // Dark dialogs need a lighter edge to stand off the scrim.
+                .stroke(Stroke::new(
+                    1.0,
+                    if palette.dark {
+                        palette.surface_active
+                    } else {
+                        palette.outline
+                    },
+                ))
                 .corner_radius(CornerRadius::same(14))
                 .inner_margin(Margin::same(0))
                 .shadow(egui::Shadow {
@@ -142,7 +176,28 @@ fn modal(
             ui.set_width(width);
             content(ui);
         });
-    response.should_close()
+    // Every dialog closes from the same place: its top-right corner, level
+    // with the title. Drawn after the content, so a wide dialog still gets
+    // it at its real edge.
+    let frame = response.response.rect;
+    ctx.data_mut(|d| d.insert_temp(height_id, frame.height()));
+    let close = egui::Area::new(egui::Id::new(id).with("close"))
+        .order(egui::Order::Tooltip)
+        .fixed_pos(egui::pos2(frame.right() - 16.0 - 28.0, frame.top() + 22.0))
+        .show(ctx, |ui| {
+            widgets::icon_button_sized(
+                ui,
+                &palette,
+                Icon::Close,
+                "Close (Esc)",
+                28.0,
+                18.0,
+                palette.secondary,
+            )
+            .clicked()
+        })
+        .inner;
+    response.should_close() || close
 }
 
 /// A person, chat or channel the switcher can jump to.
@@ -247,105 +302,79 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
             chosen = true;
         }
     });
-    let close = modal(palette, ctx, "switcher", 600.0, 90.0, |ui| {
-        Frame::new()
-            .inner_margin(Margin::symmetric(14, 12))
-            .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    theme::icon(ui, Icon::Search, 18.0, palette.dim);
-                    let response = ui.add(
-                        widgets::text_field(
-                            &mut query,
-                            "Jump to a chat, channel or person, or search messages",
-                            theme::regular(15.0),
-                        )
-                        .frame(egui::Frame::NONE),
-                    );
-                    response.request_focus();
+    let close = modal(
+        palette,
+        ctx,
+        "switcher",
+        600.0,
+        Some((ctx.content_rect().height() * 0.12).max(48.0)),
+        |ui| {
+            // The search row lines up with the dialog's close button, which
+            // keeps its own space on the right.
+            Frame::new()
+                .inner_margin(Margin {
+                    left: 14,
+                    right: 52,
+                    top: 20,
+                    bottom: 12,
+                })
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        theme::icon(ui, Icon::Search, 18.0, palette.dim);
+                        let response = ui.add(
+                            widgets::text_field(
+                                &mut query,
+                                "Jump to a chat, channel or person, or search messages",
+                                theme::regular(15.0),
+                            )
+                            .frame(egui::Frame::NONE),
+                        );
+                        response.request_focus();
+                    });
                 });
-            });
-        ui.painter().hline(
-            ui.max_rect().x_range(),
-            ui.cursor().top(),
-            Stroke::new(1.0, palette.outline),
-        );
-        egui::ScrollArea::vertical()
-            .max_height(440.0)
-            .auto_shrink([false, true])
-            .show(ui, |ui| {
-                Frame::new()
-                    .inner_margin(Margin::symmetric(8, 8))
-                    .show(ui, |ui| {
-                        ui.set_width(ui.available_width());
-                        if !found.is_empty() {
-                            group(
-                                ui,
-                                &palette,
-                                if query.trim().is_empty() {
-                                    "Recent"
-                                } else {
-                                    "Conversations"
-                                },
-                            );
-                        }
-                        for (index, target) in found.iter().enumerate() {
-                            let response = result_row(
-                                ui,
-                                app,
-                                &target.label,
-                                &target.detail,
-                                if target.channel {
-                                    Icon::Hash
-                                } else {
-                                    Icon::Chat
-                                },
-                                index == selected,
-                            );
-                            if response.clicked() || (chosen && index == selected) {
-                                actions.push(Action::OpenConversation(target.conversation.clone()));
-                                actions.push(Action::CloseOverlay);
-                            }
-                            if response.hovered()
-                                && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO)
-                            {
-                                selected = index;
-                            }
-                        }
-                        if query.trim().chars().count() >= 2 {
-                            group(ui, &palette, "Messages");
-                            if hits.is_empty() {
-                                ui.horizontal(|ui| {
-                                    ui.add_space(10.0);
-                                    let text = if app.switcher.searched == query {
-                                        "No messages found."
+            ui.painter().hline(
+                ui.max_rect().x_range(),
+                ui.cursor().top(),
+                Stroke::new(1.0, palette.outline),
+            );
+            egui::ScrollArea::vertical()
+                .max_height(440.0)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    Frame::new()
+                        .inner_margin(Margin::symmetric(8, 8))
+                        .show(ui, |ui| {
+                            ui.set_width(ui.available_width());
+                            if !found.is_empty() {
+                                group(
+                                    ui,
+                                    &palette,
+                                    if query.trim().is_empty() {
+                                        "Recent"
                                     } else {
-                                        "Searching…"
-                                    };
-                                    ui.label(egui::RichText::new(text).color(palette.dim));
-                                });
-                            }
-                            for (offset, hit) in hits.iter().enumerate() {
-                                let index = found.len() + offset;
-                                let title = app.title_of(&hit.conversation);
-                                let detail = format!(
-                                    "{} · {} · {}",
-                                    hit.author,
-                                    crate::time::short_label(hit.at, crate::time::now()),
-                                    title
+                                        "Conversations"
+                                    },
                                 );
+                            }
+                            for (index, target) in found.iter().enumerate() {
                                 let response = result_row(
                                     ui,
                                     app,
-                                    &hit.snippet,
-                                    &detail,
-                                    Icon::Search,
+                                    &target.label,
+                                    &target.detail,
+                                    if target.channel {
+                                        Icon::Hash
+                                    } else {
+                                        Icon::Chat
+                                    },
+                                    Some(&target.conversation),
                                     index == selected,
                                 );
                                 if response.clicked() || (chosen && index == selected) {
-                                    actions.push(Action::OpenMessage {
-                                        conversation: hit.conversation.clone(),
-                                        message: hit.message_id.clone(),
-                                    });
+                                    actions.push(Action::OpenConversation(
+                                        target.conversation.clone(),
+                                    ));
+                                    actions.push(Action::CloseOverlay);
                                 }
                                 if response.hovered()
                                     && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO)
@@ -353,17 +382,91 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
                                     selected = index;
                                 }
                             }
+                            if query.trim().chars().count() >= 2 {
+                                group(ui, &palette, "Messages");
+                                if hits.is_empty() {
+                                    ui.horizontal(|ui| {
+                                        ui.add_space(10.0);
+                                        let text = if app.switcher.searched == query {
+                                            "No messages found."
+                                        } else {
+                                            "Searching…"
+                                        };
+                                        ui.label(egui::RichText::new(text).color(palette.dim));
+                                    });
+                                }
+                                for (offset, hit) in hits.iter().enumerate() {
+                                    let index = found.len() + offset;
+                                    let title = app.title_of(&hit.conversation);
+                                    let detail = format!(
+                                        "{} · {} · {}",
+                                        hit.author,
+                                        crate::time::short_label(hit.at, crate::time::now()),
+                                        title
+                                    );
+                                    let response = result_row(
+                                        ui,
+                                        app,
+                                        &hit.snippet,
+                                        &detail,
+                                        Icon::Search,
+                                        None,
+                                        index == selected,
+                                    );
+                                    if response.clicked() || (chosen && index == selected) {
+                                        actions.push(Action::OpenMessage {
+                                            conversation: hit.conversation.clone(),
+                                            message: hit.message_id.clone(),
+                                        });
+                                    }
+                                    if response.hovered()
+                                        && ui.input(|i| i.pointer.delta() != egui::Vec2::ZERO)
+                                    {
+                                        selected = index;
+                                    }
+                                }
+                            }
+                        });
+                });
+            // The key hints stand apart from the results.
+            ui.add_space(4.0);
+            let divider = ui.cursor().top();
+            ui.painter().hline(
+                ui.max_rect().x_range(),
+                divider,
+                Stroke::new(1.0, palette.outline),
+            );
+            Frame::new()
+                .inner_margin(Margin {
+                    left: 14,
+                    right: 14,
+                    top: 10,
+                    bottom: 12,
+                })
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 6.0;
+                        for (keys, what) in [("↑↓", "move"), ("Enter", "open"), ("Esc", "close")]
+                        {
+                            widgets::keycaps(ui, &palette, keys);
+                            ui.label(
+                                egui::RichText::new(what)
+                                    .font(theme::regular(12.0))
+                                    .color(palette.secondary),
+                            );
+                            ui.add_space(6.0);
                         }
                     });
-            });
-        Frame::new().inner_margin(Margin::symmetric(14, 8)).show(ui, |ui| {
-            ui.label(
-                egui::RichText::new("↑↓ to move · Enter to open · Esc to close · message search covers this computer's cache, then Microsoft Search")
-                    .font(theme::regular(11.0))
+                    ui.label(
+                    egui::RichText::new(
+                        "Messages are searched on this computer first, then with Microsoft Search.",
+                    )
+                    .font(theme::regular(12.0))
                     .color(palette.dim),
-            );
-        });
-    });
+                );
+                });
+        },
+    );
     if query != app.switcher.query {
         app.switcher.query = query.clone();
         selected = 0;
@@ -396,11 +499,12 @@ fn result_row(
     label: &str,
     detail: &str,
     icon: Icon,
+    conversation: Option<&ConversationId>,
     selected: bool,
 ) -> egui::Response {
     let palette = &app.palette;
     let width = ui.available_width();
-    let (rect, response) = ui.allocate_exact_size(vec2(width, 44.0), Sense::click());
+    let (rect, response) = ui.allocate_exact_size(vec2(width, 52.0), Sense::click());
     if selected || response.hovered() {
         ui.painter().rect_filled(
             rect,
@@ -414,23 +518,39 @@ fn result_row(
     }
     if selected {
         ui.scroll_to_rect(rect, None);
+        widgets::selection_marker(ui, palette, rect);
     }
-    icon.image(
-        if selected {
-            palette.accent
-        } else {
-            palette.dim
-        },
-        16.0,
-    )
-    .paint_at(
-        ui,
-        egui::Rect::from_center_size(
-            egui::pos2(rect.left() + 20.0, rect.center().y),
-            egui::Vec2::splat(16.0),
-        ),
-    );
-    let left = rect.left() + 40.0;
+    let center = egui::pos2(rect.left() + 22.0, rect.center().y);
+    let chat = match conversation {
+        Some(ConversationId::Chat(id)) => app.chat(id),
+        _ => None,
+    };
+    if let Some(chat) = chat {
+        // The same picture as in the chat list.
+        let me = app.me().to_owned();
+        super::chat_list::chat_avatar(
+            ui,
+            app,
+            chat,
+            &me,
+            label,
+            egui::Rect::from_center_size(center, egui::Vec2::splat(28.0)),
+        );
+    } else {
+        icon.image(
+            if selected {
+                palette.accent
+            } else {
+                palette.secondary
+            },
+            16.0,
+        )
+        .paint_at(
+            ui,
+            egui::Rect::from_center_size(center, egui::Vec2::splat(16.0)),
+        );
+    }
+    let left = rect.left() + 44.0;
     let title = super::chat_list::elided(
         ui,
         label,
@@ -439,16 +559,16 @@ fn result_row(
         rect.right() - left - 12.0,
     );
     ui.painter()
-        .galley(egui::pos2(left, rect.top() + 5.0), title, palette.text);
+        .galley(egui::pos2(left, rect.top() + 7.0), title, palette.text);
     let detail = super::chat_list::elided(
         ui,
         detail,
-        theme::regular(12.0),
+        theme::regular(13.0),
         palette.secondary,
         rect.right() - left - 12.0,
     );
     ui.painter().galley(
-        egui::pos2(left, rect.top() + 24.0),
+        egui::pos2(left, rect.top() + 28.0),
         detail,
         palette.secondary,
     );
@@ -459,21 +579,29 @@ fn settings(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
     let mut actions = Vec::new();
     let browsers: Vec<BrowserKind> = app.call_browsers().iter().map(|b| b.kind).collect();
-    let close = modal(palette, ctx, "settings", 560.0, 70.0, |ui| {
-        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+    let close = modal(palette, ctx, "settings", 560.0, None, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new("Settings").font(theme::bold(20.0)).color(palette.text));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
             });
             ui.add_space(10.0);
             let height = (ui.ctx().content_rect().height() - 220.0).clamp(240.0, 640.0);
-            egui::ScrollArea::vertical()
+            // A slim floating bar in a reserved 14 pt gutter: clear of the
+            // content, present without being heavy.
+            ui.spacing_mut().scroll.floating_allocated_width = 14.0;
+            ui.spacing_mut().scroll.floating_width = 4.0;
+            ui.spacing_mut().scroll.dormant_handle_opacity = 0.6;
+            // The bar paints with these; the content gets the usual ones back.
+            let widgets_style = ui.visuals().widgets.clone();
+            let bars = &mut ui.visuals_mut().widgets;
+            bars.inactive.bg_fill = palette.control;
+            bars.hovered.bg_fill = palette.secondary;
+            bars.active.bg_fill = palette.secondary;
+            let scrolled = egui::ScrollArea::vertical()
                 .max_height(height)
                 .min_scrolled_height(height)
                 .show(ui, |ui| {
+                ui.visuals_mut().widgets = widgets_style.clone();
                 ui.spacing_mut().item_spacing.y = 8.0;
                 // Account.
                 widgets::section_label(ui, &palette, "Account");
@@ -508,12 +636,12 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         egui::RichText::new(if accounts == 1 {
                             "1 account in Wren".to_owned()
                         } else {
-                            format!("{accounts} accounts in Wren · switch from your picture or with ⌘⇧A")
+                            format!("{accounts} accounts in Wren · switch from your picture or with {}", super::keys::shortcut("⌘⇧A"))
                         })
                         .font(theme::regular(12.0))
                         .color(palette.dim),
                     );
-                    if !app.demo && ui.link("Add account").clicked() {
+                    if !app.demo && ui.link(egui::RichText::new("Add account").color(palette.link)).clicked() {
                         actions.push(Action::AddAccount);
                     }
                 });
@@ -544,50 +672,43 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         widgets::on_click(&response, &mut actions, Action::SetTheme(choice));
                     }
                 });
-                let current = match &app.settings.theme {
-                    ThemeChoice::Palette(name) => fastframe_theme::display_name(name).to_owned(),
-                    _ => "Wren".to_owned(),
-                };
-                egui::ComboBox::from_label(egui::RichText::new("Palette").color(palette.secondary))
-                    .selected_text(current)
-                    .show_ui(ui, |ui| {
-                        if ui.selectable_label(!matches!(app.settings.theme, ThemeChoice::Palette(_)), "Wren").clicked() {
-                            actions.push(Action::SetTheme(ThemeChoice::System));
-                        }
-                        for preset in theme::presets() {
-                            let on = app.settings.theme == ThemeChoice::Palette(preset.filename.clone());
-                            if ui.selectable_label(on, fastframe_theme::display_name(&preset.filename)).clicked() {
-                                actions.push(Action::SetTheme(ThemeChoice::Palette(preset.filename.clone())));
-                            }
-                        }
-                    });
-                ui.label(egui::RichText::new(format!("Zoom {:.0}% (⌘+ / ⌘− / ⌘0)", app.settings.zoom * 100.0)).color(palette.secondary));
+                ui.label(
+                    egui::RichText::new(format!(
+                        "Zoom {:.0}% · {}",
+                        app.settings.zoom * 100.0,
+                        super::keys::shortcut("⌘+ / ⌘− / ⌘0")
+                    ))
+                    .font(theme::regular(12.0))
+                    .color(palette.dim),
+                );
                 ui.add_space(8.0);
 
                 widgets::section_label(ui, &palette, "Behaviour");
                 let mut notifications = app.settings.notifications;
-                if ui.checkbox(&mut notifications, "Desktop notifications for new messages and meeting reminders").changed() {
+                if widgets::checkbox(ui, &palette, &mut notifications, "Desktop notifications for new messages and meeting reminders").changed() {
                     actions.push(Action::SetNotifications(notifications));
                 }
+                // Under the option it explains, aligned with its label.
+                widgets::checkbox_note(
+                    ui,
+                    &palette,
+                    &format!("New messages arrive when you open a chat, return to Wren or press {}.", super::keys::shortcut("⌘R")),
+                )
+                .on_hover_text("Microsoft doesn't allow apps to check for messages in the background. For alerts the moment a message arrives, connect a push relay (Push updates, below).");
                 let mut keep = app.settings.keep_running;
-                if ui.checkbox(&mut keep, "Keep running in the tray when the window closes").changed() {
+                if widgets::checkbox(ui, &palette, &mut keep, "Keep running in the tray when the window closes").changed() {
                     actions.push(Action::SetKeepRunning(keep));
                 }
-                ui.label(
-                    egui::RichText::new("New messages are fetched when you open a chat, come back to the window or press ⌘R. Microsoft's rules for Teams forbid background polling; for instant alerts, connect a push relay below (docs/realtime.md).")
-                        .font(theme::regular(12.0))
-                        .color(palette.dim),
-                );
                 let mut session = app.settings.presence_session;
                 if ui
-                    .checkbox(&mut session, "Show me as available while I use Wren")
+                    .scope(|ui| widgets::checkbox(ui, &palette, &mut session, "Show me as available while I use Wren")).inner
                     .on_hover_text("Keeps a Microsoft presence session, as a Teams app does: you show Available while you use Wren, and Away a few minutes after you stop. Needs the Presence.ReadWrite permission, asked for the first time you set your status.")
                     .changed()
                 {
                     actions.push(Action::SetPresenceSession(session));
                 }
                 let mut perf = app.settings.perf_overlay;
-                if ui.checkbox(&mut perf, "Show the performance overlay (⌘⇧P)").changed() {
+                if widgets::checkbox(ui, &palette, &mut perf, format!("Show the performance overlay ({})", super::keys::shortcut("⌘⇧P"))).changed() {
                     actions.push(Action::TogglePerfOverlay);
                 }
                 ui.add_space(8.0);
@@ -649,7 +770,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         );
                         ui.horizontal(|ui| {
                             ui.label(egui::RichText::new("Admin consent link for your tenant's administrator:").font(theme::regular(12.0)).color(palette.dim));
-                            if ui.link("Copy").clicked() {
+                            if ui.link(egui::RichText::new("Copy").color(palette.link)).clicked() {
                                 actions.push(Action::CopyText(consent));
                             }
                         });
@@ -659,10 +780,10 @@ fn settings(app: &mut App, ctx: &egui::Context) {
 
                 widgets::section_label(ui, &palette, "App updates");
                 let mut automatic = app.settings.automatic_updates;
-                if ui.checkbox(&mut automatic, "Automatically check for and download app updates").changed() {
+                if widgets::checkbox(ui, &palette, &mut automatic, "Automatically check for and download app updates").changed() {
                     actions.push(Action::SetAutomaticUpdates(automatic));
                 }
-                ui.label(egui::RichText::new("Checks GitHub once a day. Updates are verified before installation; you choose when to restart.").font(theme::regular(12.0)).color(palette.dim));
+                widgets::checkbox_note(ui, &palette, "Checks GitHub once a day. Updates are verified before installation; you choose when to restart.");
                 match &app.update {
                     crate::updates::Status::Idle => { ui.label("No update check yet."); }
                     crate::updates::Status::Checking => { ui.label("Checking for updates…"); }
@@ -688,7 +809,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     if ui.add_enabled(!app.update.busy() && !matches!(app.update, crate::updates::Status::Ready(_)), egui::Button::new("Check for updates")).clicked() {
                         actions.push(Action::CheckUpdate);
                     }
-                    if ui.link("Release notes and downloads").clicked() {
+                    if ui.link(egui::RichText::new("Release notes and downloads").color(palette.link)).clicked() {
                         actions.push(Action::OpenUrl("https://github.com/MaxTheTurtle0/wren/releases".into()));
                     }
                 });
@@ -702,14 +823,22 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     .color(palette.secondary),
                 );
                 ui.horizontal(|ui| {
-                    if ui.link("Keyboard shortcuts").clicked() {
+                    if ui.link(egui::RichText::new("Keyboard shortcuts").color(palette.link)).clicked() {
                         actions.push(Action::OpenShortcuts);
                     }
-                    if ui.link("Log file folder").clicked() {
+                    if ui.link(egui::RichText::new("Log file folder").color(palette.link)).clicked() {
                         actions.push(Action::OpenUrl(format!("file://{}", app.dirs.state.display())));
                     }
                 });
             });
+            // More settings above or below: a soft shadow at that edge.
+            let viewport = scrolled.inner_rect;
+            if scrolled.state.offset.y > 1.0 {
+                widgets::scroll_shadow(ui, &palette, viewport, true);
+            }
+            if scrolled.state.offset.y + viewport.height() < scrolled.content_size.y - 1.0 {
+                widgets::scroll_shadow(ui, &palette, viewport, false);
+            }
         });
     });
     if close {
@@ -720,33 +849,74 @@ fn settings(app: &mut App, ctx: &egui::Context) {
 
 fn shortcuts(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
-    let close = modal(palette, ctx, "shortcuts", 480.0, 90.0, |ui| {
-        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
-            ui.label(
-                egui::RichText::new("Keyboard shortcuts")
-                    .font(theme::bold(20.0))
-                    .color(palette.text),
-            );
+    let close = modal(palette, ctx, "shortcuts", 880.0, None, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(
+                    egui::RichText::new("Keyboard shortcuts")
+                        .font(theme::bold(20.0))
+                        .color(palette.text),
+                );
+            });
             ui.add_space(10.0);
-            egui::Grid::new("shortcuts")
-                .num_columns(2)
-                .spacing(vec2(24.0, 8.0))
-                .show(ui, |ui| {
-                    for (keys, what) in super::keys::SHORTCUTS {
-                        let keys = if cfg!(target_os = "macos") {
-                            (*keys).to_owned()
-                        } else {
-                            keys.replace('⌘', "Ctrl ")
-                        };
-                        ui.label(
-                            egui::RichText::new(keys)
-                                .font(theme::mono(12.0))
-                                .color(palette.accent),
-                        );
-                        ui.label(egui::RichText::new(*what).color(palette.text));
-                        ui.end_row();
+            // Two columns keep the sheet short: Messages on the right, the
+            // other groups on the left. Each column is its own grid, so a
+            // heading in one never stretches a row in the other.
+            enum Row {
+                Heading(&'static str),
+                Key(&'static str, &'static str),
+            }
+            let rows = |groups: Vec<&(&'static str, &'static [(&'static str, &'static str)])>| {
+                let mut rows = Vec::new();
+                for (group, shortcuts) in groups {
+                    rows.push(Row::Heading(group));
+                    rows.extend(shortcuts.iter().map(|(keys, what)| Row::Key(keys, what)));
+                }
+                rows
+            };
+            let (right, left): (Vec<_>, Vec<_>) = super::keys::SHORTCUTS
+                .iter()
+                .partition(|(group, _)| *group == "Messages");
+            let (left, right) = (rows(left), rows(right));
+            let cell = |ui: &mut egui::Ui, row: &Row, first: bool| match row {
+                Row::Heading(group) => {
+                    ui.vertical(|ui| {
+                        // Every heading row has the same room above, so each
+                        // heading sits the same distance from its first key.
+                        ui.add_space(if first { 4.0 } else { 14.0 });
+                        widgets::section_label(ui, &palette, group);
+                    });
+                    ui.label("");
+                }
+                Row::Key(keys, what) => {
+                    widgets::keycaps(ui, &palette, &super::keys::shortcut(keys));
+                    ui.label(egui::RichText::new(*what).color(palette.text));
+                }
+            };
+            let column = ((ui.available_width() - 32.0) / 2.0).floor();
+            ui.horizontal_top(|ui| {
+                for (side, rows) in [&left, &right].into_iter().enumerate() {
+                    if side > 0 {
+                        ui.add_space(32.0);
                     }
-                });
+                    ui.allocate_ui_with_layout(
+                        vec2(column, 0.0),
+                        egui::Layout::top_down(egui::Align::Min),
+                        |ui| {
+                            ui.set_width(column);
+                            egui::Grid::new(("shortcuts", side))
+                                .num_columns(2)
+                                .spacing(vec2(16.0, 6.0))
+                                .show(ui, |ui| {
+                                    for (index, row) in rows.iter().enumerate() {
+                                        cell(ui, row, index == 0);
+                                        ui.end_row();
+                                    }
+                                });
+                        },
+                    );
+                }
+            });
         });
     });
     if close {
@@ -801,169 +971,208 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
             start = true;
         }
     });
-    let close = modal(palette, ctx, "new-chat", 520.0, 90.0, |ui| {
-        Frame::new().inner_margin(Margin::same(20)).show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new("New chat")
-                        .font(theme::bold(20.0))
-                        .color(palette.text),
-                );
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
-            });
-            ui.add_space(10.0);
-            // The people picked so far.
-            if !picked.is_empty() {
-                let mut remove = None;
-                ui.horizontal_wrapped(|ui| {
-                    ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
-                    for (index, person) in picked.iter().enumerate() {
-                        Frame::new()
-                            .fill(palette.surface_hover)
-                            .corner_radius(CornerRadius::same(14))
-                            .inner_margin(Margin {
-                                left: 4,
-                                right: 2,
-                                top: 2,
-                                bottom: 2,
-                            })
-                            .show(ui, |ui| {
-                                ui.horizontal(|ui| {
-                                    ui.spacing_mut().item_spacing.x = 4.0;
-                                    widgets::avatar(
-                                        ui,
-                                        app,
-                                        Some(&person.user_id),
-                                        &person.display_name,
-                                        22.0,
-                                        false,
-                                    );
-                                    ui.label(
-                                        egui::RichText::new(&person.display_name)
-                                            .font(theme::medium(13.0))
-                                            .color(palette.text),
-                                    );
-                                    let close = widgets::icon_button_sized(
-                                        ui,
-                                        &palette,
-                                        Icon::Close,
-                                        "Remove",
-                                        20.0,
-                                        12.0,
-                                        palette.dim,
-                                    );
-                                    if close.clicked() {
-                                        remove = Some(index);
-                                    }
-                                });
-                            });
-                    }
-                });
-                if let Some(index) = remove {
-                    picked.remove(index);
-                }
-                ui.add_space(8.0);
-            }
-            let response = ui.add(
-                egui::TextEdit::singleline(&mut query)
-                    .hint_text("Type a name or email address")
-                    .desired_width(f32::INFINITY)
-                    .margin(Margin::symmetric(10, 8))
-                    .font(theme::regular(14.0)),
-            );
-            response.request_focus();
-            ui.add_space(6.0);
-            for (index, person) in found.iter().enumerate() {
-                let (rect, row) =
-                    ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::click());
-                if index == selected || row.hovered() {
-                    ui.painter()
-                        .rect_filled(rect, CornerRadius::same(8), palette.surface_active);
-                }
-                let mut child = ui.new_child(
-                    egui::UiBuilder::new()
-                        .max_rect(rect.shrink2(vec2(10.0, 0.0)))
-                        .layout(egui::Layout::left_to_right(egui::Align::Center)),
-                );
-                widgets::avatar(
-                    &mut child,
-                    app,
-                    Some(&person.user_id),
-                    &person.display_name,
-                    30.0,
-                    true,
-                );
-                child.add_space(8.0);
-                child.vertical(|ui| {
-                    ui.spacing_mut().item_spacing.y = 0.0;
+    let close = modal(
+        palette,
+        ctx,
+        "new-chat",
+        520.0,
+        // Centred for its usual height, and fixed there so results that come
+        // and go never move the field.
+        Some((ctx.content_rect().height() * 0.4 - 220.0).max(48.0)),
+        |ui| {
+            Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
+                ui.horizontal(|ui| {
                     ui.label(
-                        egui::RichText::new(&person.display_name)
-                            .font(theme::medium(14.0))
+                        egui::RichText::new("New chat")
+                            .font(theme::bold(20.0))
                             .color(palette.text),
                     );
-                    if let Some(email) = &person.email {
-                        ui.label(
-                            egui::RichText::new(email)
-                                .font(theme::regular(12.0))
-                                .color(palette.dim),
+                });
+                ui.add_space(10.0);
+                // The people picked so far, under their own label, apart
+                // from the search below.
+                if !picked.is_empty() {
+                    widgets::field_label(ui, &palette, "Recipients");
+                    let mut remove = None;
+                    ui.horizontal_wrapped(|ui| {
+                        ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
+                        for (index, person) in picked.iter().enumerate() {
+                            Frame::new()
+                                .fill(palette.surface_hover)
+                                .corner_radius(CornerRadius::same(14))
+                                .inner_margin(Margin {
+                                    left: 4,
+                                    right: 2,
+                                    top: 2,
+                                    bottom: 2,
+                                })
+                                .show(ui, |ui| {
+                                    ui.horizontal(|ui| {
+                                        ui.spacing_mut().item_spacing.x = 4.0;
+                                        widgets::avatar(
+                                            ui,
+                                            app,
+                                            Some(&person.user_id),
+                                            &person.display_name,
+                                            26.0,
+                                            false,
+                                        );
+                                        ui.label(
+                                            egui::RichText::new(&person.display_name)
+                                                .font(theme::medium(14.0))
+                                                .color(palette.text),
+                                        );
+                                        let close = widgets::icon_button_sized(
+                                            ui,
+                                            &palette,
+                                            Icon::Close,
+                                            "Remove",
+                                            20.0,
+                                            12.0,
+                                            palette.dim,
+                                        );
+                                        if close.clicked() {
+                                            remove = Some(index);
+                                        }
+                                    });
+                                });
+                        }
+                    });
+                    if let Some(index) = remove {
+                        picked.remove(index);
+                    }
+                    ui.add_space(8.0);
+                }
+                widgets::field_label(
+                    ui,
+                    &palette,
+                    if picked.is_empty() {
+                        "To"
+                    } else {
+                        "Add another person"
+                    },
+                );
+                let response = ui.add(
+                    egui::TextEdit::singleline(&mut query)
+                        .hint_text("Type a name or email address")
+                        .desired_width(f32::INFINITY)
+                        .margin(Margin::symmetric(10, 8))
+                        .font(theme::regular(14.0)),
+                );
+                response.request_focus();
+                ui.add_space(6.0);
+                for (index, person) in found.iter().enumerate() {
+                    let (rect, row) =
+                        ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::click());
+                    // The keyboard's choice: a marker and an Enter hint, so it
+                    // reads as "about to add", not as already added.
+                    if index == selected || row.hovered() {
+                        ui.painter().rect_filled(
+                            rect,
+                            CornerRadius::same(8),
+                            if index == selected {
+                                palette.surface_active
+                            } else {
+                                palette.surface_hover
+                            },
                         );
                     }
-                });
-                if row.clicked() {
-                    choose = Some(person.clone());
+                    if index == selected {
+                        widgets::selection_marker(ui, &palette, rect);
+                        ui.painter().text(
+                            egui::pos2(rect.right() - 12.0, rect.center().y),
+                            egui::Align2::RIGHT_CENTER,
+                            "Enter to add",
+                            theme::regular(12.0),
+                            palette.secondary,
+                        );
+                    }
+                    let mut child = ui.new_child(
+                        egui::UiBuilder::new()
+                            .max_rect(rect.shrink2(vec2(10.0, 0.0)))
+                            .layout(egui::Layout::left_to_right(egui::Align::Center)),
+                    );
+                    widgets::avatar(
+                        &mut child,
+                        app,
+                        Some(&person.user_id),
+                        &person.display_name,
+                        30.0,
+                        true,
+                    );
+                    child.add_space(8.0);
+                    child.vertical(|ui| {
+                        ui.spacing_mut().item_spacing.y = 0.0;
+                        ui.label(
+                            egui::RichText::new(&person.display_name)
+                                .font(theme::medium(14.0))
+                                .color(palette.text),
+                        );
+                        if let Some(email) = &person.email {
+                            ui.label(
+                                egui::RichText::new(email)
+                                    .font(theme::regular(12.0))
+                                    .color(palette.secondary),
+                            );
+                        }
+                    });
+                    if row.clicked() {
+                        choose = Some(person.clone());
+                    }
                 }
-            }
-            if found.is_empty() && query.trim().chars().count() >= 2 {
-                ui.label(egui::RichText::new("Searching your organisation…").color(palette.dim));
-            }
-            if picked.len() > 1 {
-                ui.add_space(10.0);
-                ui.label(
-                    egui::RichText::new("Group name (optional)")
-                        .font(theme::medium(12.0))
-                        .color(palette.secondary),
-                );
-                ui.add(
-                    egui::TextEdit::singleline(&mut topic)
-                        .hint_text("Launch crew")
-                        .desired_width(f32::INFINITY)
-                        .margin(Margin::symmetric(10, 6)),
-                );
-            }
-            ui.add_space(12.0);
-            ui.horizontal(|ui| {
-                let label = match picked.len() {
-                    0 => "Pick someone to chat with".to_owned(),
-                    1 => format!("Chat with {}", picked[0].display_name),
-                    n => format!("Start a group chat with {n} people"),
-                };
-                let button = ui.add_enabled(
-                    !picked.is_empty(),
-                    egui::Button::new(
-                        egui::RichText::new(label)
-                            .font(theme::semibold(13.0))
-                            .color(palette.on_accent),
-                    )
-                    .fill(palette.accent)
-                    .corner_radius(CornerRadius::same(8))
-                    .min_size(vec2(0.0, 32.0)),
-                );
-                if button.clicked() {
-                    start = true;
+                if found.is_empty() && query.trim().chars().count() >= 2 {
+                    ui.label(
+                        egui::RichText::new("Searching your organisation…").color(palette.dim),
+                    );
                 }
+                if picked.len() > 1 {
+                    ui.add_space(10.0);
+                    ui.label(
+                        egui::RichText::new("Group name (optional)")
+                            .font(theme::medium(12.0))
+                            .color(palette.secondary),
+                    );
+                    ui.add(
+                        egui::TextEdit::singleline(&mut topic)
+                            .hint_text("Launch crew")
+                            .desired_width(f32::INFINITY)
+                            .margin(Margin::symmetric(10, 6)),
+                    );
+                }
+                ui.add_space(16.0);
+                // The dialog footer: a note above, the action on the right.
                 if picked.len() == 1 {
                     ui.label(
                         egui::RichText::new("An existing chat with this person opens instead.")
-                            .font(theme::regular(11.0))
-                            .color(palette.dim),
+                            .font(theme::regular(12.0))
+                            .color(palette.secondary),
                     );
+                    ui.add_space(8.0);
                 }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // One stable action; the count beside it says who it is for.
+                    let button = ui
+                        .add_enabled_ui(!picked.is_empty(), |ui| {
+                            widgets::primary_button(ui, &palette, "Start chat")
+                        })
+                        .inner;
+                    if button.clicked() {
+                        start = true;
+                    }
+                    let count = match picked.len() {
+                        0 => "Add someone to start".to_owned(),
+                        1 => "1 recipient".to_owned(),
+                        n => format!("{n} recipients, a group chat"),
+                    };
+                    ui.label(
+                        egui::RichText::new(count)
+                            .font(theme::regular(13.0))
+                            .color(palette.secondary),
+                    );
+                });
             });
-        });
-    });
+        },
+    );
     if let Some(person) = choose {
         picked.push(person);
         query.clear();
@@ -995,38 +1204,56 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
     let mut actions = Vec::new();
     let mut text = app.form_status.clone();
-    let close = modal(palette, ctx, "status-message", 440.0, 120.0, |ui| {
-        Frame::new().inner_margin(Margin::same(20)).show(ui, |ui| {
-            ui.label(
-                egui::RichText::new("Status message")
-                    .font(theme::bold(18.0))
-                    .color(palette.text),
-            );
+    let close = modal(palette, ctx, "status-message", 440.0, None, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.label(
+                    egui::RichText::new("Status message")
+                        .font(theme::bold(20.0))
+                        .color(palette.text),
+                );
+            });
             ui.add_space(4.0);
             ui.label(
                 egui::RichText::new("People see it next to your name in Teams and Wren.")
                     .color(palette.secondary),
             );
             ui.add_space(10.0);
-            let response = ui.add(
-                egui::TextEdit::multiline(&mut text)
-                    .hint_text("Back at 3 pm")
-                    .desired_rows(2)
-                    .desired_width(f32::INFINITY)
-                    .margin(Margin::symmetric(10, 8)),
-            );
+            widgets::field_label(ui, &palette, "Status");
+            let response = ui.add(widgets::text_field(
+                &mut text,
+                "For example: Back at 3 pm",
+                theme::regular(14.0),
+            ));
             response.request_focus();
-            ui.add_space(12.0);
+            ui.add_space(14.0);
+            let current = app
+                .my_presence
+                .as_ref()
+                .and_then(|p| p.status_message.clone())
+                .unwrap_or_default();
             ui.horizontal(|ui| {
-                if widgets::primary_button(ui, &palette, "  Save  ").clicked() {
-                    actions.push(Action::SetStatusMessage(text.clone()));
-                }
-                if widgets::secondary_button(ui, &palette, "Clear").clicked() {
+                if !current.is_empty()
+                    && widgets::secondary_button(ui, &palette, "Remove status").clicked()
+                {
                     actions.push(Action::SetStatusMessage(String::new()));
                 }
-                if widgets::secondary_button(ui, &palette, "Cancel").clicked() {
-                    actions.push(Action::CloseOverlay);
-                }
+                // The dialog's actions on the right: Cancel, then Save.
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // Save once something changed.
+                    let changed = text.trim() != current.trim();
+                    let save = ui
+                        .add_enabled_ui(changed, |ui| widgets::primary_button(ui, &palette, "Save"))
+                        .inner;
+                    let enter =
+                        changed && response.lost_focus() && ui.input(|i| i.key_pressed(Key::Enter));
+                    if save.clicked() || enter {
+                        actions.push(Action::SetStatusMessage(text.clone()));
+                    }
+                    if widgets::secondary_button(ui, &palette, "Cancel").clicked() {
+                        actions.push(Action::CloseOverlay);
+                    }
+                });
             });
         });
     });
@@ -1048,7 +1275,9 @@ fn call_settings(
     let palette = app.palette;
     widgets::section_label(ui, &palette, "Calls and meetings");
     let mut calls = app.settings.calls.clone();
-    egui::ComboBox::from_label(egui::RichText::new("Open in").color(palette.secondary))
+    widgets::field_label(ui, &palette, "Open calls and meetings in");
+    egui::ComboBox::from_id_salt("calls-open-in")
+        .icon(widgets::combo_chevron(palette.secondary))
         .selected_text(calls.open_in.label())
         .width(300.0)
         .show_ui(ui, |ui| {
@@ -1060,7 +1289,7 @@ fn call_settings(
         match browsers {
             [] => {
                 ui.label(
-                    egui::RichText::new("A separate window needs Microsoft Edge or Google Chrome. Until one is installed, calls open in your default browser.")
+                    egui::RichText::new("A separate window needs Microsoft Edge or Google Chrome. Until one is installed, calls open in your default browser.").line_height(Some(theme::leading(12.0)))
                         .font(theme::regular(12.0))
                         .color(palette.warning),
                 );
@@ -1070,7 +1299,10 @@ fn call_settings(
                     .browser
                     .filter(|b| found.contains(b))
                     .unwrap_or(found[0]);
-                egui::ComboBox::from_label(egui::RichText::new("Browser").color(palette.secondary))
+                widgets::field_label(ui, &palette, "Browser");
+                egui::ComboBox::from_id_salt("calls-browser")
+                    .icon(widgets::combo_chevron(palette.secondary))
+                    .width(300.0)
                     .selected_text(current.name())
                     .show_ui(ui, |ui| {
                         for kind in found {
@@ -1079,15 +1311,19 @@ fn call_settings(
                             }
                         }
                     });
-                ui.checkbox(
+                widgets::checkbox(
+                    ui,
+                    &palette,
                     &mut calls.dock,
                     "Move Wren beside the call window during calls",
                 );
                 if app.accounts.len() > 1 || calls.profile_per_account {
-                    ui.checkbox(&mut calls.profile_per_account, "A separate browser profile for each account")
+                    widgets::checkbox(ui, &palette, &mut calls.profile_per_account, "A separate browser profile for each account")
                         .on_hover_text("Each account signs in to Microsoft in its own browser profile, so Teams on the web never asks which account to use.");
                 }
-                ui.checkbox(
+                widgets::checkbox(
+                    ui,
+                    &palette,
                     &mut calls.sign_out_browser,
                     format!(
                         "Signing out of Wren also signs {} out of Microsoft",
@@ -1121,30 +1357,37 @@ fn call_settings(
 fn join_on_phone(app: &mut App, ctx: &egui::Context, url: &str) {
     let palette = app.palette;
     let mut actions = Vec::new();
-    let close = modal(palette, ctx, "join-on-phone", 340.0, 100.0, |ui| {
-        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+    let close = modal(palette, ctx, "join-on-phone", 340.0, None, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
                     egui::RichText::new("Join on your phone")
-                        .font(theme::bold(18.0))
+                        .font(theme::bold(20.0))
                         .color(palette.text),
                 );
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
             });
+            // Which meeting the code joins.
+            if let Some(call) = &app.call {
+                ui.label(
+                    egui::RichText::new(call.title())
+                        .font(theme::semibold(14.0))
+                        .color(palette.text),
+                );
+            }
             ui.add_space(6.0);
             ui.label(
                 egui::RichText::new("Point your phone's camera here; Teams opens the meeting.")
+                    .line_height(Some(theme::leading(14.0)))
                     .color(palette.secondary),
             );
             ui.add_space(12.0);
             ui.vertical_centered(|ui| qr_code(ui, url, 232.0));
-            ui.add_space(12.0);
-            if widgets::secondary_button(ui, &palette, "Copy the link").clicked() {
-                actions.push(Action::CopyText(url.to_owned()));
-            }
+            ui.add_space(16.0);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if widgets::secondary_button(ui, &palette, "Copy link").clicked() {
+                    actions.push(Action::CopyText(url.to_owned()));
+                }
+            });
         });
     });
     if close {
@@ -1160,7 +1403,8 @@ pub fn qr_code(ui: &mut egui::Ui, text: &str, size: f32) {
         ui.label("This link is too long for a QR code.");
         return;
     };
-    const QUIET: i32 = 3;
+    // The standard quiet zone: four modules of white all round.
+    const QUIET: i32 = 4;
     let modules = code.size() + 2 * QUIET;
     let cell = (size / modules as f32).floor().max(1.0);
     let side = cell * modules as f32;
@@ -1192,25 +1436,29 @@ pub fn qr_code(ui: &mut egui::Ui, text: &str, size: f32) {
 fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
     let palette = app.palette;
     let mut actions = Vec::new();
-    let close = modal(palette, ctx, "consent", 460.0, 120.0, |ui| {
-        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+    let close = modal(palette, ctx, "consent", 460.0, None, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
-                theme::icon(ui, Icon::Lock, 20.0, palette.accent);
-                ui.label(egui::RichText::new("One more permission").font(theme::bold(18.0)).color(palette.text));
+                theme::icon(ui, Icon::Lock, 20.0, palette.secondary);
+                ui.label(egui::RichText::new("One more permission").font(theme::bold(20.0)).color(palette.text));
             });
             ui.add_space(8.0);
-            ui.label(egui::RichText::new(crate::auth::scope_reason(scope)).color(palette.text));
+            ui.label(egui::RichText::new(crate::auth::scope_reason(scope)).font(theme::medium(14.0)).color(palette.text));
             ui.add_space(6.0);
             ui.label(
-                egui::RichText::new(format!(
-                    "Wren asks for Microsoft Graph's {scope} permission only now that you use this. Microsoft's consent page opens in your browser; some organisations need an administrator to approve it."
-                ))
-                .font(theme::regular(12.0))
-                .color(palette.secondary),
+                egui::RichText::new("Microsoft's consent page opens in your browser. Some organisations need an administrator to approve it first.").line_height(Some(theme::leading(13.0)))
+                    .font(theme::regular(13.0))
+                    .color(palette.secondary),
+            );
+            ui.add_space(4.0);
+            ui.label(
+                egui::RichText::new(format!("Permission: {scope} (Microsoft Graph), asked for only now that you use this.")).line_height(Some(theme::leading(12.0)))
+                    .font(theme::regular(12.0))
+                    .color(palette.dim),
             );
             ui.add_space(14.0);
-            ui.horizontal(|ui| {
-                if widgets::primary_button(ui, &palette, "  Continue in browser  ").clicked() {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if widgets::primary_button(ui, &palette, "Continue in browser").clicked() {
                     actions.push(Action::RequestScope(scope));
                 }
                 if widgets::secondary_button(ui, &palette, "Not now").clicked() {

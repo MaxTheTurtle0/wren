@@ -1,0 +1,601 @@
+{
+ "overall": 7.0,
+ "dimensions": {
+  "hierarchy": 7.5,
+  "spacing": 6.5,
+  "typography": 6.5,
+  "consistency": 7,
+  "contrast_accessibility": 6.5,
+  "feedback": 6.5,
+  "states": 7.5,
+  "navigation": 7
+ },
+ "screens": {
+  "chats": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "no divider under the conversation header; scrolled message clips under it (avatar and 'Alex Rivera' cut at y=44-60)",
+    "hyphen renders with wide gaps ('On - call', 'full - text')",
+    "composer border #dfdfe3 on #ffffff is 1.33:1 (dark #303137 on #17181b 1.37:1), below 3:1 for an input boundary",
+    "unread dot #a9530f and away presence #8a5a00 are near-identical brown dots in the same list"
+   ]
+  },
+  "chats-wide": {
+   "score": 6.5,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "message text runs to ~800 px lines at 1920 wide; no max reading width",
+    "composer stretches 1520 px with the send button far from the text",
+    "bottom 160 px of the pane is empty; content sits on a sea of white",
+    "header divider missing, as on chats"
+   ]
+  },
+  "chats-narrow": {
+   "score": 6,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "hover toolbar (y=268-303) covers 'Alex Rivera 07:43' and the heart reaction chip",
+    "sidebar keeps its full 300 px at 760 wide, leaving 396 px for the conversation; no collapse",
+    "composer hint row wraps to two lines with a dangling 'for a new line'",
+    "quote truncates mid-word with ellipsis inside a 3-line block"
+   ]
+  },
+  "chat-no-selection": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "empty state sits at y=216-334, upper third, not optically centred",
+    "no secondary action (e.g. New chat button) in the empty state; only a shortcut hint"
+   ]
+  },
+  "chat-filter-no-match": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "filter field has no clear (x) button; recovery depends on the Clear filter button only",
+    "filter text 'zz' sits in a field with no focus ring, so the active filter is easy to miss",
+    "conversation still scrolled under header with clipped first message"
+   ]
+  },
+  "group-chat": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "hover toolbar straddles the boundary between the mention-highlighted row and the next message",
+    "hyphen renders with wide gaps ('On - call', 'full - text') ('go/no - go', 'Ad - hoc')",
+    "mention highlight #fdf1e5 and hover row #f6f6f7 meet with no gap, two backgrounds stack"
+   ]
+  },
+  "channel": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "'Reply' is plain 12 pt text with no button affordance or icon",
+    "team tiles Engineering and Contoso share the same magenta, weakening wayfinding",
+    "top post card is clipped under the header with a stray reaction chip edge at y=40-58",
+    "post title 'Performance check' is only 1 pt larger than body"
+   ]
+  },
+  "channel-narrow": {
+   "score": 6,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "hover toolbar covers 'Hedy Lamarr 09:54' author line",
+    "team tree keeps 300 px at 760 wide; posts wrap to 4 short lines",
+    "composer placeholder wraps to two lines",
+    "hint row wraps"
+   ]
+  },
+  "teams": {
+   "score": 7.5,
+   "issues": [
+    "empty pane shows only 'Pick a channel on the left.', no recent/favourite channels",
+    "Engineering and Contoso tiles use the same colour",
+    "channel list text #4a4d55 lighter than team names; selected/hover not shown (fine for empty state)",
+    "DEMO label and settings icon float with a large unstructured gap above"
+   ]
+  },
+  "calendar": {
+   "score": 7.5,
+   "issues": [
+    "detail pane has no header bar, unlike chat and channel panes; title floats at y=78",
+    "hyphen renders with wide gaps ('On - call', 'full - text') ('go/no - go')",
+    "Join and Copy link are small 28 px pills, smaller than buttons elsewhere (32-34 px)",
+    "footnote 12 pt grey paragraph reads like documentation",
+    "no way to see a week/day view; list only"
+   ]
+  },
+  "calls": {
+   "score": 6.5,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "link input is 29 px tall and Join button 34 px; tops align, bottoms are 5 px off",
+    "disabled Join is #e8d2c1 on #d0a583 (1.54:1) and looks broken rather than disabled",
+    "page is mostly explanatory prose; capability table reads like docs",
+    "right pane has no header, unlike chat"
+   ]
+  },
+  "calls-narrow": {
+   "score": 6,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "input/button misalignment as on calls",
+    "capability list scrolls under a hard cut at the bottom ('Incoming calls' half visible)",
+    "sidebar keeps 300 px at 760 wide"
+   ]
+  },
+  "composer-mention": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "mention popup is detached from the caret, anchored to the composer's left edge",
+    "attachment chip and text share a box with uneven padding (chip 8 px from top, text 14 px from bottom)",
+    "no focus ring on the composer while typing"
+   ]
+  },
+  "composer-long-draft": {
+   "score": 6,
+   "issues": [
+    "first visible draft line is cut in half at the composer's top edge (y=552-560) with no padding or fade",
+    "no scrollbar inside the composer to show more text above",
+    "attach/send icons vertically centred in a 210 px box instead of pinned to the bottom",
+    "composer described as focused but shows no focus ring",
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7) (filter field)"
+   ]
+  },
+  "composer-images": {
+   "score": 6.5,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "thumbnails crop images so content is cut on all sides (first and third thumbnails unreadable)",
+    "remove (x) buttons overlap image corners with no ring",
+    "no file name/size, unlike the file attachment chip",
+    "dark: thumbnails sit flush against the composer edge"
+   ]
+  },
+  "image-preview": {
+   "score": 7,
+   "issues": [
+    "'100%' is unstyled text next to a filled 'Fit' pill; not clearly a toggle",
+    "Fit selected fill #e1c3ab is muddy and low-key",
+    "modal leaves ~40% of the canvas empty for a wide image; title bar wastes 100 px",
+    "no download/open/copy action"
+   ]
+  },
+  "search-switcher": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7) ('Jump to a chat...' 4.48:1)",
+    "footer hint wraps leaving 'Search' orphaned on its own line",
+    "every row uses the same chat-bubble icon; 1:1, group and meeting chats look the same",
+    "dark: panel #25262b against scrim #0a0a0c only 1.31:1 with no border"
+   ]
+  },
+  "new-chat": {
+   "score": 7.5,
+   "issues": [
+    "first result looks selected (#e4e4e8) with no keyboard focus cue on the input",
+    "primary button sits left with helper text trailing to the right; footer not aligned to a right-hand action area",
+    "dark panel edge 1.31:1 against scrim",
+    "the search input has no leading icon or label"
+   ]
+  },
+  "settings": {
+   "score": 6,
+   "issues": [
+    "checkboxes look like radio buttons: unchecked is a 13 px circle at 2.72:1 (#8e9199 on #eeeef0), fails 3:1",
+    "content is clipped mid-line at the bottom ('Move Wren beside the call window...') with no fade or sticky footer",
+    "uneven section spacing: 'Zoom' line to BEHAVIOUR 30 px, other gaps 24-36 px",
+    "long policy paragraph in 12 pt grey inside a settings list",
+    "dark selected theme pill uses orange fill while light uses dark text on orange; inconsistent"
+   ]
+  },
+  "shortcuts": {
+   "score": 8,
+   "issues": [
+    "no grouping (navigation, composer, view); 15 rows read as one list",
+    "key caps and descriptions are not baseline aligned on multi-cap rows",
+    "'Ctrl+,' and 'Ctrl+/' are hard to read as keys"
+   ]
+  },
+  "status-message": {
+   "score": 6.5,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "Save is 34 px tall, Clear and Cancel 30 px",
+    "placeholder top-aligned in a 50 px field that holds one line",
+    "no character limit, preview or expiry option; no focus ring",
+    "Clear and Cancel have equal weight; Clear is destructive"
+   ]
+  },
+  "account-menu": {
+   "score": 6.5,
+   "issues": [
+    "left edges misaligned: '+ Add account' and 'Settings...' at x=63, status dots at x=79, checkbox icon at x=70",
+    "Busy and Do not disturb use the same red dot; Be right back and Appear away the same amber dot",
+    "'Set a status message' uses an empty checkbox icon, reads as a toggle",
+    "second account's unread count is bare orange '1' text, not a badge"
+   ]
+  },
+  "permission-consent": {
+   "score": 8,
+   "issues": [
+    "explanatory text is 12 pt; the key sentence about admin approval is easy to skip",
+    "primary button 34 px vs secondary 32 px"
+   ]
+  },
+  "error-toast": {
+   "score": 5.5,
+   "issues": [
+    "toast centred on the window (x 374-905, centre 640) not on the conversation pane (centre 822); covers the last message",
+    "no Retry action in the toast and no failed/retry marker on a message",
+    "text wraps to 'Retry in a / moment.' in a 530 px box",
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)"
+   ]
+  },
+  "first-sync-loading": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "two spinners: one in the sidebar header that shifts the action icons, one in the main pane",
+    "filter and new-chat stay enabled with nothing loaded",
+    "skeleton bars #e4e4e8 on #f6f6f7 (1.17:1) are nearly invisible in light"
+   ]
+  },
+  "first-sync-empty": {
+   "score": 7,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)",
+    "'No chats yet' in the sidebar duplicates the main empty state",
+    "filter field shown with nothing to filter",
+    "empty state in upper third, not centred"
+   ]
+  },
+  "call-bar": {
+   "score": 5.5,
+   "issues": [
+    "bar says 'In the meeting \u00b7 just joined' while the chat says 'Meeting ended: 58 min'",
+    "34 px gap between the meeting title (y=24) and its status line (y=58)",
+    "header truncates to 'Design review:...' with 150 px free to the right",
+    "'Done' as the primary orange action is ambiguous during a live call",
+    "'Meeting ended' sits 6 px under the last message",
+    "composer placeholder and hint row each wrap to two lines",
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)"
+   ]
+  },
+  "call-docked": {
+   "score": 6,
+   "issues": [
+    "status contradiction ('In the meeting' vs 'Meeting ended') as in call-bar",
+    "34 px gap between title and status line",
+    "no navigation back to other chats while docked",
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7)"
+   ]
+  },
+  "join-on-phone": {
+   "score": 7.5,
+   "issues": [
+    "light mode QR has no quiet-zone card; dark mode does, inconsistent",
+    "only a small secondary 'Copy the link' action",
+    "dialog overlaps the call bar so 'Join on phone' trigger is half visible under the scrim"
+   ]
+  },
+  "setup": {
+   "score": 6.5,
+   "issues": [
+    "light placeholder text fails WCAG: #767779 on #ffffff 4.48:1 / #727376 on #f6f6f7 4.39:1 (cap 7) (GUID placeholder)",
+    "disabled Save text #ead5c4 on #d4a987 (1.51:1); dark #51351e on #865934 (1.86:1): reads as broken",
+    "Application ID field has a dark border, Tenant a light grey one: looks like focus vs normal with no focus intent",
+    "dense card: 8 px between label and field, 14 pt paragraph with 17 px leading",
+    "hyphen renders with wide gaps ('On - call', 'full - text') ('open - source')"
+   ]
+  },
+  "signin": {
+   "score": 7.5,
+   "issues": [
+    "primary button 34 px tall, secondary 32 px",
+    "card is top-heavy; bottom 200 px of the window empty",
+    "'App registration' disclosure triangle is a 6 px glyph",
+    "hyphen renders with wide gaps ('On - call', 'full - text') ('sign - in', 'open - source')"
+   ]
+  },
+  "signin-browser": {
+   "score": 7.5,
+   "issues": [
+    "three buttons of equal secondary weight next to a primary that re-opens the page; Cancel not visually separated",
+    "footer jumps vertically between sign-in screens (y=515 here, 592 on signin)",
+    "body leading 17 px vs 23 px on device-code"
+   ]
+  },
+  "signin-device-code": {
+   "score": 7.5,
+   "issues": [
+    "code uses proportional font with a wide hyphen: 'F4KQ - 9TZW'",
+    "body leading (23 px) differs from other sign-in cards (17 px)",
+    "link wraps the sentence awkwardly"
+   ]
+  },
+  "signin-finishing": {
+   "score": 8,
+   "issues": [
+    "spinner and title baseline off by ~1 px; title 15 pt vs 18 pt card titles elsewhere",
+    "no cancel/escape while finishing"
+   ]
+  },
+  "signin-expired": {
+   "score": 7.5,
+   "issues": [
+    "'Account' label and value at 12-13 pt look secondary though they matter",
+    "primary/secondary height mismatch",
+    "no option to switch account"
+   ]
+  },
+  "signin-failed": {
+   "score": 7.5,
+   "issues": [
+    "error text has no hint about cause or next step beyond Try again",
+    "primary/secondary height mismatch",
+    "'Sign - in' hyphen spacing in the title"
+   ]
+  }
+ },
+ "top_issues": [
+  {
+   "priority": 1,
+   "severity": "high",
+   "screens": [
+    "chats",
+    "chats-wide",
+    "chats-narrow",
+    "chat-no-selection",
+    "chat-filter-no-match",
+    "group-chat",
+    "channel",
+    "channel-narrow",
+    "calls",
+    "calls-narrow",
+    "composer-mention",
+    "composer-images",
+    "composer-long-draft",
+    "search-switcher",
+    "status-message",
+    "setup",
+    "first-sync-loading",
+    "first-sync-empty",
+    "call-bar",
+    "call-docked",
+    "error-toast"
+   ],
+   "mode": "light",
+   "issue": "Placeholder text fails WCAG 1.4.3 in light mode in every input (composer, filter, search, status, setup)",
+   "evidence": "composer/search placeholder #767779 on #ffffff = 4.48:1; filter/status/setup placeholder #727376 on #f6f6f7 = 4.39:1 (dark passes at 5.45-6.0)",
+   "fix": "Use the secondary text colour #62656d for placeholders (5.83:1 on #fff, 5.40:1 on #f6f6f7), or darken the placeholder token to #6b6e75 or darker."
+  },
+  {
+   "priority": 2,
+   "severity": "high",
+   "screens": [
+    "error-toast"
+   ],
+   "mode": "both",
+   "issue": "Failed send is shown only as a transient toast that covers the last message, sits off-centre, and has no Retry",
+   "evidence": "toast spans x 374-905 (centre 640) while the conversation pane centre is 822; it overlays the 10:20 message at y=640-690; no Retry button and no failed marker on any message",
+   "fix": "Mark the failed message inline (red 'Not sent' label + Retry and Delete text buttons under it, 12 pt). If a toast stays, centre it on the pane, place it 12 px above the composer, add a 'Retry' button, and give it a 480 px max width so the text fits one line."
+  },
+  {
+   "priority": 3,
+   "severity": "high",
+   "screens": [
+    "settings"
+   ],
+   "mode": "both",
+   "issue": "Settings checkboxes look like radio buttons and the unchecked state fails 3:1",
+   "evidence": "unchecked control is a 13 px circle #8e9199 on #eeeef0 = 2.72:1 (dark #6c6e77 on #2c2d33 = 2.70:1)",
+   "fix": "Draw square 16 px checkboxes with 3 px corner radius, 1.5 px border #8a8d95 light / #7c7f88 dark (>=3:1), checked state filled accent #a9530f / #e88c3e with a white/dark check."
+  },
+  {
+   "priority": 4,
+   "severity": "high",
+   "screens": [
+    "call-bar",
+    "call-docked"
+   ],
+   "mode": "both",
+   "issue": "Call bar contradicts the chat and wastes space",
+   "evidence": "bar reads 'In the meeting \u00b7 just joined' while the timeline shows 'Meeting ended: 58 min \u00b7 09:35'; 34 px gap between title (y=24) and status (y=58); title truncates to 'Design review:...' at 380 px with ~150 px free; primary orange action is 'Done'",
+   "fix": "Put status on the line under the title with 4 px gap; truncate only when the text exceeds the available width; label the primary action 'Leave' or 'Back to Wren' with a neutral style; hide or reconcile 'Meeting ended' while a call is active."
+  },
+  {
+   "priority": 5,
+   "severity": "medium",
+   "screens": [
+    "chats-narrow",
+    "channel-narrow",
+    "group-chat",
+    "chats"
+   ],
+   "mode": "both",
+   "issue": "Hover action toolbar covers message author lines and reactions",
+   "evidence": "chats-narrow toolbar y=268-303 sits over 'Alex Rivera 07:43' and the heart chip; channel-narrow covers 'Hedy Lamarr 09:54'; group-chat toolbar straddles two rows",
+   "fix": "Anchor the toolbar to the top-right of the hovered row at y = row_top - 16 px but clamp so it never overlaps the row's header text; at widths < 900 px show a single '...' button that opens the actions."
+  },
+  {
+   "priority": 6,
+   "severity": "medium",
+   "screens": [
+    "chats",
+    "group-chat",
+    "calendar",
+    "signin",
+    "setup",
+    "channel",
+    "calls",
+    "signin-device-code"
+   ],
+   "mode": "both",
+   "issue": "Hyphens render with wide gaps across the app",
+   "evidence": "'On - call', 'full - text', 'go/no - go', 'Ad - hoc', 'open - source', 'Sign - in', 'F4KQ - 9TZW' all show ~4 px space on both sides of the hyphen",
+   "fix": "Render the normal U+002D hyphen from the UI font (not U+2011 or a fallback glyph); if non-breaking behaviour is needed, use U+2011 only where the UI font has that glyph."
+  },
+  {
+   "priority": 7,
+   "severity": "medium",
+   "screens": [
+    "chats",
+    "chats-wide",
+    "chat-filter-no-match",
+    "channel",
+    "composer-long-draft",
+    "composer-mention",
+    "status-message"
+   ],
+   "mode": "both",
+   "issue": "Inputs lack a visible boundary and focus state",
+   "evidence": "composer border #dfdfe3 on #ffffff = 1.33:1, dark #303137 on #17181b = 1.37:1; no focus ring on the 'focused' long draft or the typing composer",
+   "fix": "Composer border #8a8d95 light / #6e7179 dark (>=3:1, matching the filter field), and a 2 px focus ring in accent #a9530f / #e88c3e on focus."
+  },
+  {
+   "priority": 8,
+   "severity": "medium",
+   "screens": [
+    "composer-long-draft"
+   ],
+   "mode": "both",
+   "issue": "Long draft clips the top line and has no scroll affordance",
+   "evidence": "top draft line cut at y=552-560 against the composer edge; no inner scrollbar; attach/send centred at y=658 in a 210 px tall box",
+   "fix": "Give the text area 10 px inner top/bottom padding, show a thin scrollbar when content overflows, cap height at 40% of the pane, and pin the attach/send icons to the bottom-right (12 px inset)."
+  },
+  {
+   "priority": 9,
+   "severity": "medium",
+   "screens": [
+    "chats-narrow",
+    "channel-narrow",
+    "calls-narrow"
+   ],
+   "mode": "both",
+   "issue": "Narrow windows keep the full 300 px sidebar",
+   "evidence": "at 760 px wide the sidebar occupies x 64-364, leaving 396 px for content; messages wrap to 3-4 short lines, composer placeholder and hint row wrap",
+   "fix": "Below 900 px, shrink the sidebar to 240 px; below 720 px collapse it to an overlay; hide the formatting hint row below 600 px of pane width."
+  },
+  {
+   "priority": 10,
+   "severity": "medium",
+   "screens": [
+    "chats-wide"
+   ],
+   "mode": "both",
+   "issue": "No maximum reading width on wide windows",
+   "evidence": "at 1920 wide, message lines reach ~800 px and the composer is 1520 px wide",
+   "fix": "Constrain message column and composer to max 760-800 px (about 90 characters at 14 pt), left aligned after the avatar column, or centred in the pane."
+  },
+  {
+   "priority": 11,
+   "severity": "medium",
+   "screens": [
+    "calls",
+    "calls-narrow",
+    "setup"
+   ],
+   "mode": "both",
+   "issue": "Disabled primary buttons are illegible and look broken; input/button heights don't match",
+   "evidence": "calls disabled Join #e8d2c1 on #d0a583 = 1.54:1 (dark 1.81:1); setup Save 1.51:1 / 1.86:1; calls input 29 px tall vs Join 34 px",
+   "fix": "Disabled buttons: neutral fill #eeeef0 / #2c2d33 with #8a8d95 text (keeps the shape recognisable). Make inputs and adjacent buttons the same 32 px height and vertically centre them."
+  },
+  {
+   "priority": 12,
+   "severity": "medium",
+   "screens": [
+    "account-menu",
+    "chats",
+    "calls"
+   ],
+   "mode": "both",
+   "issue": "Presence states are indistinguishable by shape, and away/unread colours collide",
+   "evidence": "Busy and DND both red dots (#c42b2b), BRB and Away both #8a5a00; light away #8a5a00 vs unread dot #a9530f are near-identical browns",
+   "fix": "Use distinct glyphs: DND = red dot with white bar, Away/BRB = amber dot with clock cut-out, Offline = hollow ring. Shift light away to #b7791f (amber) so it differs from the orange unread accent."
+  },
+  {
+   "priority": 13,
+   "severity": "medium",
+   "screens": [
+    "account-menu"
+   ],
+   "mode": "both",
+   "issue": "Account menu items are not on a common left edge",
+   "evidence": "'+ Add account' and 'Settings...' text at x=63, status dots at x=79 with text at x=95, checkbox icon at x=70 with text at x=85",
+   "fix": "Use one 16 px icon column at x=72 and one text column at x=96 for every row; give 'Add account' a plus icon and 'Settings' a gear icon; replace the empty checkbox with a speech-bubble icon."
+  },
+  {
+   "priority": 14,
+   "severity": "medium",
+   "screens": [
+    "chats",
+    "chat-filter-no-match",
+    "channel",
+    "search-switcher",
+    "settings"
+   ],
+   "mode": "both",
+   "issue": "Conversation header has no divider; content clips under it",
+   "evidence": "pixels at x=700, y=40-61 are all #ffffff; partial avatar and name of the first message are cut at y=44-60",
+   "fix": "Add a 1 px bottom border #e4e4e8 / #2c2d33 under the 56 px header, or a 12 px fade from the page colour."
+  },
+  {
+   "priority": 15,
+   "severity": "low",
+   "screens": [
+    "signin",
+    "signin-expired",
+    "signin-failed",
+    "status-message",
+    "permission-consent",
+    "signin-browser"
+   ],
+   "mode": "both",
+   "issue": "Primary and secondary buttons differ in height",
+   "evidence": "signin primary y=382-415 (34 px) vs secondary 383-414 (32 px); status Save 34 px vs Clear 30 px",
+   "fix": "Use one 32 px button height for all variants; differentiate by fill only."
+  },
+  {
+   "priority": 16,
+   "severity": "low",
+   "screens": [
+    "calendar",
+    "calls"
+   ],
+   "mode": "both",
+   "issue": "Calendar and Calls detail panes have no header bar, unlike chat and channel panes",
+   "evidence": "chat panes have a 56 px header with title and actions; calendar title floats at y=78 with an empty band above",
+   "fix": "Use the same 56 px header (title 15 pt bold, subtitle 12 pt) with Join and Copy link as header actions."
+  },
+  {
+   "priority": 17,
+   "severity": "low",
+   "screens": [
+    "search-switcher",
+    "new-chat",
+    "settings",
+    "shortcuts",
+    "status-message",
+    "permission-consent"
+   ],
+   "mode": "dark",
+   "issue": "Dark dialogs barely separate from the scrim",
+   "evidence": "switcher panel #25262b vs scrim #0a0a0c = 1.31:1, no border",
+   "fix": "Add a 1 px border #3a3b42 to dark dialogs and lighten the scrim to rgba(0,0,0,0.5) so the panel edge is crisp."
+  },
+  {
+   "priority": 18,
+   "severity": "low",
+   "screens": [
+    "composer-images"
+   ],
+   "mode": "both",
+   "issue": "Pasted-image thumbnails crop content and remove buttons overlap corners",
+   "evidence": "first and third thumbnails show cut birds; x buttons at the top-right corner overlap the image",
+   "fix": "Use object-fit contain on a #eeeef0 / #2c2d33 tile, 96x72 px, with the remove button 6 px inset on a white/dark ring."
+  }
+ ]
+}

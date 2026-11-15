@@ -68,7 +68,7 @@ Status as of Wren 0.1 (unreleased).
 | Showing you as available while you use Wren | Works | A Graph presence session (`setPresence`), refreshed at most every 4 minutes and only on input, so stepping away shows you inactive after 5 minutes and Away after 10. Ended at sign-out and exit, expires after an hour otherwise. Starts once Presence.ReadWrite is granted; can be turned off in Settings |
 | Profile photos | Works | Lazy, cached 7 days |
 | Multiple accounts | Works | Add from the account menu or Settings; ⌘⇧A switches. Each account has its own backend, cache, credentials and push connection. Unread chats in other accounts show as a dot on your picture; their notifications still arrive. Signing in to an account twice keeps one |
-| Light, dark, system theme, 8 shared palettes | Works | fastframe-theme presets |
+| Light, dark and system theme | Works | System is the default and follows the desktop |
 | Keyboard shortcuts, ⌘K switcher | Works | ⌘/ lists them |
 | Tray / menu-bar item, keep running | Works | Off by default; with a self-hosted relay, push notifications continue while the window is closed |
 | Desktop notifications | Works | notify-rust |
@@ -103,5 +103,3 @@ Remaining checks and known issues:
   and pass tests in CI.
 - A real call in the Teams web window has not been confirmed. See the
   [calling open questions](calling.md#open-questions).
-- The Calls capability table clips at 760 × 700, observed in both themes
-  during the macOS demo checks.
