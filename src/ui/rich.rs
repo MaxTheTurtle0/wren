@@ -46,7 +46,12 @@ fn job(
         let color = if style.link.is_some() {
             palette.link
         } else if style.mention {
-            palette.accent
+            // A darker orange on the mention tint, for contrast headroom.
+            if palette.dark {
+                palette.accent
+            } else {
+                palette.accent_hover
+            }
         } else {
             look.color
         };
@@ -374,7 +379,8 @@ pub fn quote_block(
                     ne: 0,
                     se: 0,
                 },
-                palette.accent,
+                // Quote bars are structure, not a signal: neutral.
+                palette.control,
             );
         })
         .response

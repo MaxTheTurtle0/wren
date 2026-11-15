@@ -40,6 +40,29 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 if response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                     app.chat_filter.clear();
                 }
+                // Clear, right where the text is.
+                if !app.chat_filter.is_empty() {
+                    let clear = egui::Rect::from_center_size(
+                        egui::pos2(response.rect.right() - 16.0, response.rect.center().y),
+                        vec2(24.0, 24.0),
+                    );
+                    let clicked = ui
+                        .put(clear, |ui: &mut egui::Ui| {
+                            widgets::icon_button_sized(
+                                ui,
+                                &palette,
+                                Icon::Close,
+                                "Clear filter",
+                                24.0,
+                                14.0,
+                                palette.secondary,
+                            )
+                        })
+                        .clicked();
+                    if clicked {
+                        app.chat_filter.clear();
+                    }
+                }
             });
         });
     ui.add_space(8.0);
@@ -129,7 +152,7 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
         })
         .map(|m| m.body.to_plain());
     let (time, time_font, time_color) = if failed.is_some() {
-        ("Not sent".to_owned(), theme::semibold(12.0), palette.danger)
+        ("Not sent".to_owned(), theme::semibold(13.0), palette.danger)
     } else {
         (
             chat.preview
@@ -137,9 +160,9 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
                 .map(|p| crate::time::short_label(p.at, now))
                 .unwrap_or_default(),
             if unread {
-                theme::semibold(12.0)
+                theme::semibold(13.0)
             } else {
-                theme::regular(12.0)
+                theme::regular(13.0)
             },
             // Unread reads as weight; the dot alone carries the accent.
             if unread {
@@ -220,7 +243,8 @@ fn row(ui: &mut egui::Ui, app: &App, chat: &Chat, me: &str, now: i64) -> egui::R
         ui.painter().circle_filled(
             egui::pos2(inner.right() - 16.0, inner.top() + 39.0),
             4.5,
-            palette.accent,
+            // Strong ink: orange is kept for actions and selection.
+            palette.text,
         );
     }
     response.on_hover_cursor(egui::CursorIcon::PointingHand)

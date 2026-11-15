@@ -309,8 +309,15 @@ fn switcher(app: &mut App, ctx: &egui::Context) {
         600.0,
         Some((ctx.content_rect().height() * 0.12).max(48.0)),
         |ui| {
+            // The search row lines up with the dialog's close button, which
+            // keeps its own space on the right.
             Frame::new()
-                .inner_margin(Margin::symmetric(14, 12))
+                .inner_margin(Margin {
+                    left: 14,
+                    right: 52,
+                    top: 20,
+                    bottom: 12,
+                })
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
                         theme::icon(ui, Icon::Search, 18.0, palette.dim);
@@ -874,8 +881,9 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
             let cell = |ui: &mut egui::Ui, row: &Row, first: bool| match row {
                 Row::Heading(group) => {
                     ui.vertical(|ui| {
-                        // Groups after the first get room above their heading.
-                        ui.add_space(if first { 0.0 } else { 14.0 });
+                        // Every heading row has the same room above, so each
+                        // heading sits the same distance from its first key.
+                        ui.add_space(if first { 4.0 } else { 14.0 });
                         widgets::section_label(ui, &palette, group);
                     });
                     ui.label("");
@@ -1142,19 +1150,25 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                     ui.add_space(8.0);
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let label = match picked.len() {
-                        0 => "Pick someone to chat with".to_owned(),
-                        1 => format!("Chat with {}", picked[0].display_name),
-                        n => format!("Start a group chat with {n} people"),
-                    };
+                    // One stable action; the count beside it says who it is for.
                     let button = ui
                         .add_enabled_ui(!picked.is_empty(), |ui| {
-                            widgets::primary_button(ui, &palette, &label)
+                            widgets::primary_button(ui, &palette, "Start chat")
                         })
                         .inner;
                     if button.clicked() {
                         start = true;
                     }
+                    let count = match picked.len() {
+                        0 => "Add someone to start".to_owned(),
+                        1 => "1 recipient".to_owned(),
+                        n => format!("{n} recipients, a group chat"),
+                    };
+                    ui.label(
+                        egui::RichText::new(count)
+                            .font(theme::regular(13.0))
+                            .color(palette.secondary),
+                    );
                 });
             });
         },

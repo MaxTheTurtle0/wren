@@ -53,11 +53,17 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                 );
                 widgets::avatar(&mut child, app, Some(user), name, 32.0, true);
                 child.add_space(8.0);
-                // Both call buttons stay visible, smaller in a narrow list;
-                // names take what is left.
+                // A narrow list keeps the audio call visible and shows the
+                // video call on the row under the pointer, so names keep room.
                 let compact = width < 260.0;
-                let label_width =
-                    (child.available_width() - if compact { 56.0 } else { 72.0 }).max(40.0);
+                let video_shown = !compact || response.hovered();
+                let label_width = (child.available_width()
+                    - match (compact, video_shown) {
+                        (false, _) => 72.0,
+                        (true, true) => 56.0,
+                        (true, false) => 30.0,
+                    })
+                .max(40.0);
                 child.add(egui::Label::new(super::chat_list::elided(
                     &child,
                     name,
@@ -68,23 +74,25 @@ pub fn list(app: &mut App, ui: &mut egui::Ui) {
                 child.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     // Narrow lists use tighter buttons, so names keep room.
                     let button = if compact { 26.0 } else { 30.0 };
-                    let video = widgets::icon_button_sized(
-                        ui,
-                        &palette,
-                        Icon::Video,
-                        "Video call",
-                        button,
-                        16.0,
-                        palette.secondary,
-                    );
-                    widgets::on_click(
-                        &video,
-                        &mut actions,
-                        Action::StartCall {
-                            users: vec![email.clone()],
-                            video: true,
-                        },
-                    );
+                    if video_shown {
+                        let video = widgets::icon_button_sized(
+                            ui,
+                            &palette,
+                            Icon::Video,
+                            "Video call",
+                            button,
+                            16.0,
+                            palette.secondary,
+                        );
+                        widgets::on_click(
+                            &video,
+                            &mut actions,
+                            Action::StartCall {
+                                users: vec![email.clone()],
+                                video: true,
+                            },
+                        );
+                    }
                     let audio = widgets::icon_button_sized(
                         ui,
                         &palette,

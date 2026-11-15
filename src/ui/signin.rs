@@ -23,21 +23,16 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 ui.vertical_centered(|ui| {
                     // The logo, card and footer sit as one group near the middle.
-                    // Centred by the stack's own height last frame, so a long
-                    // form starts higher instead of overflowing.
-                    let height_id = egui::Id::new(("signin-height", app.auth.log_label()));
-                    let group: f32 = ui.ctx().data(|d| d.get_temp(height_id)).unwrap_or(560.0);
-                    let top = ((ui.available_height() - group) / 2.0).max(24.0);
+                    // One anchor for every sign-in step, so the mark and the
+                    // card do not move as the steps change: the tallest step
+                    // (setup) centred, with room above it.
+                    let height_id = egui::Id::new("signin-setup-height");
+                    let tallest: f32 = ui.ctx().data(|d| d.get_temp(height_id)).unwrap_or(620.0);
+                    let top = ((ui.available_height() - tallest) / 2.0).max(32.0);
                     ui.add_space(top);
                     let stack_top = ui.cursor().top();
-                    // The setup form is long: a smaller mark keeps the stack
-                    // starting where the other sign-in screens start.
-                    let logo = if matches!(app.auth, AuthStatus::NotConfigured) {
-                        vec2(84.0, 64.0)
-                    } else {
-                        vec2(128.0, 97.0)
-                    };
-                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(logo).tint(palette.text).alt_text("Wren"));
+                    // One mark size on every step.
+                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(84.0, 64.0)).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
                     ui.label(
                         egui::RichText::new("A fast, native client for Microsoft Teams chats, channels and meetings.").line_height(Some(theme::leading(14.0)))
@@ -100,8 +95,10 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         );
                     });
                     ui.add_space(24.0);
-                    let height = ui.cursor().top() - stack_top;
-                    ui.ctx().data_mut(|d| d.insert_temp(height_id, height));
+                    if matches!(app.auth, AuthStatus::NotConfigured) {
+                        let height = ui.cursor().top() - stack_top;
+                        ui.ctx().data_mut(|d| d.insert_temp(height_id, height));
+                    }
                 });
             });
         });

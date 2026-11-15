@@ -836,7 +836,7 @@ fn body(
                         Some(reason) => format!("Not sent: {reason}"),
                         None => "Not sent".to_owned(),
                     })
-                    .font(theme::semibold(12.0))
+                    .font(theme::semibold(13.0))
                     .color(palette.danger),
                 );
                 let retry = egui::Button::new(

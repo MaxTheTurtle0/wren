@@ -328,9 +328,9 @@ pub fn empty_state_with_action(
     ui.vertical_centered(|ui| {
         // Stay inside narrow panes instead of widening them.
         ui.set_max_width((ui.available_width() - 48.0).clamp(120.0, 360.0));
-        // Centred, a little above the middle (optical centre).
-        let content = 128.0 + if action.is_some() { 48.0 } else { 0.0 };
-        ui.add_space(((ui.available_height() - content) / 2.0 - 24.0).max(24.0));
+        // The icon always sits at the same height (42% down the pane), so
+        // empty states line up from screen to screen.
+        ui.add_space((ui.available_height() * 0.42 - 28.0).max(24.0));
         let size = 32.0;
         let (rect, _) = ui.allocate_exact_size(Vec2::splat(56.0), Sense::hover());
         ui.painter()
@@ -583,18 +583,6 @@ pub fn segmented(ui: &mut Ui, palette: &Palette, value: &mut bool, first: &str, 
             let response = ui
                 .add(button)
                 .on_hover_cursor(egui::CursorIcon::PointingHand);
-            if on {
-                // The chosen view, marked as well as filled.
-                let rect = response.rect;
-                ui.painter().rect_filled(
-                    egui::Rect::from_min_max(
-                        egui::pos2(rect.left() + 6.0, rect.bottom() - 3.0),
-                        egui::pos2(rect.right() - 6.0, rect.bottom() - 1.0),
-                    ),
-                    CornerRadius::same(1),
-                    palette.accent,
-                );
-            }
             if response.clicked() {
                 *value = index == 1;
             }
@@ -680,20 +668,21 @@ pub fn menu_row(
 /// content continues out of view. It darkens the background slightly
 /// instead of fading text, so what shows keeps its contrast.
 pub fn scroll_shadow(ui: &Ui, palette: &Palette, viewport: egui::Rect, top: bool) {
-    let depth = 8.0;
-    let strength = if palette.dark { 90.0 } else { 26.0 };
-    for step in 0..4 {
-        let t = step as f32 / 4.0;
+    // Soft: no hard line at the edge, fading over 12 pt.
+    let depth = 12.0;
+    let strength = if palette.dark { 70.0 } else { 16.0 };
+    for step in 0..6 {
+        let t = step as f32 / 6.0;
         let alpha = (strength * (1.0 - t) * (1.0 - t)) as u8;
         let y = if top {
-            viewport.top() + step as f32 * depth / 4.0
+            viewport.top() + step as f32 * depth / 6.0
         } else {
-            viewport.bottom() - (step + 1) as f32 * depth / 4.0
+            viewport.bottom() - (step + 1) as f32 * depth / 6.0
         };
         ui.painter().rect_filled(
             egui::Rect::from_min_size(
                 egui::pos2(viewport.left(), y),
-                vec2(viewport.width(), depth / 4.0),
+                vec2(viewport.width(), depth / 6.0),
             ),
             0.0,
             Color32::from_black_alpha(alpha),
