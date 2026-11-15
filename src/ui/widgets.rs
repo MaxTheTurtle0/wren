@@ -187,6 +187,8 @@ pub fn primary_button(ui: &mut Ui, palette: &Palette, text: &str) -> Response {
             .font(theme::semibold(13.0)),
     )
     .fill(fill)
+    // No grey control edge: the fill is the boundary.
+    .stroke(Stroke::NONE)
     .corner_radius(CornerRadius::same(8))
     .min_size(vec2(0.0, 32.0));
     // egui fades disabled widgets; this one has its own disabled colours.
@@ -229,7 +231,8 @@ pub fn pill(ui: &mut Ui, palette: &Palette, icon: Icon, text: &str, accent: bool
     let galley = ui
         .ctx()
         .fonts_mut(|f| f.layout_no_wrap(text.to_owned(), theme::semibold(13.0), fg));
-    let size = vec2(galley.size().x + 16.0 + 22.0, 28.0);
+    // The same 32 pt height as other buttons.
+    let size = vec2(galley.size().x + 18.0 + 22.0, 32.0);
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
     if ui.is_rect_visible(rect) {
         let fill = if response.hovered() {
@@ -241,23 +244,23 @@ pub fn pill(ui: &mut Ui, palette: &Palette, icon: Icon, text: &str, accent: bool
         } else {
             fill
         };
-        ui.painter().rect_filled(rect, CornerRadius::same(14), fill);
+        ui.painter().rect_filled(rect, CornerRadius::same(16), fill);
         if !accent {
             // The same 3:1 edge as other secondary controls.
             ui.painter().rect_stroke(
                 rect,
-                CornerRadius::same(14),
+                CornerRadius::same(16),
                 Stroke::new(1.0, palette.control),
                 egui::StrokeKind::Inside,
             );
         }
         let icon_rect = egui::Rect::from_center_size(
-            egui::pos2(rect.left() + 17.0, rect.center().y),
+            egui::pos2(rect.left() + 18.0, rect.center().y),
             Vec2::splat(15.0),
         );
         icon.image(fg, 15.0).paint_at(ui, icon_rect);
         ui.painter().galley(
-            egui::pos2(rect.left() + 29.0, rect.center().y - galley.size().y / 2.0),
+            egui::pos2(rect.left() + 30.0, rect.center().y - galley.size().y / 2.0),
             galley,
             fg,
         );

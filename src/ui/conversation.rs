@@ -382,6 +382,12 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 &mut heights,
                                 |message, grouped| estimate(message, width, grouped),
                             );
+                            // A short conversation sits at the bottom, by the
+                            // composer, as chats read (newest last).
+                            let slack = clip.bottom() - 24.0 - (ui.cursor().top() + layout.total());
+                            if slack > 0.0 {
+                                ui.add_space(slack);
+                            }
                             let origin = ui.cursor().top();
                             // Behind the hovered message, set once it is known.
                             let hover_tint = ui.painter().add(egui::Shape::Noop);

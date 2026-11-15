@@ -619,15 +619,16 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                 if widgets::checkbox(ui, &palette, &mut notifications, "Desktop notifications for new messages and meeting reminders").changed() {
                     actions.push(Action::SetNotifications(notifications));
                 }
-                let mut keep = app.settings.keep_running;
-                if widgets::checkbox(ui, &palette, &mut keep, "Keep running in the tray when the window closes").changed() {
-                    actions.push(Action::SetKeepRunning(keep));
-                }
+                // Under the option it explains: when there is something to notify.
                 ui.label(
                     egui::RichText::new(format!("New messages arrive when you open a chat, come back to Wren or press {}. Microsoft doesn't allow apps to check in the background; for instant alerts, connect a push relay.", super::keys::shortcut("⌘R")))
                         .font(theme::regular(13.0))
                         .color(palette.secondary),
                 );
+                let mut keep = app.settings.keep_running;
+                if widgets::checkbox(ui, &palette, &mut keep, "Keep running in the tray when the window closes").changed() {
+                    actions.push(Action::SetKeepRunning(keep));
+                }
                 let mut session = app.settings.presence_session;
                 if ui
                     .scope(|ui| widgets::checkbox(ui, &palette, &mut session, "Show me as available while I use Wren")).inner
@@ -947,9 +948,28 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
             for (index, person) in found.iter().enumerate() {
                 let (rect, row) =
                     ui.allocate_exact_size(vec2(ui.available_width(), 44.0), Sense::click());
+                // The keyboard's choice: a marker and an Enter hint, so it
+                // reads as "about to add", not as already added.
                 if index == selected || row.hovered() {
-                    ui.painter()
-                        .rect_filled(rect, CornerRadius::same(8), palette.surface_active);
+                    ui.painter().rect_filled(
+                        rect,
+                        CornerRadius::same(8),
+                        if index == selected {
+                            palette.surface_active
+                        } else {
+                            palette.surface_hover
+                        },
+                    );
+                }
+                if index == selected {
+                    widgets::selection_marker(ui, &palette, rect);
+                    ui.painter().text(
+                        egui::pos2(rect.right() - 12.0, rect.center().y),
+                        egui::Align2::RIGHT_CENTER,
+                        "Enter to add",
+                        theme::regular(12.0),
+                        palette.secondary,
+                    );
                 }
                 let mut child = ui.new_child(
                     egui::UiBuilder::new()

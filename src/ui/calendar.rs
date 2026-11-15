@@ -204,7 +204,12 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
                     if let Some(organizer) = &meeting.organizer {
                         fact(ui, "Organizer", organizer);
                     }
-                    if let Some(location) = &meeting.location {
+                    // "Teams" as a location only repeats the Online row.
+                    if let Some(location) = meeting.location.as_ref().filter(|l| {
+                        !(meeting.join_url.is_some()
+                            && ["teams", "microsoft teams meeting"]
+                                .contains(&l.trim().to_lowercase().as_str()))
+                    }) {
                         fact(ui, "Location", location);
                     }
                     fact(ui, "Online", if meeting.join_url.is_some() { "Microsoft Teams meeting" } else { "No" });
