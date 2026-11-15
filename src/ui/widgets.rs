@@ -481,30 +481,37 @@ pub fn pane_header(
         Stroke::new(1.0, palette.outline),
     );
     let inset = super::header_inset(ui.ctx(), rect.left());
-    // Title and actions line up with the page's centred content column.
+    // The title lines up with the page's content column; the actions sit at
+    // the pane's right edge, as in a conversation header.
     let column = detail_column(rect);
     ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
         ui.horizontal_centered(|ui| {
             ui.add_space(inset);
             ui.vertical(|ui| {
                 ui.spacing_mut().item_spacing.y = 0.0;
-                ui.add_space(5.0);
+                ui.add_space(4.0);
                 ui.label(
                     egui::RichText::new(title)
                         .font(theme::semibold(18.0))
                         .color(palette.text),
                 );
                 if !subtitle.is_empty() {
+                    // The when of a meeting matters: a readable size.
                     ui.label(
                         egui::RichText::new(subtitle)
-                            .font(theme::regular(12.0))
+                            .font(theme::medium(13.0))
                             .color(palette.secondary),
                     );
                 }
             });
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), actions);
         });
     });
+    ui.scope_builder(
+        egui::UiBuilder::new()
+            .max_rect(rect.shrink2(vec2(24.0, 0.0)))
+            .layout(egui::Layout::right_to_left(egui::Align::Center)),
+        actions,
+    );
     ui.allocate_rect(rect, Sense::hover());
 }
 
@@ -570,11 +577,22 @@ pub fn segmented(ui: &mut Ui, palette: &Palette, value: &mut bool, first: &str, 
             .stroke(Stroke::new(1.0, palette.control))
             .corner_radius(corner)
             .min_size(vec2(56.0, 28.0));
-            if ui
+            let response = ui
                 .add(button)
-                .on_hover_cursor(egui::CursorIcon::PointingHand)
-                .clicked()
-            {
+                .on_hover_cursor(egui::CursorIcon::PointingHand);
+            if on {
+                // The chosen view, marked as well as filled.
+                let rect = response.rect;
+                ui.painter().rect_filled(
+                    egui::Rect::from_min_max(
+                        egui::pos2(rect.left() + 6.0, rect.bottom() - 3.0),
+                        egui::pos2(rect.right() - 6.0, rect.bottom() - 1.0),
+                    ),
+                    CornerRadius::same(1),
+                    palette.accent,
+                );
+            }
+            if response.clicked() {
                 *value = index == 1;
             }
         }
@@ -655,11 +673,36 @@ pub fn menu_row(
     response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
+/// A soft shadow along the top (or bottom) edge of a scroll area, where
+/// content continues out of view. It darkens the background slightly
+/// instead of fading text, so what shows keeps its contrast.
+pub fn scroll_shadow(ui: &Ui, palette: &Palette, viewport: egui::Rect, top: bool) {
+    let depth = 8.0;
+    let strength = if palette.dark { 90.0 } else { 26.0 };
+    for step in 0..4 {
+        let t = step as f32 / 4.0;
+        let alpha = (strength * (1.0 - t) * (1.0 - t)) as u8;
+        let y = if top {
+            viewport.top() + step as f32 * depth / 4.0
+        } else {
+            viewport.bottom() - (step + 1) as f32 * depth / 4.0
+        };
+        ui.painter().rect_filled(
+            egui::Rect::from_min_size(
+                egui::pos2(viewport.left(), y),
+                vec2(viewport.width(), depth / 4.0),
+            ),
+            0.0,
+            Color32::from_black_alpha(alpha),
+        );
+    }
+}
+
 /// A label above a field or drop-down.
 pub fn field_label(ui: &mut Ui, palette: &Palette, text: &str) {
     ui.label(
         egui::RichText::new(text)
-            .font(theme::medium(12.0))
+            .font(theme::medium(13.0))
             .color(palette.secondary),
     );
 }

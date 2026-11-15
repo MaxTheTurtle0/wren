@@ -317,7 +317,7 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
         let app_ro: &App = app;
         // Opening a conversation shows its newest messages; from then on egui
         // keeps the view at the end while it is there.
-        egui::ScrollArea::vertical()
+        let scrolled = egui::ScrollArea::vertical()
             .id_salt(("history", conversation.key()))
             .auto_shrink([false, false])
             .stick_to_bottom(jump.is_none())
@@ -553,6 +553,12 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         });
                     });
             });
+        // History scrolled under the header gets a soft shadow there, so a
+        // cut line reads as "more above" (a shadow, not a fade, so the text
+        // keeps its contrast).
+        if scrolled.state.offset.y > 1.0 {
+            widgets::scroll_shadow(ui, &palette, scrolled.inner_rect, true);
+        }
         if let Some(view) = app.conversations.get_mut(conversation) {
             if view.messages.is_empty() {
                 view.messages = messages;
@@ -673,13 +679,13 @@ fn message_row(
                     gutter.left_top() + vec2(4.0, 4.0),
                     egui::Align2::LEFT_TOP,
                     crate::time::clock(message.created),
-                    theme::regular(11.0),
+                    theme::regular(12.0),
                     palette.dim,
                 );
             }
             ui.vertical(|ui| {
                 // Prose stops at a readable measure (about 80 characters).
-                let content_width = (width - GUTTER - 8.0).clamp(80.0, 680.0);
+                let content_width = (width - GUTTER - 8.0).clamp(80.0, 640.0);
                 ui.set_max_width(content_width);
                 ui.spacing_mut().item_spacing.y = 3.0;
                 if !grouped {
@@ -694,7 +700,7 @@ fn message_row(
                         );
                         ui.label(
                             egui::RichText::new(crate::time::clock(message.created))
-                                .font(theme::regular(12.0))
+                                .font(theme::regular(13.0))
                                 .color(palette.dim),
                         )
                         .on_hover_text(crate::time::day_label(message.created, crate::time::now()));
@@ -1136,7 +1142,8 @@ fn thread_card(
     actions: &mut Vec<Action>,
 ) -> egui::Rect {
     let palette = &app.palette;
-    let width = ui.available_width();
+    // Whole points, so every card in a thread ends on the same edge.
+    let width = ui.available_width().floor();
     if root.system {
         return message_row(ui, app, conversation, root, me, false, false, actions);
     }
@@ -1852,10 +1859,9 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                         // control colour.
                                         // A floating bar: a solid lane would re-wrap the
                                         // text and lose the caret on paste.
-                                        // A full-height track reads as a scroll bar,
-                                        // not a stray mark by the icons.
-                                        ui.spacing_mut().scroll.dormant_handle_opacity = 1.0;
-                                        ui.spacing_mut().scroll.dormant_background_opacity = 1.0;
+                                        // A slim, half-strength thumb, like the other
+                                        // scroll bars.
+                                        ui.spacing_mut().scroll.dormant_handle_opacity = 0.5;
                                         ui.spacing_mut().scroll.floating_width = 4.0;
                                         ui.spacing_mut().scroll.handle_min_length = 24.0;
                                         let editor_widgets = ui.visuals().widgets.clone();
@@ -1975,7 +1981,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                 };
                 ui.label(
                     egui::RichText::new(hint)
-                        .font(theme::regular(12.0))
+                        .font(theme::regular(13.0))
                         .color(palette.dim),
                 );
             });
@@ -1989,7 +1995,8 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
         let height = candidates.len() as f32 * 40.0 + 12.0 + 26.0;
         egui::Area::new(id.with("mentions"))
             .order(egui::Order::Foreground)
-            .fixed_pos(top + vec2(0.0, -height - 4.0))
+            // 8 pt clear of the composer.
+            .fixed_pos(top + vec2(0.0, -height - 8.0))
             .show(ui.ctx(), |ui| {
                 Frame::new()
                     .fill(palette.surface)

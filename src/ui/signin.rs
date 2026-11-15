@@ -24,12 +24,19 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 ui.vertical_centered(|ui| {
                     // The logo, card and footer sit as one group near the middle.
                     let group = if matches!(app.auth, AuthStatus::NotConfigured) {
-                        780.0
+                        700.0
                     } else {
                         560.0
                     };
-                    ui.add_space(((ui.available_height() - group) / 2.0).max(16.0));
-                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(128.0, 97.0)).tint(palette.text).alt_text("Wren"));
+                    ui.add_space(((ui.available_height() - group) / 2.0).max(48.0));
+                    // The setup form is long: a smaller mark keeps the stack
+                    // starting where the other sign-in screens start.
+                    let logo = if matches!(app.auth, AuthStatus::NotConfigured) {
+                        vec2(84.0, 64.0)
+                    } else {
+                        vec2(128.0, 97.0)
+                    };
+                    ui.add(egui::Image::new(LOGO).fit_to_exact_size(logo).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
                     ui.label(
                         egui::RichText::new("A fast, native client for Microsoft Teams chats, channels and meetings.").line_height(Some(theme::leading(14.0)))
@@ -77,12 +84,20 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         app.actions.push(Action::StartDemo);
                     }
                     ui.add_space(24.0);
-                    ui.set_max_width(472.0f32.min(ui.available_width() - 32.0));
-                    ui.label(
-                        egui::RichText::new("Wren is an independent open-source project, not affiliated with Microsoft. It talks only to Microsoft's official APIs and keeps your data on this computer.").line_height(Some(theme::leading(12.0)))
-                            .font(theme::regular(12.0))
-                            .color(palette.dim),
-                    );
+                    // A short measure: two or three lines, not one long one.
+                    let footer = 560.0f32.min(ui.available_width() - 32.0);
+                    ui.allocate_ui(vec2(footer, 0.0), |ui| {
+                        ui.set_max_width(footer);
+                        ui.add(
+                            egui::Label::new(
+                                egui::RichText::new("Wren is an independent open-source project, not affiliated with Microsoft. It talks only to Microsoft's official APIs and keeps your data on this computer.")
+                                    .line_height(Some(theme::leading(13.0)))
+                                    .font(theme::regular(13.0))
+                                    .color(palette.dim),
+                            )
+                            .wrap(),
+                        );
+                    });
                     ui.add_space(24.0);
                 });
             });
@@ -160,7 +175,7 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     .link(
                         egui::RichText::new(&url)
                             .line_height(Some(theme::leading(14.0)))
-                            .underline(),
+                            .color(palette.link),
                     )
                     .clicked()
                 {
@@ -359,7 +374,11 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
                 tenant: app.form_tenant.clone(),
             });
         }
-        if !first_run && ui.link("How to register Wren").clicked() {
+        if !first_run
+            && ui
+                .link(egui::RichText::new("How to register Wren").color(palette.link))
+                .clicked()
+        {
             app.actions.push(Action::OpenUrl(DOCS.into()));
         }
     });

@@ -582,7 +582,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
             bars.inactive.bg_fill = palette.control;
             bars.hovered.bg_fill = palette.secondary;
             bars.active.bg_fill = palette.secondary;
-            egui::ScrollArea::vertical()
+            let scrolled = egui::ScrollArea::vertical()
                 .max_height(height)
                 .min_scrolled_height(height)
                 .show(ui, |ui| {
@@ -626,7 +626,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         .font(theme::regular(12.0))
                         .color(palette.dim),
                     );
-                    if !app.demo && ui.link("Add account").clicked() {
+                    if !app.demo && ui.link(egui::RichText::new("Add account").color(palette.link)).clicked() {
                         actions.push(Action::AddAccount);
                     }
                 });
@@ -755,7 +755,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                         );
                         ui.horizontal(|ui| {
                             ui.label(egui::RichText::new("Admin consent link for your tenant's administrator:").font(theme::regular(12.0)).color(palette.dim));
-                            if ui.link("Copy").clicked() {
+                            if ui.link(egui::RichText::new("Copy").color(palette.link)).clicked() {
                                 actions.push(Action::CopyText(consent));
                             }
                         });
@@ -794,7 +794,7 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     if ui.add_enabled(!app.update.busy() && !matches!(app.update, crate::updates::Status::Ready(_)), egui::Button::new("Check for updates")).clicked() {
                         actions.push(Action::CheckUpdate);
                     }
-                    if ui.link("Release notes and downloads").clicked() {
+                    if ui.link(egui::RichText::new("Release notes and downloads").color(palette.link)).clicked() {
                         actions.push(Action::OpenUrl("https://github.com/MaxTheTurtle0/wren/releases".into()));
                     }
                 });
@@ -808,14 +808,22 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                     .color(palette.secondary),
                 );
                 ui.horizontal(|ui| {
-                    if ui.link("Keyboard shortcuts").clicked() {
+                    if ui.link(egui::RichText::new("Keyboard shortcuts").color(palette.link)).clicked() {
                         actions.push(Action::OpenShortcuts);
                     }
-                    if ui.link("Log file folder").clicked() {
+                    if ui.link(egui::RichText::new("Log file folder").color(palette.link)).clicked() {
                         actions.push(Action::OpenUrl(format!("file://{}", app.dirs.state.display())));
                     }
                 });
             });
+            // More settings above or below: a soft shadow at that edge.
+            let viewport = scrolled.inner_rect;
+            if scrolled.state.offset.y > 1.0 {
+                widgets::scroll_shadow(ui, &palette, viewport, true);
+            }
+            if scrolled.state.offset.y + viewport.height() < scrolled.content_size.y - 1.0 {
+                widgets::scroll_shadow(ui, &palette, viewport, false);
+            }
         });
     });
     if close {
@@ -979,12 +987,12 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                                             app,
                                             Some(&person.user_id),
                                             &person.display_name,
-                                            22.0,
+                                            26.0,
                                             false,
                                         );
                                         ui.label(
                                             egui::RichText::new(&person.display_name)
-                                                .font(theme::medium(13.0))
+                                                .font(theme::medium(14.0))
                                                 .color(palette.text),
                                         );
                                         let close = widgets::icon_button_sized(
@@ -1362,7 +1370,8 @@ pub fn qr_code(ui: &mut egui::Ui, text: &str, size: f32) {
         ui.label("This link is too long for a QR code.");
         return;
     };
-    const QUIET: i32 = 3;
+    // The standard quiet zone: four modules of white all round.
+    const QUIET: i32 = 4;
     let modules = code.size() + 2 * QUIET;
     let cell = (size / modules as f32).floor().max(1.0);
     let side = cell * modules as f32;
