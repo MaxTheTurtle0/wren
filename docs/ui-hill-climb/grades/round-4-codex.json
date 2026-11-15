@@ -1,0 +1,388 @@
+{
+  "overall": 8,
+  "dimensions": {
+    "hierarchy": 8,
+    "spacing": 8,
+    "typography": 8,
+    "consistency": 8.5,
+    "contrast_accessibility": 8,
+    "feedback": 8,
+    "states": 8.5,
+    "navigation": 8
+  },
+  "screens": {
+    "account-menu": {
+      "score": 8.5,
+      "issues": [
+        "Account identities rely on small email text to distinguish two identical names and initials."
+      ]
+    },
+    "calendar": {
+      "score": 8,
+      "issues": [
+        "The selected meeting title is only about 15 px, scarcely stronger than its detail text.",
+        "Join is separated from the detail card by a large horizontal gap."
+      ]
+    },
+    "call-bar": {
+      "score": 8.5,
+      "issues": [
+        "The narrow composer truncates its destination and omits the mention hint.",
+        "Secondary text and the send instructions remain small."
+      ]
+    },
+    "call-docked": {
+      "score": 8.5,
+      "issues": [
+        "The persistent formatting instructions compete with the otherwise quiet meeting chat."
+      ]
+    },
+    "calls-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Several recent-person names truncate before the surname.",
+        "Capability text wraps back to the far left instead of aligning with its text column.",
+        "Static capability explanations occupy more space than the join task."
+      ]
+    },
+    "calls": {
+      "score": 8,
+      "issues": [
+        "Static unsupported-capability text uses error-red emphasis.",
+        "The explanatory section is visually heavier than the meeting-link task."
+      ]
+    },
+    "channel-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Reply-button outlines are below 3:1 in both themes.",
+        "The navigation region occupies 296 of 760 px and limits thread reading space.",
+        "The long composer placeholder nearly fills its available text lane."
+      ]
+    },
+    "channel": {
+      "score": 8,
+      "issues": [
+        "Reply-button outlines are below 3:1 in both themes.",
+        "The persistent formatting instructions are small and visually busy."
+      ]
+    },
+    "chat-filter-no-match": {
+      "score": 8.5,
+      "issues": [
+        "Small persistent formatting instructions add noise to the conversation pane."
+      ]
+    },
+    "chat-no-selection": {
+      "score": 9,
+      "issues": []
+    },
+    "chats-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Chat names and previews truncate heavily.",
+        "The 296 px navigation region consumes 39% of the window.",
+        "The quoted message loses its original bullet structure."
+      ]
+    },
+    "chats-wide": {
+      "score": 8,
+      "issues": [
+        "Header actions sit at the window edge, far from the capped message and composer column.",
+        "The quote flattens a structured list into a compact run of text.",
+        "Persistent formatting instructions remain small."
+      ]
+    },
+    "chats": {
+      "score": 8,
+      "issues": [
+        "The quote flattens a structured list into a compact run of text.",
+        "Persistent formatting instructions remain small and dense."
+      ]
+    },
+    "composer-images": {
+      "score": 8,
+      "issues": [
+        "Fixed thumbnail crops hide the overall proportions and content of the pasted images.",
+        "Remove icons are visually tiny relative to the thumbnails."
+      ]
+    },
+    "composer-long-draft": {
+      "score": 7.5,
+      "issues": [
+        "The first visible draft line is clipped at the top of the editor.",
+        "The short scrollbar thumb and long repetitive draft make position hard to judge.",
+        "Persistent formatting instructions add another dense line below the editor."
+      ]
+    },
+    "composer-mention": {
+      "score": 8,
+      "issues": [
+        "Suggestion email is about 11 px in a compact 38 px row.",
+        "Selected-row secondary text passes contrast narrowly.",
+        "Attachment removal is represented by a very small cross."
+      ]
+    },
+    "error-toast": {
+      "score": 8,
+      "issues": [
+        "The toast covers an earlier message near the top of the timeline.",
+        "The specific cause appears in the remote toast while the failed message itself only says Not sent."
+      ]
+    },
+    "first-sync-empty": {
+      "score": 8.5,
+      "issues": [
+        "The sidebar changes width from the populated and loading views, shifting the main pane."
+      ]
+    },
+    "first-sync-loading": {
+      "score": 9,
+      "issues": []
+    },
+    "group-chat": {
+      "score": 8.5,
+      "issues": [
+        "Persistent composer instructions are small and dense."
+      ]
+    },
+    "image-preview": {
+      "score": 8.5,
+      "issues": [
+        "The 100% action has less visible button affordance than Fit."
+      ]
+    },
+    "join-on-phone": {
+      "score": 9,
+      "issues": []
+    },
+    "new-chat": {
+      "score": 8,
+      "issues": [
+        "The typed people-search field has no persistent label.",
+        "The existing-chat explanation is squeezed into an approximately 11 px line beside the primary action.",
+        "Selected-result secondary text passes contrast narrowly."
+      ]
+    },
+    "permission-consent": {
+      "score": 8.5,
+      "issues": [
+        "The permission identifier and consent explanation use small secondary type."
+      ]
+    },
+    "search-switcher": {
+      "score": 8.5,
+      "issues": [
+        "The input combines navigation and message-search instructions into one long placeholder.",
+        "Long previews truncate into dense single lines."
+      ]
+    },
+    "settings": {
+      "score": 8,
+      "issues": [
+        "Important refresh behavior is explained in a small three-line paragraph.",
+        "The paragraph's position below the tray option makes its scope ambiguous.",
+        "Some controls below the scroll fold are not visible in the shot."
+      ]
+    },
+    "setup": {
+      "score": 8,
+      "issues": [
+        "The dense tenant, GUID and environment-variable guidance competes with completing the two fields.",
+        "Several operational instructions use approximately 12 px text."
+      ]
+    },
+    "shortcuts": {
+      "score": 8,
+      "issues": [
+        "Description columns drift between sections and rows.",
+        "The dialog reaches y=785 in an 800 px window, leaving only 15 px below it."
+      ]
+    },
+    "signin-browser": {
+      "score": 8.5,
+      "issues": [
+        "The long privacy footer is visually detached from the compact sign-in task."
+      ]
+    },
+    "signin-device-code": {
+      "score": 9,
+      "issues": []
+    },
+    "signin-expired": {
+      "score": 8.5,
+      "issues": [
+        "The long privacy footer is visually detached from the compact recovery task."
+      ]
+    },
+    "signin-failed": {
+      "score": 9,
+      "issues": []
+    },
+    "signin-finishing": {
+      "score": 9,
+      "issues": []
+    },
+    "signin": {
+      "score": 8.5,
+      "issues": [
+        "The long privacy footer is visually detached from the compact sign-in task."
+      ]
+    },
+    "status-message": {
+      "score": 9,
+      "issues": []
+    },
+    "teams": {
+      "score": 9,
+      "issues": []
+    }
+  },
+  "top_issues": [
+    {
+      "priority": 1,
+      "severity": "medium",
+      "screens": [
+        "channel",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "issue": "Reply-button borders do not meet the requested 3:1 component-boundary contrast. Their labels remain readable.",
+      "evidence": "Pillow sampled the Reply button at x393-466, y519-547 in channel. Light border #DFDFE3 against #FFFFFF = 1.33:1. Dark border #303137 against #25262B = 1.17:1. Label colors #4A4D55 and #B4B6BF pass.",
+      "fix": "Use a 1 px outline of #7B7E87 in light mode and #858894 in dark mode for Reply controls; retain the existing label colors."
+    },
+    {
+      "priority": 2,
+      "severity": "medium",
+      "screens": [
+        "chats-narrow",
+        "calls-narrow",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "issue": "Narrow layouts spend too much width on navigation while still truncating important identities.",
+      "evidence": "At 760 px, the rail and sidebar end at x296, taking 39% of the window. Chat names start at x128; Katherine Johnson and multiple other surnames truncate. Calls reserves two action columns around x226 and x265.",
+      "fix": "At widths below 900 px, provide a collapsible sidebar or a list/detail view with a 32 px Back control. In compact Calls rows, move audio/video actions to a second row or an overflow action, reserving at least 150 px for the person's name."
+    },
+    {
+      "priority": 3,
+      "severity": "medium",
+      "screens": [
+        "composer-long-draft"
+      ],
+      "mode": "both",
+      "issue": "The scrolled draft clips the first visible line against the editor's top edge.",
+      "evidence": "The editor starts at y546. The SELECT column_110 line is partly cut at y552, while subsequent baselines are spaced about 20 px apart. The scrollbar thumb is only about 16 px tall near x1181.",
+      "fix": "Keep 8 px vertical editor padding inside the clip region and scroll to whole 20 px line increments when revealing the caret. Keep the thumb at least 24 px high."
+    },
+    {
+      "priority": 4,
+      "severity": "medium",
+      "screens": [
+        "composer-images"
+      ],
+      "mode": "both",
+      "issue": "Pasted-image thumbnails crop away content needed to verify attachments before sending.",
+      "evidence": "Three approximately 144x96 px previews at x393,545,697 show cropped birds or partial grids. The image-preview shot establishes one image's very wide 3072x256 proportions.",
+      "fix": "Contain each image inside its 144x96 px tile with neutral letterboxing instead of filling and cropping. Add a 12 pt filename or dimensions below each preview and give the remove glyph a 24x24 px control."
+    },
+    {
+      "priority": 5,
+      "severity": "medium",
+      "screens": [
+        "new-chat"
+      ],
+      "mode": "both",
+      "issue": "People search loses its purpose label once the user types; the existing-chat explanation is too compressed.",
+      "evidence": "The field at x400-880, y203-236 shows only 'ra'. The explanation at x580, y427 shares the primary action row in approximately 11 px type.",
+      "fix": "Add a persistent 12 pt 'Find people' label 6 px above the field. Place the existing-chat explanation on its own line below the results in 13 pt type, with 12 px before a separate action row."
+    },
+    {
+      "priority": 6,
+      "severity": "medium",
+      "screens": [
+        "error-toast"
+      ],
+      "mode": "both",
+      "issue": "The failure explanation is separated from its recovery control and obscures older content.",
+      "evidence": "The toast covers x393-887, y64-112 near the top of the timeline. The failed message and Retry are near y605-700; its local label only reads 'Not sent'.",
+      "fix": "Place a 13 pt 'Microsoft is limiting requests. Try again in a moment.' explanation directly above Retry in the failed row, with 8 px spacing. Keep a global toast below the header only if it has reserved space instead of covering message text."
+    },
+    {
+      "priority": 7,
+      "severity": "low",
+      "screens": [
+        "calls",
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "issue": "Static capability documentation receives error-level emphasis and wraps poorly at narrow widths.",
+      "evidence": "In calls-narrow, the capability block spans y319-385. The red row starts its text around x432 but wraps 'window' to x320. 'How calls work' and its paragraph occupy y200-291 above this block.",
+      "fix": "Keep one 13 pt sentence about browser calling below the join card. Put limitations under Details in neutral #4A4D55 light or #B4B6BF dark. Use a fixed 24 px icon column and a text column whose wrapped lines align."
+    },
+    {
+      "priority": 8,
+      "severity": "low",
+      "screens": [
+        "shortcuts"
+      ],
+      "mode": "both",
+      "issue": "Shortcut descriptions do not share a consistent alignment, and the dialog nearly touches the bottom edge.",
+      "evidence": "Navigation descriptions begin around x596, message descriptions around x601 and app descriptions vary up to x622. The card ends at y785, only 15 px above the window bottom.",
+      "fix": "Use one grid with a 176 px key column, a 20 px gap and a shared description start. Limit height to viewport minus 64 px, with a scrolling body and 24 px internal padding."
+    },
+    {
+      "priority": 9,
+      "severity": "low",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "group-chat",
+        "channel",
+        "composer-mention",
+        "composer-long-draft",
+        "call-docked"
+      ],
+      "mode": "both",
+      "issue": "The persistent composer help line exposes dense formatting syntax in very small type.",
+      "evidence": "At 1280x800 the helper runs around x380-850, y779 and includes raw **bold**, *italic*, backticks, quote and list syntax. Sampled text is #62656D on white = 5.83:1 and #9C9EA8 on #17181B = 6.65:1, so this is density and size, not a contrast failure.",
+      "fix": "Show only 'Enter to send \u00b7 Shift+Enter for a new line' at 12 pt. Move syntax examples into a formatting help popup reached by a 24 px button; use 13 pt examples there."
+    },
+    {
+      "priority": 10,
+      "severity": "low",
+      "screens": [
+        "settings",
+        "setup"
+      ],
+      "mode": "both",
+      "issue": "Important behavior and setup guidance is packed into small secondary paragraphs.",
+      "evidence": "Settings refresh guidance wraps across three lines at x382-860, y433-472 immediately below the tray option. Setup guidance mixes tenant instructions, GUID requirements and environment variables between y481 and y632.",
+      "fix": "Use 13 pt guidance with 18 px line height. In Settings, group the refresh explanation under a 'Message updates' label separated by 16 px. In Setup, move environment-variable guidance to an Advanced disclosure and keep a single 13 pt validation hint below the ID field."
+    },
+    {
+      "priority": 11,
+      "severity": "low",
+      "screens": [
+        "calendar",
+        "chats-wide"
+      ],
+      "mode": "both",
+      "issue": "Main-pane hierarchy and action placement do not consistently follow the reading column.",
+      "evidence": "Calendar's selected meeting title is about 15 px at x380,y17 while the section title is about 18 px. Its detail card ends at x1028 but Join sits near x1230. At 1920 px, chat content ends near x1300 while header actions sit around x1820-1890.",
+      "fix": "Use a 20 pt meeting-detail title. Align Calendar actions to the 640 px detail-card column. In wide chats, group header actions at the right edge of the capped 920 px conversation column."
+    },
+    {
+      "priority": 12,
+      "severity": "low",
+      "screens": [
+        "composer-mention",
+        "new-chat"
+      ],
+      "mode": "both",
+      "issue": "Selected suggestions use tiny secondary identity text with little contrast margin.",
+      "evidence": "The mention row is about 38 px high at y620-658 and its email is about 11 px. Shared selected-row metadata samples are #62656D on #E4E4E8 = 4.60:1 light and #9C9EA8 on #34353C = 4.57:1 dark. Both pass 4.5:1, narrowly.",
+      "fix": "Use a 44 px suggestion row, 14 pt name and 12 pt email. Darken light-mode email to #4A4D55 and lighten dark-mode email to #B4B6BF for a larger contrast margin."
+    }
+  ]
+}
