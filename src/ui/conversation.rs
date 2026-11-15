@@ -501,7 +501,12 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                         egui::Shape::rect_filled(
                                             rect.expand2(vec2(8.0, 0.0)),
                                             CornerRadius::same(6),
-                                            palette.panel,
+                                            // A tint you can see, not the near-white panel.
+                                            if palette.dark {
+                                                palette.surface
+                                            } else {
+                                                palette.surface_hover
+                                            },
                                         ),
                                     );
                                 }
@@ -527,14 +532,17 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         // Messages fade out under the header instead of being cut.
                         let fade = egui::Rect::from_min_size(
                             egui::pos2(clip.left(), clip.top()),
-                            vec2(clip.width(), 12.0),
+                            vec2(clip.width(), 20.0),
                         );
-                        for step in 0..6 {
+                        for step in 0..10 {
                             let strip = egui::Rect::from_min_size(
                                 fade.min + vec2(0.0, step as f32 * 2.0),
                                 vec2(fade.width(), 2.0),
                             );
-                            let alpha = 1.0 - step as f32 / 6.0;
+                            // Eased: mostly solid at the top edge, so a cut line
+                            // reads as hidden rather than half there.
+                            let t = step as f32 / 10.0;
+                            let alpha = 1.0 - t * t;
                             ui.painter().with_clip_rect(clip).rect_filled(
                                 strip,
                                 0.0,
@@ -668,17 +676,15 @@ fn message_row(
                 );
             }
             ui.vertical(|ui| {
-                let content_width = (width - GUTTER - 8.0).max(80.0);
+                // Prose stops at a readable measure (about 80 characters).
+                let content_width = (width - GUTTER - 8.0).clamp(80.0, 680.0);
                 ui.set_max_width(content_width);
                 ui.spacing_mut().item_spacing.y = 3.0;
                 if !grouped {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 8.0;
-                        let name_color = if message.is_from(me) {
-                            palette.accent
-                        } else {
-                            palette.text
-                        };
+                        // Orange stays for actions, selection and mentions.
+                        let name_color = palette.text;
                         ui.label(
                             egui::RichText::new(&message.author)
                                 .font(theme::semibold(14.0))
@@ -1544,23 +1550,25 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                             ui.horizontal_wrapped(|ui| {
                                 ui.spacing_mut().item_spacing = vec2(8.0, 8.0);
                                 for (index, image) in draft.images.iter().enumerate() {
-                                    // Crop a fixed-size thumbnail instead of shrinking a
-                                    // wide screenshot into a line. The preview keeps the
-                                    // full image and its original proportions.
+                                    // The whole image fits its tile. Very long or tall
+                                    // images keep a 12 pt short side, so they never
+                                    // shrink into a line; only their length is cut. The
+                                    // preview keeps the full image.
                                     let size = vec2(144.0, 96.0);
                                     let natural =
                                         vec2(image.width.max(1) as f32, image.height.max(1) as f32);
-                                    let scale = (size.x / natural.x).max(size.y / natural.y);
+                                    let fit = (size.x / natural.x).min(size.y / natural.y);
+                                    let scale = fit.max(12.0 / natural.x.min(natural.y));
+                                    let shown = (natural * scale).min(size);
                                     let uv = egui::Rect::from_center_size(
                                         egui::pos2(0.5, 0.5),
-                                        size / (natural * scale),
+                                        shown / (natural * scale),
                                     );
                                     let (tile, _) = ui.allocate_exact_size(
                                         size + vec2(0.0, 18.0),
                                         Sense::hover(),
                                     );
                                     let rect = egui::Rect::from_min_size(tile.min, size);
-                                    // What is being sent, since the tile shows a crop.
                                     ui.painter().text(
                                         egui::pos2(rect.left() + 2.0, rect.bottom() + 3.0),
                                         egui::Align2::LEFT_TOP,
@@ -1573,16 +1581,20 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                         CornerRadius::same(8),
                                         palette.surface_hover,
                                     );
+                                    egui::Image::new(crate::images::cropped(&image.uri()))
+                                        .maintain_aspect_ratio(false)
+                                        .uv(uv)
+                                        .corner_radius(4)
+                                        .alt_text("Pasted image")
+                                        .paint_at(
+                                            ui,
+                                            egui::Rect::from_center_size(rect.center(), shown),
+                                        );
                                     let response = ui
-                                        .put(
+                                        .interact(
                                             rect,
-                                            egui::Image::new(crate::images::cropped(&image.uri()))
-                                                .fit_to_exact_size(size)
-                                                .maintain_aspect_ratio(false)
-                                                .uv(uv)
-                                                .corner_radius(8)
-                                                .sense(Sense::click())
-                                                .alt_text("Preview pasted image"),
+                                            id.with(("image-tile", index)),
+                                            Sense::click(),
                                         )
                                         .on_hover_cursor(egui::CursorIcon::PointingHand)
                                         .on_hover_text("Preview image");
@@ -1806,6 +1818,17 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                     vec2(width, max_editor_height),
                                     Layout::top_down(Align::Min),
                                     |ui| {
+                                        // A long draft always shows its scroll thumb, in the
+                                        // control colour.
+                                        // A floating bar: a solid lane would re-wrap the
+                                        // text and lose the caret on paste.
+                                        ui.spacing_mut().scroll.dormant_handle_opacity = 1.0;
+                                        ui.spacing_mut().scroll.floating_width = 4.0;
+                                        let editor_widgets = ui.visuals().widgets.clone();
+                                        let bars = &mut ui.visuals_mut().widgets;
+                                        bars.inactive.bg_fill = palette.control;
+                                        bars.hovered.bg_fill = palette.secondary;
+                                        bars.active.bg_fill = palette.secondary;
                                         let scrolled = egui::ScrollArea::vertical()
                                             .id_salt(id.with("scroll"))
                                             .max_height(max_editor_height)
@@ -1813,6 +1836,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                             .auto_shrink([false, true])
                                             .animated(false)
                                             .show(ui, |ui| {
+                                                ui.visuals_mut().widgets = editor_widgets.clone();
                                                 ui.add_enabled_ui(can_post, |ui| {
                                                     let output = edit.show(ui);
                                                     // Paste and mention completion move the

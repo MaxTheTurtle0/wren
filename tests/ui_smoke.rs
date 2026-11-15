@@ -744,11 +744,14 @@ fn composer_images_have_usable_thumbnails_and_open_full_previews() {
                 h.wait_for_images();
                 let thumbnail = image_shapes(&h, &image)[0];
                 let rect = thumbnail.rect;
-                assert_eq!(rect.size(), egui::vec2(144.0, 96.0));
+                // The image fits its 144 x 96 tile and is never thinner than
+                // 12 pt, so a panorama does not shrink into a line.
+                assert!(rect.width() <= 144.5 && rect.height() <= 96.5, "{rect:?}");
+                assert!(rect.width() >= 11.5 && rect.height() >= 11.5, "{rect:?}");
                 let uv = thumbnail.brush.as_ref().unwrap().uv;
-                let cropped_aspect = uv.width() * w as f32 / (uv.height() * height as f32);
+                let shown_aspect = uv.width() * w as f32 / (uv.height() * height as f32);
                 assert!(
-                    (cropped_aspect - 1.5).abs() < 0.001,
+                    (shown_aspect - rect.width() / rect.height()).abs() < 0.02 * shown_aspect,
                     "thumbnail preserves proportions"
                 );
                 assert!(uv.min.x >= 0.0 && uv.min.y >= 0.0 && uv.max.x <= 1.0 && uv.max.y <= 1.0);
@@ -808,9 +811,13 @@ fn composer_images_have_usable_thumbnails_and_open_full_previews() {
                 h.frames(3);
                 assert!(h.app.overlay.is_none());
                 assert_eq!(h.app.drafts[&chat].images, vec![image.clone()]);
-                let thumbnail = image_shapes(&h, &image)[0].rect;
-                // The remove control sits on the thumbnail's top-right corner.
-                let remove = thumbnail.right_top() + egui::vec2(-14.0, 14.0);
+                // The remove control sits on the top-right corner of the tile
+                // around the image.
+                let tile = egui::Rect::from_center_size(
+                    image_shapes(&h, &image)[0].rect.center(),
+                    egui::vec2(144.0, 96.0),
+                );
+                let remove = tile.right_top() + egui::vec2(-14.0, 14.0);
                 h.click(remove);
                 assert!(
                     h.app
@@ -856,7 +863,7 @@ fn multiple_pasted_images_wrap_without_clipping() {
             let mut rects = Vec::new();
             for image in images {
                 let (rect, clip) = image_clips(&h, image)[0];
-                assert_eq!(rect.size(), egui::vec2(144.0, 96.0));
+                assert!(rect.width() <= 144.5 && rect.height() <= 96.5, "{rect:?}");
                 assert!(
                     clip.contains_rect(rect),
                     "all thumbnails must remain visible at width {width}"

@@ -140,8 +140,8 @@ impl Palette {
             text: Color32::from_rgb(0x1b, 0x1c, 0x1f),
             secondary: Color32::from_rgb(0x4a, 0x4d, 0x55),
             dim: Color32::from_rgb(0x62, 0x65, 0x6d),
-            accent: Color32::from_rgb(0xa9, 0x53, 0x0f),
-            accent_hover: Color32::from_rgb(0x8f, 0x45, 0x0b),
+            accent: Color32::from_rgb(0x9c, 0x4b, 0x0c),
+            accent_hover: Color32::from_rgb(0x80, 0x3d, 0x08),
             on_accent: Color32::from_rgb(0xff, 0xff, 0xff),
             danger: Color32::from_rgb(0xb4, 0x25, 0x25),
             warning: Color32::from_rgb(0x8a, 0x5a, 0x00),
@@ -323,6 +323,8 @@ pub fn apply(ctx: &egui::Context, palette: &Palette) {
         style.spacing.scroll = egui::style::ScrollStyle::floating();
         style.spacing.scroll.floating_width = 6.0;
         style.interaction.selectable_labels = false;
+        // Tooltips wrap at a readable measure instead of running wide.
+        style.spacing.tooltip_width = 280.0;
         style.url_in_tooltip = true;
     });
 }

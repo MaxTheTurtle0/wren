@@ -99,7 +99,7 @@ fn row(
         if live {
             ui.painter().circle_filled(dot, 4.0, palette.success);
         } else if meeting.join_url.is_some() {
-            ui.painter().circle_filled(dot, 4.0, palette.link);
+            ui.painter().circle_filled(dot, 4.0, palette.secondary);
         } else {
             ui.painter()
                 .circle_stroke(dot, 3.5, Stroke::new(1.5, palette.dim));
@@ -168,11 +168,18 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
         return;
     };
     let now = crate::time::now();
-    let when = format!(
+    // When, with how soon it starts, in one line under the title.
+    let mut when = format!(
         "{} · {}",
         crate::time::day_label(meeting.start, now),
         crate::time::span_label(meeting.start, meeting.end, meeting.all_day)
     );
+    if meeting.start > now {
+        when.push_str(&format!(
+            " · {}",
+            crate::time::until_label(meeting.start, now)
+        ));
+    }
     widgets::pane_header(ui, &palette, &meeting.subject, &when, |ui| {
         ui.spacing_mut().item_spacing.x = 6.0;
         // Right to left: the primary action ends up rightmost.
@@ -187,10 +194,9 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
             widgets::on_click(&open, &mut app.actions, Action::OpenUrl(web.clone()));
         }
     });
-    ui.add_space(20.0);
-    Frame::new().inner_margin(Margin::symmetric(24, 0)).show(ui, |ui| {
-        // The same centred column as Calls; conversations use a wider one.
-        let column = widgets::centred_column(ui.max_rect(), DETAIL_WIDTH);
+    Frame::new().inner_margin(Margin::symmetric(0, 0)).show(ui, |ui| {
+        // The same column as Calls and as the header above.
+        let column = widgets::detail_column(ui.max_rect());
         ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
         ui.add_space(20.0);
         Frame::new()
@@ -218,15 +224,19 @@ pub fn detail(app: &mut App, ui: &mut egui::Ui) {
                         fact(ui, "Location", location);
                     }
                     fact(ui, "Online", if meeting.join_url.is_some() { "Microsoft Teams meeting" } else { "No" });
-                    if meeting.start > now {
-                        fact(ui, "Starts", &crate::time::until_label(meeting.start, now));
-                    }
                 });
-                if let Some(preview) = &meeting.preview {
-                    ui.add_space(12.0);
-                    ui.label(egui::RichText::new(preview).color(palette.secondary));
-                }
             });
+        // The invitation's own text, under its own label.
+        if let Some(preview) = &meeting.preview {
+            ui.add_space(16.0);
+            widgets::section_label(ui, &palette, "From the invitation");
+            ui.add_space(2.0);
+            ui.label(
+                egui::RichText::new(preview)
+                    .line_height(Some(theme::leading(14.0)))
+                    .color(palette.text),
+            );
+        }
         ui.add_space(14.0);
         ui.label(
             egui::RichText::new("Joining opens the meeting in Teams on the web beside Wren, with its chat here. Wren reminds you five minutes before online meetings start.").line_height(Some(theme::leading(12.0)))

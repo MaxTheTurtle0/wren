@@ -24,11 +24,11 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 ui.vertical_centered(|ui| {
                     // The logo, card and footer sit as one group near the middle.
                     let group = if matches!(app.auth, AuthStatus::NotConfigured) {
-                        720.0
+                        780.0
                     } else {
                         560.0
                     };
-                    ui.add_space(((ui.available_height() - group) / 2.0).max(32.0));
+                    ui.add_space(((ui.available_height() - group) / 2.0).max(16.0));
                     ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(160.0, 121.0)).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
                     ui.label(
@@ -299,7 +299,7 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
     ui.add(widgets::text_field(
         &mut app.form_client_id,
         "Paste the application ID",
-        theme::mono(13.0),
+        theme::regular(13.0),
     ));
     ui.label(
         egui::RichText::new("Tenant")

@@ -12,7 +12,8 @@ pub fn text_field<'a>(text: &'a mut String, hint: &str, font: egui::FontId) -> e
         // TextEdit's hint atoms otherwise use the body font independently.
         .hint_text(egui::RichText::new(hint).font(font.clone()))
         .font(font)
-        .margin(egui::Margin::symmetric(8, 6))
+        // 8 pt above and below make a 32 pt field at the 13-14 pt sizes used.
+        .margin(egui::Margin::symmetric(8, 8))
         .min_size(vec2(0.0, 32.0))
         .desired_width(f32::INFINITY)
 }
@@ -476,7 +477,7 @@ pub fn pane_header(
     );
     let inset = super::header_inset(ui.ctx(), rect.left());
     // Title and actions line up with the page's centred content column.
-    let column = centred_column(rect.shrink2(vec2(24.0, 0.0)), super::calendar::DETAIL_WIDTH);
+    let column = detail_column(rect);
     ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
         ui.horizontal_centered(|ui| {
             ui.add_space(inset);
@@ -583,7 +584,7 @@ pub fn centred_column(rect: egui::Rect, max: f32) -> egui::Rect {
 }
 
 /// Help for the checkbox above it, indented to the checkbox's label.
-pub fn checkbox_note(ui: &mut Ui, palette: &Palette, text: &str) {
+pub fn checkbox_note(ui: &mut Ui, palette: &Palette, text: &str) -> Response {
     egui::Frame::new()
         .inner_margin(egui::Margin {
             left: 26,
@@ -597,8 +598,22 @@ pub fn checkbox_note(ui: &mut Ui, palette: &Palette, text: &str) {
                     .font(theme::regular(13.0))
                     .line_height(Some(theme::leading(13.0)))
                     .color(palette.secondary),
-            );
-        });
+            )
+        })
+        .inner
+}
+
+/// A detail page's column (Calendar, Calls): at most 720 pt wide, starting
+/// 30 pt in, where a conversation's header starts at the usual window width.
+pub fn detail_column(rect: egui::Rect) -> egui::Rect {
+    let inner = rect.shrink2(vec2(30.0, 0.0));
+    egui::Rect::from_min_size(
+        inner.min,
+        vec2(
+            inner.width().min(super::calendar::DETAIL_WIDTH),
+            inner.height(),
+        ),
+    )
 }
 
 /// A label above a field or drop-down.

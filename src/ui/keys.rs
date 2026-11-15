@@ -12,7 +12,7 @@ pub const SHORTCUTS: &[(&str, &[(&str, &str)])] = &[
         &[
             ("⌘K", "Search chats, channels and messages"),
             ("⌘1 – ⌘4", "Chat, Teams, Calendar, Calls"),
-            ("Alt ↑ / Alt ↓", "Previous or next conversation"),
+            ("Alt+↑ / Alt+↓", "Previous or next conversation"),
             ("⌘⇧A", "Next account"),
         ],
     ),
@@ -21,9 +21,9 @@ pub const SHORTCUTS: &[(&str, &[(&str, &str)])] = &[
         &[
             ("⌘N", "New chat"),
             ("Enter", "Send"),
-            ("Shift Enter", "New line"),
-            ("@ in the composer", "Mention someone"),
-            ("↑ in an empty composer", "Edit your last message"),
+            ("Shift+Enter", "New line"),
+            ("@", "Mention someone"),
+            ("↑", "Edit your last message (empty composer)"),
             ("Esc", "Cancel reply or edit, close dialogs"),
         ],
     ),

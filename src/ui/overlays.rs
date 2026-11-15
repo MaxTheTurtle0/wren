@@ -36,6 +36,16 @@ fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
     let loaded = egui::Image::new(crate::images::original(uri))
         .load_for_size(ctx, vec2(width - 32.0, height));
     let mut actual_size = ctx.data(|d| d.get_temp::<bool>(zoom_id)).unwrap_or(false);
+    // Fitted, the canvas is only as tall as the image needs, not the window.
+    let height = match &loaded {
+        Ok(egui::load::TexturePoll::Ready { texture }) if !actual_size => {
+            let scale = ((width - 32.0) / texture.size.x)
+                .min(height / texture.size.y)
+                .min(1.0);
+            (texture.size.y * scale).clamp(160.0, height)
+        }
+        _ => height,
+    };
     let mut actions = Vec::new();
     let close = modal(palette, ctx, "image-preview", width, 24.0, |ui| {
         ui.set_height(height + 96.0);
@@ -46,11 +56,6 @@ fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
                         .font(theme::bold(20.0))
                         .color(palette.text),
                 );
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close =
-                        widgets::icon_button(ui, &palette, Icon::Close, "Close preview (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
             });
             ui.horizontal(|ui| {
                 widgets::segmented(ui, &palette, &mut actual_size, "Fit", "100%");
@@ -150,7 +155,27 @@ fn modal(
             ui.set_width(width);
             content(ui);
         });
-    response.should_close()
+    // Every dialog closes from the same place: its top-right corner, level
+    // with the title. Drawn after the content, so a wide dialog still gets
+    // it at its real edge.
+    let frame = response.response.rect;
+    let close = egui::Area::new(egui::Id::new(id).with("close"))
+        .order(egui::Order::Tooltip)
+        .fixed_pos(egui::pos2(frame.right() - 16.0 - 28.0, frame.top() + 22.0))
+        .show(ctx, |ui| {
+            widgets::icon_button_sized(
+                ui,
+                &palette,
+                Icon::Close,
+                "Close (Esc)",
+                28.0,
+                18.0,
+                palette.secondary,
+            )
+            .clicked()
+        })
+        .inner;
+    response.should_close() || close
 }
 
 /// A person, chat or channel the switcher can jump to.
@@ -508,13 +533,9 @@ fn settings(app: &mut App, ctx: &egui::Context) {
     let mut actions = Vec::new();
     let browsers: Vec<BrowserKind> = app.call_browsers().iter().map(|b| b.kind).collect();
     let close = modal(palette, ctx, "settings", 560.0, 70.0, |ui| {
-        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new("Settings").font(theme::bold(20.0)).color(palette.text));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
             });
             ui.add_space(10.0);
             let height = (ui.ctx().content_rect().height() - 220.0).clamp(240.0, 640.0);
@@ -623,8 +644,9 @@ fn settings(app: &mut App, ctx: &egui::Context) {
                 widgets::checkbox_note(
                     ui,
                     &palette,
-                    &format!("New messages arrive when you open a chat, come back to Wren or press {}. Microsoft doesn't allow apps to check in the background; for instant alerts, connect a push relay.", super::keys::shortcut("⌘R")),
-                );
+                    &format!("New messages arrive when you open a chat, return to Wren or press {}.", super::keys::shortcut("⌘R")),
+                )
+                .on_hover_text("Microsoft doesn't allow apps to check for messages in the background. For alerts the moment a message arrives, connect a push relay (Push updates, below).");
                 let mut keep = app.settings.keep_running;
                 if widgets::checkbox(ui, &palette, &mut keep, "Keep running in the tray when the window closes").changed() {
                     actions.push(Action::SetKeepRunning(keep));
@@ -772,19 +794,13 @@ fn settings(app: &mut App, ctx: &egui::Context) {
 fn shortcuts(app: &mut App, ctx: &egui::Context) {
     let palette = app.palette;
     let close = modal(palette, ctx, "shortcuts", 880.0, 90.0, |ui| {
-        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
                     egui::RichText::new("Keyboard shortcuts")
                         .font(theme::bold(20.0))
                         .color(palette.text),
                 );
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    if close.clicked() {
-                        app.actions.push(Action::CloseOverlay);
-                    }
-                });
             });
             ui.add_space(10.0);
             // Two columns keep the sheet short: Messages on the right, the
@@ -889,17 +905,13 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
         }
     });
     let close = modal(palette, ctx, "new-chat", 520.0, 90.0, |ui| {
-        Frame::new().inner_margin(Margin::same(20)).show(ui, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
                     egui::RichText::new("New chat")
                         .font(theme::bold(20.0))
                         .color(palette.text),
                 );
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
             });
             ui.add_space(10.0);
             // The people picked so far.
@@ -1107,17 +1119,13 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
     let mut actions = Vec::new();
     let mut text = app.form_status.clone();
     let close = modal(palette, ctx, "status-message", 440.0, 120.0, |ui| {
-        Frame::new().inner_margin(Margin::same(20)).show(ui, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
                     egui::RichText::new("Status message")
                         .font(theme::bold(20.0))
                         .color(palette.text),
                 );
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
             });
             ui.add_space(4.0);
             ui.label(
@@ -1266,17 +1274,13 @@ fn join_on_phone(app: &mut App, ctx: &egui::Context, url: &str) {
     let palette = app.palette;
     let mut actions = Vec::new();
     let close = modal(palette, ctx, "join-on-phone", 340.0, 100.0, |ui| {
-        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.label(
                     egui::RichText::new("Join on your phone")
                         .font(theme::bold(20.0))
                         .color(palette.text),
                 );
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
             });
             // Which meeting the code joins.
             if let Some(call) = &app.call {
@@ -1348,14 +1352,10 @@ fn consent(app: &mut App, ctx: &egui::Context, scope: &'static str) {
     let palette = app.palette;
     let mut actions = Vec::new();
     let close = modal(palette, ctx, "consent", 460.0, 120.0, |ui| {
-        Frame::new().inner_margin(Margin::same(22)).show(ui, |ui| {
+        Frame::new().inner_margin(Margin::same(24)).show(ui, |ui| {
             ui.horizontal(|ui| {
                 theme::icon(ui, Icon::Lock, 20.0, palette.secondary);
                 ui.label(egui::RichText::new("One more permission").font(theme::bold(20.0)).color(palette.text));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let close = widgets::icon_button(ui, &palette, Icon::Close, "Close (Esc)");
-                    widgets::on_click(&close, &mut actions, Action::CloseOverlay);
-                });
             });
             ui.add_space(8.0);
             ui.label(egui::RichText::new(crate::auth::scope_reason(scope)).font(theme::medium(14.0)).color(palette.text));

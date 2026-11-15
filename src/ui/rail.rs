@@ -81,7 +81,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui.label(
                         egui::RichText::new("DEMO")
                             .font(theme::bold(11.0))
-                            .color(palette.accent),
+                            .color(palette.secondary),
                     )
                     .on_hover_text("Sample data. Nothing is sent anywhere.");
                 }

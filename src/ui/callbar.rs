@@ -192,10 +192,18 @@ fn content(app: &mut App, ui: &mut egui::Ui, docked: bool) {
             });
         }
         ui.add_space(8.0);
+        // A narrow panel keeps the actions on one row: icons, with their
+        // names in the tooltips.
+        let compact = ui.available_width() < 480.0;
         ui.horizontal_wrapped(|ui| {
             ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
             for (icon, label, action, accent, tip) in buttons {
-                let response = widgets::pill(ui, &palette, icon, label, accent).on_hover_text(tip);
+                let response = if compact {
+                    widgets::pill(ui, &palette, icon, "", accent)
+                        .on_hover_text(format!("{label}: {tip}"))
+                } else {
+                    widgets::pill(ui, &palette, icon, label, accent).on_hover_text(tip)
+                };
                 widgets::on_click(&response, &mut actions, action);
             }
         });
