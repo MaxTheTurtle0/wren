@@ -287,6 +287,7 @@ pub fn message(message: g::ChatMessage, conversation: Option<&ConversationId>) -
         reply_to: message.reply_to_id,
         conversation,
         delivery: Default::default(),
+        failure: None,
     }
 }
 

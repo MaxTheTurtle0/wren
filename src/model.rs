@@ -259,6 +259,9 @@ pub struct Message {
     /// Channel posts: replies loaded with the root.
     pub replies: Vec<Message>,
     pub delivery: Delivery,
+    /// Why the last send failed, shown beside Retry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub failure: Option<String>,
 }
 
 impl Message {

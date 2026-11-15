@@ -413,14 +413,13 @@ fn apply_page(app: &mut App, page: &str) {
                             created: wren::time::now(),
                             body: wren::html::RichText::plain("Here are the throttling numbers."),
                             delivery: wren::model::Delivery::Failed,
+                            failure: Some(
+                                "Microsoft is limiting requests. Try again in a moment.".into(),
+                            ),
                             ..Default::default()
                         });
                     }
                 }
-                app.toast(
-                    wren::model::ToastKind::Error,
-                    "Not sent: Microsoft is limiting requests. Try again in a moment.",
-                );
             }
             "consent" => {
                 app.overlay = Some(wren::app::Overlay::Consent(wren::auth::CHAT_CREATE_SCOPE));

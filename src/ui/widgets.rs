@@ -224,7 +224,7 @@ pub fn pill(ui: &mut Ui, palette: &Palette, icon: Icon, text: &str, accent: bool
     let (fill, fg) = if accent {
         (palette.accent, palette.on_accent)
     } else {
-        (palette.surface_hover, palette.text)
+        (palette.surface, palette.text)
     };
     let galley = ui
         .ctx()
@@ -242,6 +242,15 @@ pub fn pill(ui: &mut Ui, palette: &Palette, icon: Icon, text: &str, accent: bool
             fill
         };
         ui.painter().rect_filled(rect, CornerRadius::same(14), fill);
+        if !accent {
+            // The same 3:1 edge as other secondary controls.
+            ui.painter().rect_stroke(
+                rect,
+                CornerRadius::same(14),
+                Stroke::new(1.0, palette.control),
+                egui::StrokeKind::Inside,
+            );
+        }
         let icon_rect = egui::Rect::from_center_size(
             egui::pos2(rect.left() + 17.0, rect.center().y),
             Vec2::splat(15.0),

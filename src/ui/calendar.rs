@@ -89,20 +89,22 @@ fn row(
                 },
             );
         }
+        if selected {
+            widgets::selection_marker(ui, palette, inner);
+        }
+        // A dot for the kind of meeting: live, online, or neither. The
+        // accent bar stays the sign of selection, as in the other lists.
         let live = meeting.start <= now && meeting.end > now;
-        let bar = egui::Rect::from_min_size(inner.left_top() + vec2(8.0, 9.0), vec2(3.0, 34.0));
-        ui.painter().rect_filled(
-            bar,
-            CornerRadius::same(2),
-            if live {
-                palette.success
-            } else if meeting.join_url.is_some() {
-                palette.accent
-            } else {
-                palette.dim
-            },
-        );
-        let left = bar.right() + 10.0;
+        let dot = egui::pos2(inner.left() + 13.0, inner.top() + 17.0);
+        if live {
+            ui.painter().circle_filled(dot, 4.0, palette.success);
+        } else if meeting.join_url.is_some() {
+            ui.painter().circle_filled(dot, 4.0, palette.link);
+        } else {
+            ui.painter()
+                .circle_stroke(dot, 3.5, Stroke::new(1.5, palette.dim));
+        }
+        let left = inner.left() + 24.0;
         let title = super::chat_list::elided(
             ui,
             &meeting.subject,

@@ -243,7 +243,7 @@ fn card(app: &mut App, ui: &mut egui::Ui) {
                     app.actions.push(Action::SignIn);
                 }
                 if widgets::secondary_button(ui, &palette, "Use a code instead")
-                    .on_hover_text("Device code sign-in, for when the browser can't reach Wren. Needs 'Allow public client flows' on the app registration.")
+                    .on_hover_text("Sign in on any device with a short code, if the browser can't return to Wren.")
                     .clicked()
                 {
                     app.actions.push(Action::SignInWithCode);
@@ -279,13 +279,10 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
         );
         ui.add_space(2.0);
         // The guide first: the fields below need what it produces.
-        let guide = ui.horizontal(|ui| {
-            theme::icon(ui, crate::theme::Icon::ExternalLink, 14.0, palette.link);
-            ui.link(
-                egui::RichText::new("Step-by-step registration guide").font(theme::semibold(13.0)),
-            )
-        });
-        if guide.inner.clicked() {
+        if widgets::secondary_button(ui, &palette, "Open the registration guide")
+            .on_hover_text("Step by step, in your browser")
+            .clicked()
+        {
             app.actions.push(Action::OpenUrl(DOCS.into()));
         }
         ui.add_space(8.0);
@@ -322,7 +319,15 @@ fn registration(app: &mut App, ui: &mut egui::Ui, first_run: bool) {
         let valid = crate::settings::is_guid(app.form_client_id.trim());
         let save = ui
             .add_enabled_ui(valid, |ui| {
-                widgets::primary_button(ui, &palette, "  Save  ")
+                widgets::primary_button(
+                    ui,
+                    &palette,
+                    if first_run {
+                        "  Save and continue  "
+                    } else {
+                        "  Save  "
+                    },
+                )
             })
             .inner;
         if save.clicked() {

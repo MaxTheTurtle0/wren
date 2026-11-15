@@ -46,10 +46,7 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
             );
             widgets::window_drag(ui, rect, "header-drag");
             // Actions end where the message column ends on wide windows.
-            let column = egui::Rect::from_min_size(
-                rect.min,
-                vec2(rect.width().min(MAX_HISTORY_WIDTH - 4.0), rect.height()),
-            );
+            let column = centred_column(rect, MAX_HISTORY_WIDTH - 4.0);
             ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
                 ui.horizontal_centered(|ui| {
                     ui.spacing_mut().item_spacing.x = 10.0;
@@ -261,6 +258,16 @@ fn estimate(message: &Message, width: f32, grouped: bool) -> f32 {
 /// The widest the message column grows, avatar gutter included.
 const MAX_HISTORY_WIDTH: f32 = 920.0;
 
+/// `max` wide at most, centred in `rect`: the conversation's reading column,
+/// shared by its header, history and composer.
+fn centred_column(rect: egui::Rect, max: f32) -> egui::Rect {
+    let width = rect.width().min(max);
+    egui::Rect::from_min_size(
+        egui::pos2(rect.center().x - width / 2.0, rect.top()),
+        vec2(width, rect.height()),
+    )
+}
+
 fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let palette = app.palette;
     let channel = conversation.is_channel();
@@ -294,7 +301,12 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let jump = app.jump_to.take();
     let hover_id = egui::Id::new(("wren-hover-row", conversation.key()));
     let previous_hover: Option<(String, egui::Rect)> = ui.ctx().data(|d| d.get_temp(hover_id));
-    let pointer = ui.input(|i| i.pointer.hover_pos());
+    // Under a dialog nothing in the history is hovered.
+    let pointer = if app.overlay.is_some() {
+        None
+    } else {
+        ui.input(|i| i.pointer.hover_pos())
+    };
     let mut hovered: Option<(usize, egui::Rect, bool)> = None;
     let scroll_to_end = app.scroll_to_end > 0;
     app.scroll_to_end = app.scroll_to_end.saturating_sub(1);
@@ -331,184 +343,207 @@ fn history(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                         bottom: 12,
                     })
                     .show(ui, |ui| {
-                        // A readable measure on wide windows; the column stays
-                        // left-aligned with the header and composer.
-                        let width = ui.available_width().min(MAX_HISTORY_WIDTH);
-                        ui.set_width(width);
-                        ui.spacing_mut().item_spacing.y = 0.0;
-                        if more {
-                            ui.vertical_centered(|ui| {
-                                let response = widgets::secondary_button(
-                                    ui,
-                                    &palette,
-                                    "Load earlier messages",
-                                );
-                                widgets::on_click(
-                                    &response,
-                                    &mut actions,
-                                    Action::LoadOlder(conversation.clone()),
-                                );
-                                // Reaching the top loads more on its own.
-                                if ui.is_rect_visible(response.rect)
-                                    && !app_ro.loading.contains(&crate::sync::Resource::Messages(
-                                        conversation.clone(),
-                                    ))
-                                    && ui.input(|i| i.smooth_scroll_delta.y > 0.0)
-                                {
-                                    actions.push(Action::LoadOlder(conversation.clone()));
-                                }
-                            });
-                            ui.add_space(12.0);
-                        }
-                        layout.prepare(
-                            &messages,
-                            width,
-                            theme::font_revision(ui.ctx()),
-                            channel,
-                            &mut heights,
-                            |message, grouped| estimate(message, width, grouped),
-                        );
-                        let origin = ui.cursor().top();
-                        // Behind the hovered message, set once it is known.
-                        let hover_tint = ui.painter().add(egui::Shape::Noop);
-                        let visible = layout.visible(
-                            clip.top() - origin - margin,
-                            clip.bottom() - origin + margin,
-                        );
-                        let target_id =
-                            jump.as_ref().or_else(|| restore.as_ref().map(|(id, _)| id));
-                        let target_index =
-                            target_id.and_then(|id| messages.iter().position(|m| &m.id == id));
-                        let mut ranges = vec![visible];
-                        if let Some(index) = target_index {
-                            ranges.push(index..index + 1);
-                        }
-                        ranges.sort_by_key(|range| range.start);
-                        let mut end = 0;
-                        for range in ranges {
-                            let start = range.start.max(end);
-                            if start >= range.end {
-                                continue;
-                            }
-                            let skipped = layout.prefix(start) - (ui.cursor().top() - origin);
-                            if skipped > 0.0 {
-                                ui.add_space(skipped);
-                            }
-                            for (index, message) in
-                                messages.iter().enumerate().take(range.end).skip(start)
-                            {
-                                let (new_day, grouped) = layout.flags(index);
-                                if new_day {
-                                    day_divider(ui, app_ro, message.created, now);
-                                }
-                                let top = ui.cursor().top();
-                                let target = target_index == Some(index);
-                                let rect = if channel {
-                                    thread_card(
+                        // A readable measure on wide windows, centred like the
+                        // header and composer.
+                        let column = centred_column(ui.max_rect(), MAX_HISTORY_WIDTH);
+                        ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
+                            let width = column.width();
+                            ui.set_width(width);
+                            ui.spacing_mut().item_spacing.y = 0.0;
+                            if more {
+                                ui.vertical_centered(|ui| {
+                                    let response = widgets::secondary_button(
                                         ui,
-                                        app_ro,
-                                        conversation,
-                                        message,
-                                        &me,
-                                        now,
-                                        expanded.contains(&message.id),
-                                        &mut actions,
-                                    )
-                                } else {
-                                    message_row(
-                                        ui,
-                                        app_ro,
-                                        conversation,
-                                        message,
-                                        &me,
-                                        grouped,
-                                        target,
-                                        &mut actions,
-                                    )
-                                };
-                                let measured = ui.cursor().top() - top;
-                                heights.insert(message.id.clone(), measured);
-                                layout.measure(index, measured);
-                                if jump.as_deref() == Some(message.id.as_str()) {
-                                    ui.scroll_to_rect(rect, Some(Align::Center));
-                                }
-                                if let Some((id, offset)) = &restore
-                                    && id == &message.id
-                                {
-                                    ui.scroll_to_rect_animation(
-                                        egui::Rect::from_min_size(
-                                            // ScrollArea adds item spacing to an
-                                            // aligned target; cancel that here.
-                                            rect.min - vec2(0.0, *offset - scroll_spacing),
-                                            vec2(1.0, clip.height()),
-                                        ),
-                                        Some(Align::TOP),
-                                        egui::style::ScrollAnimation::none(),
+                                        &palette,
+                                        "Load earlier messages",
                                     );
-                                }
-                                if anchor.is_none()
-                                    && rect.bottom() >= clip.top()
-                                    && rect.top() <= clip.bottom()
-                                {
-                                    anchor = Some((message.id.clone(), rect.top() - clip.top()));
-                                }
-                                if !message.system && !message.deleted {
-                                    let keep =
-                                        previous_hover.as_ref().is_some_and(|(id, toolbar)| {
-                                            id == &message.id
-                                                && pointer.is_some_and(|p| toolbar.contains(p))
-                                        });
-                                    if keep
-                                        || pointer
-                                            .is_some_and(|p| rect.contains(p) && clip.contains(p))
+                                    widgets::on_click(
+                                        &response,
+                                        &mut actions,
+                                        Action::LoadOlder(conversation.clone()),
+                                    );
+                                    // Reaching the top loads more on its own.
+                                    if ui.is_rect_visible(response.rect)
+                                        && !app_ro.loading.contains(
+                                            &crate::sync::Resource::Messages(conversation.clone()),
+                                        )
+                                        && ui.input(|i| i.smooth_scroll_delta.y > 0.0)
                                     {
-                                        hovered = Some((index, rect, message.is_from(&me)));
+                                        actions.push(Action::LoadOlder(conversation.clone()));
+                                    }
+                                });
+                                ui.add_space(12.0);
+                            }
+                            layout.prepare(
+                                &messages,
+                                width,
+                                theme::font_revision(ui.ctx()),
+                                channel,
+                                &mut heights,
+                                |message, grouped| estimate(message, width, grouped),
+                            );
+                            let origin = ui.cursor().top();
+                            // Behind the hovered message, set once it is known.
+                            let hover_tint = ui.painter().add(egui::Shape::Noop);
+                            let visible = layout.visible(
+                                clip.top() - origin - margin,
+                                clip.bottom() - origin + margin,
+                            );
+                            let target_id =
+                                jump.as_ref().or_else(|| restore.as_ref().map(|(id, _)| id));
+                            let target_index =
+                                target_id.and_then(|id| messages.iter().position(|m| &m.id == id));
+                            let mut ranges = vec![visible];
+                            if let Some(index) = target_index {
+                                ranges.push(index..index + 1);
+                            }
+                            ranges.sort_by_key(|range| range.start);
+                            let mut end = 0;
+                            for range in ranges {
+                                let start = range.start.max(end);
+                                if start >= range.end {
+                                    continue;
+                                }
+                                let skipped = layout.prefix(start) - (ui.cursor().top() - origin);
+                                if skipped > 0.0 {
+                                    ui.add_space(skipped);
+                                }
+                                for (index, message) in
+                                    messages.iter().enumerate().take(range.end).skip(start)
+                                {
+                                    let (new_day, grouped) = layout.flags(index);
+                                    if new_day {
+                                        day_divider(ui, app_ro, message.created, now);
+                                    }
+                                    let top = ui.cursor().top();
+                                    let target = target_index == Some(index);
+                                    let rect = if channel {
+                                        thread_card(
+                                            ui,
+                                            app_ro,
+                                            conversation,
+                                            message,
+                                            &me,
+                                            now,
+                                            expanded.contains(&message.id),
+                                            &mut actions,
+                                        )
+                                    } else {
+                                        message_row(
+                                            ui,
+                                            app_ro,
+                                            conversation,
+                                            message,
+                                            &me,
+                                            grouped,
+                                            target,
+                                            &mut actions,
+                                        )
+                                    };
+                                    let measured = ui.cursor().top() - top;
+                                    heights.insert(message.id.clone(), measured);
+                                    layout.measure(index, measured);
+                                    if jump.as_deref() == Some(message.id.as_str()) {
+                                        ui.scroll_to_rect(rect, Some(Align::Center));
+                                    }
+                                    if let Some((id, offset)) = &restore
+                                        && id == &message.id
+                                    {
+                                        ui.scroll_to_rect_animation(
+                                            egui::Rect::from_min_size(
+                                                // ScrollArea adds item spacing to an
+                                                // aligned target; cancel that here.
+                                                rect.min - vec2(0.0, *offset - scroll_spacing),
+                                                vec2(1.0, clip.height()),
+                                            ),
+                                            Some(Align::TOP),
+                                            egui::style::ScrollAnimation::none(),
+                                        );
+                                    }
+                                    if anchor.is_none()
+                                        && rect.bottom() >= clip.top()
+                                        && rect.top() <= clip.bottom()
+                                    {
+                                        anchor =
+                                            Some((message.id.clone(), rect.top() - clip.top()));
+                                    }
+                                    if !message.system && !message.deleted {
+                                        let keep =
+                                            previous_hover.as_ref().is_some_and(|(id, toolbar)| {
+                                                id == &message.id
+                                                    && pointer.is_some_and(|p| toolbar.contains(p))
+                                            });
+                                        if keep
+                                            || pointer.is_some_and(|p| {
+                                                rect.contains(p) && clip.contains(p)
+                                            })
+                                        {
+                                            hovered = Some((index, rect, message.is_from(&me)));
+                                        }
                                     }
                                 }
+                                end = range.end;
                             }
-                            end = range.end;
-                        }
-                        let remaining = layout.total() - (ui.cursor().top() - origin);
-                        if remaining > 0.0 {
-                            ui.add_space(remaining);
-                        }
-                        ui.add_space(4.0);
-                        if scroll_to_end && jump.is_none() {
-                            let end = egui::Rect::from_min_size(ui.cursor().min, vec2(1.0, 1.0));
-                            ui.scroll_to_rect_animation(
-                                end,
-                                Some(Align::BOTTOM),
-                                egui::style::ScrollAnimation::none(),
-                            );
-                        }
-                        if let Some((index, rect, mine)) = &hovered {
-                            if !channel {
-                                ui.painter().set(
-                                    hover_tint,
-                                    egui::Shape::rect_filled(
-                                        rect.expand2(vec2(8.0, 0.0)),
-                                        CornerRadius::same(6),
-                                        palette.panel,
-                                    ),
+                            let remaining = layout.total() - (ui.cursor().top() - origin);
+                            if remaining > 0.0 {
+                                ui.add_space(remaining);
+                            }
+                            ui.add_space(4.0);
+                            if scroll_to_end && jump.is_none() {
+                                let end =
+                                    egui::Rect::from_min_size(ui.cursor().min, vec2(1.0, 1.0));
+                                ui.scroll_to_rect_animation(
+                                    end,
+                                    Some(Align::BOTTOM),
+                                    egui::style::ScrollAnimation::none(),
                                 );
                             }
-                            let message = &messages[*index];
-                            let id = &message.id;
-                            let toolbar = hover_toolbar(
-                                ui,
-                                app_ro,
-                                conversation,
-                                id,
-                                Some(message),
-                                *rect,
-                                *mine,
-                                &mut actions,
+                            if let Some((index, rect, mine)) = &hovered {
+                                if !channel {
+                                    ui.painter().set(
+                                        hover_tint,
+                                        egui::Shape::rect_filled(
+                                            rect.expand2(vec2(8.0, 0.0)),
+                                            CornerRadius::same(6),
+                                            palette.panel,
+                                        ),
+                                    );
+                                }
+                                let message = &messages[*index];
+                                let id = &message.id;
+                                let toolbar = hover_toolbar(
+                                    ui,
+                                    app_ro,
+                                    conversation,
+                                    id,
+                                    Some(message),
+                                    *rect,
+                                    *mine,
+                                    &mut actions,
+                                );
+                                ui.ctx()
+                                    .data_mut(|d| d.insert_temp(hover_id, (id.clone(), toolbar)));
+                            } else {
+                                ui.ctx()
+                                    .data_mut(|d| d.remove::<(String, egui::Rect)>(hover_id));
+                            }
+                        });
+                        // Messages fade out under the header instead of being cut.
+                        let fade = egui::Rect::from_min_size(
+                            egui::pos2(clip.left(), clip.top()),
+                            vec2(clip.width(), 12.0),
+                        );
+                        for step in 0..6 {
+                            let strip = egui::Rect::from_min_size(
+                                fade.min + vec2(0.0, step as f32 * 2.0),
+                                vec2(fade.width(), 2.0),
                             );
-                            ui.ctx()
-                                .data_mut(|d| d.insert_temp(hover_id, (id.clone(), toolbar)));
-                        } else {
-                            ui.ctx()
-                                .data_mut(|d| d.remove::<(String, egui::Rect)>(hover_id));
+                            let alpha = 1.0 - step as f32 / 6.0;
+                            ui.painter().with_clip_rect(clip).rect_filled(
+                                strip,
+                                0.0,
+                                palette.window.gamma_multiply(alpha),
+                            );
                         }
                     });
             });
@@ -782,9 +817,12 @@ fn body(
                 ui.spacing_mut().item_spacing.x = 6.0;
                 theme::icon(ui, Icon::Alert, 14.0, palette.danger);
                 ui.label(
-                    egui::RichText::new("Not sent")
-                        .font(theme::semibold(12.0))
-                        .color(palette.danger),
+                    egui::RichText::new(match &message.failure {
+                        Some(reason) => format!("Not sent: {reason}"),
+                        None => "Not sent".to_owned(),
+                    })
+                    .font(theme::semibold(12.0))
+                    .color(palette.danger),
                 );
                 let retry = egui::Button::new(
                     egui::RichText::new("Retry")
@@ -1395,13 +1433,7 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
         .show(ui, |ui| {
             // As wide as the message column above it. The panel stretches
             // its own Ui to the full width, so draw into a narrower child.
-            let column = egui::Rect::from_min_size(
-                ui.max_rect().min,
-                vec2(
-                    ui.available_width().min(MAX_HISTORY_WIDTH - 4.0),
-                    ui.max_rect().height(),
-                ),
-            );
+            let column = centred_column(ui.max_rect(), MAX_HISTORY_WIDTH - 4.0);
             ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
                 composer_top = Some(ui.cursor().min);
                 // The field's edge reads as a control, and focus as a ring.

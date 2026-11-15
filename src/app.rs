@@ -1065,8 +1065,13 @@ impl App {
                     && let Some(message) = entry.find_mut(&local_id)
                 {
                     message.delivery = Delivery::Failed;
+                    message.failure = Some(reason.clone());
                 }
-                self.toast(ToastKind::Error, format!("Not sent: {reason}"));
+                // The open conversation shows the failure on the message
+                // itself; elsewhere a toast says so.
+                if self.hidden || self.open.as_ref() != Some(&conversation) {
+                    self.toast(ToastKind::Error, format!("Not sent: {reason}"));
+                }
             }
             Event::Deleted {
                 conversation,
@@ -1651,6 +1656,7 @@ impl App {
                         && let Some(found) = entry.find_mut(&local_id)
                     {
                         found.delivery = Delivery::Sending;
+                        found.failure = None;
                     }
                     self.backend.send(Command::Send {
                         conversation,
@@ -2687,6 +2693,49 @@ mod tests {
     }
 
     #[test]
+    fn a_failed_send_in_the_open_chat_shows_on_the_message_not_a_toast() {
+        let (mut app, mut commands) = app();
+        let ctx = egui::Context::default();
+        let chat = ConversationId::Chat("19:open".into());
+        app.open = Some(chat.clone());
+        app.apply(
+            Action::Send {
+                conversation: chat.clone(),
+                text: "hello".into(),
+                reply_to: None,
+                mentions: Vec::new(),
+                files: Vec::new(),
+                images: Vec::new(),
+            },
+            &ctx,
+        );
+        let Command::Send { local_id, .. } = commands.try_recv().unwrap() else {
+            panic!("send expected")
+        };
+        app.handle(
+            Event::SendFailed {
+                conversation: chat.clone(),
+                local_id: local_id.clone(),
+                reason: "throttled".into(),
+            },
+            &ctx,
+        );
+        assert!(app.toasts.is_empty());
+        let failed = app.conversations[&chat].find(&local_id).unwrap();
+        assert_eq!(failed.failure.as_deref(), Some("throttled"));
+        app.apply(
+            Action::RetrySend {
+                conversation: chat.clone(),
+                local_id: local_id.clone(),
+            },
+            &ctx,
+        );
+        let retried = app.conversations[&chat].find(&local_id).unwrap();
+        assert_eq!(retried.delivery, Delivery::Sending);
+        assert_eq!(retried.failure, None);
+    }
+
+    #[test]
     fn pasted_images_send_without_text_and_survive_retry() {
         let (mut app, mut commands) = app();
         let ctx = egui::Context::default();
@@ -2732,6 +2781,11 @@ mod tests {
             },
             &ctx,
         );
+        // Not the open chat: a toast says so, and the message keeps why.
+        assert_eq!(app.toasts.len(), 1);
+        let failed = app.conversations[&chat].find(&local_id).unwrap();
+        assert_eq!(failed.delivery, Delivery::Failed);
+        assert_eq!(failed.failure.as_deref(), Some("offline"));
         app.apply(
             Action::RetrySend {
                 conversation: chat,

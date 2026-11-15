@@ -1082,6 +1082,7 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
                     .color(palette.secondary),
             );
             ui.add_space(10.0);
+            widgets::field_label(ui, &palette, "Status");
             let response = ui.add(widgets::text_field(
                 &mut text,
                 "For example: Back at 3 pm",
