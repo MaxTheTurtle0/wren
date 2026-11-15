@@ -1,0 +1,451 @@
+{
+  "overall": 8,
+  "dimensions": {
+    "contrast": 8.5,
+    "typography": 8,
+    "colour": 8.5,
+    "spacing": 7.5,
+    "hierarchy": 8
+  },
+  "blocks_9": [
+    "Narrow layouts retain oversized sidebars and nested padding, causing avoidable name truncation and dense message wrapping.",
+    "Secondary text is too small across metadata, settings, suggestions and error recovery.",
+    "Conversation spacing and shifting sign-in layouts lack the stable rhythm expected of an exemplary native app.",
+    "Attachment thumbnails and the pending-recipient state need clearer visual treatment.",
+    "Thread boundaries are weak and light mention text only narrowly clears AA."
+  ],
+  "screens": {
+    "chats": {
+      "score": 8,
+      "issues": [
+        "Secondary text and reaction labels are small for sustained desktop reading.",
+        "Quoted content is compressed into a small, flattened summary."
+      ]
+    },
+    "chats-wide": {
+      "score": 8,
+      "issues": [
+        "The centered conversation leaves a large gutter between navigation and messages.",
+        "Small timestamps and helper text remain unchanged despite the larger canvas."
+      ]
+    },
+    "chats-narrow": {
+      "score": 7.5,
+      "issues": [
+        "The sidebar takes 39% of the window and truncates many names and nearly every preview.",
+        "The message column wraps heavily and quoted content becomes dense."
+      ]
+    },
+    "chat-no-selection": {
+      "score": 8.5,
+      "issues": [
+        "The empty-state instruction is small relative to the available space."
+      ]
+    },
+    "chat-filter-no-match": {
+      "score": 8,
+      "issues": [
+        "No inline clear affordance beside the query; recovery is far down the sidebar.",
+        "The empty-state sentence occupies almost the full sidebar width."
+      ]
+    },
+    "group-chat": {
+      "score": 8,
+      "issues": [
+        "Small timestamps and system messages require close reading.",
+        "Light mention text has only 4.52:1 contrast, leaving little margin."
+      ]
+    },
+    "channel": {
+      "score": 8,
+      "issues": [
+        "Thread borders are faint, especially in dark mode.",
+        "Reply metadata is smaller than the chat metadata and makes a dense secondary tier."
+      ]
+    },
+    "channel-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Large sidebar and nested card padding leave a short text measure.",
+        "The long composer prompt uses almost all the space preceding its action icons."
+      ]
+    },
+    "teams": {
+      "score": 8.5,
+      "issues": [
+        "Small channel labels and empty-state instruction underuse the available reading space."
+      ]
+    },
+    "calendar": {
+      "score": 8,
+      "issues": [
+        "Long explanatory copy stretches broadly across a mostly empty detail pane.",
+        "Date labels and meeting metadata are small relative to the meeting title."
+      ]
+    },
+    "calls": {
+      "score": 8,
+      "issues": [
+        "The page gives explanatory prose more visual space than the calling actions.",
+        "Recent-person audio and video controls are small and tightly paired."
+      ]
+    },
+    "calls-narrow": {
+      "score": 7.5,
+      "issues": [
+        "Names truncate while the sidebar retains two controls per person.",
+        "Explanatory text becomes a long block at the narrow measure."
+      ]
+    },
+    "composer-mention": {
+      "score": 8,
+      "issues": [
+        "Mention suggestion email, insertion hint and attachment metadata create several small-text tiers.",
+        "Small attachment remove control is visually slight."
+      ]
+    },
+    "composer-long-draft": {
+      "score": 8,
+      "issues": [
+        "No visible line-count or extent cue for a 120-line draft beyond a short scrollbar.",
+        "Internal scrollbar and action icons share a cramped bottom-right zone."
+      ]
+    },
+    "composer-images": {
+      "score": 7.5,
+      "issues": [
+        "Extreme-aspect previews collapse into thin strips that cannot be identified.",
+        "Image dimensions are small and low in hierarchy."
+      ]
+    },
+    "image-preview": {
+      "score": 8.5,
+      "issues": [
+        "Fit/100% selection relies on a very short accent underline."
+      ]
+    },
+    "search-switcher": {
+      "score": 8.5,
+      "issues": [
+        "Long result previews truncate heavily.",
+        "The footer stacks two small explanatory tiers."
+      ]
+    },
+    "new-chat": {
+      "score": 8,
+      "issues": [
+        "The primary button names the selected recipient while an unfinished second-recipient query remains active.",
+        "Search-result email addresses are small."
+      ]
+    },
+    "settings": {
+      "score": 8,
+      "issues": [
+        "Small help text and uppercase labels create a dense secondary text layer.",
+        "The panel ends immediately below a checkbox with limited contextual preview of further settings."
+      ]
+    },
+    "shortcuts": {
+      "score": 8.5,
+      "issues": [
+        "The navigation key-to-description gap is substantially larger than the messages gap."
+      ]
+    },
+    "status-message": {
+      "score": 8.5,
+      "issues": [
+        "The single-line field gives little visible room for a longer status."
+      ]
+    },
+    "account-menu": {
+      "score": 8,
+      "issues": [
+        "The account and presence list is tall and text-heavy for a rail popover.",
+        "Available and Busy use the same solid-dot shape with colour carrying the distinction."
+      ]
+    },
+    "permission-consent": {
+      "score": 8.5,
+      "issues": [
+        "The technical permission detail is small and wraps its last words onto a short second line."
+      ]
+    },
+    "error-toast": {
+      "score": 8.5,
+      "issues": [
+        "The critical failure explanation is only about 12 points.",
+        "Retry is a small neutral button beside the red error sentence."
+      ]
+    },
+    "first-sync-loading": {
+      "score": 8.5,
+      "issues": [
+        "The loading explanation is small and offers little detail beyond an indeterminate state."
+      ]
+    },
+    "first-sync-empty": {
+      "score": 8.5,
+      "issues": [
+        "The small instruction and button feel modest within the very large empty pane."
+      ]
+    },
+    "call-bar": {
+      "score": 8,
+      "issues": [
+        "Phone, Expand and Hide are abbreviated compared with the wider docked version.",
+        "Several system/date rows consume a substantial part of the narrow conversation."
+      ]
+    },
+    "call-docked": {
+      "score": 8,
+      "issues": [
+        "About 170 pixels of blank space separate the header and conversation-start label.",
+        "System messages are separated by large gaps relative to actual chat messages."
+      ]
+    },
+    "join-on-phone": {
+      "score": 8.5,
+      "issues": [
+        "Copy link is visually distant from the QR and explanatory text."
+      ]
+    },
+    "setup": {
+      "score": 7.5,
+      "issues": [
+        "Dense registration terminology makes the first-run card feel administrative.",
+        "Tenant helper copy separates its label and input by a large vertical distance."
+      ]
+    },
+    "signin": {
+      "score": 8.5,
+      "issues": [
+        "The hover tooltip covers the lower card, a transient state rather than a permanent layout defect.",
+        "The brand/card position varies noticeably across sign-in states."
+      ]
+    },
+    "signin-browser": {
+      "score": 8.5,
+      "issues": [
+        "Brand and card shift down relative to the initial sign-in screen."
+      ]
+    },
+    "signin-device-code": {
+      "score": 8.5,
+      "issues": [
+        "The waiting state has no visible code lifetime or expiry cue."
+      ]
+    },
+    "signin-finishing": {
+      "score": 8,
+      "issues": [
+        "Brand and card move again when the card becomes shorter.",
+        "The pending state has no visible recovery affordance if it persists."
+      ]
+    },
+    "signin-expired": {
+      "score": 8.5,
+      "issues": [
+        "The hover tooltip covers lower card content.",
+        "Account metadata is visually small compared with the brand."
+      ]
+    },
+    "signin-failed": {
+      "score": 8.5,
+      "issues": [
+        "The error identifies a timeout but gives little guidance for choosing the alternate code flow."
+      ]
+    }
+  },
+  "top_issues": [
+    {
+      "priority": 1,
+      "severity": "medium",
+      "screens": [
+        "chats-narrow",
+        "channel-narrow",
+        "calls-narrow"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Narrow navigation consumes too much of the available width, forcing avoidable truncation and wrapping.",
+      "evidence": "At 760 px, the detail pane starts at x=296, so navigation occupies 38.9%. Chat names start at x=128 and compete with dates around x=244; Katherine Johnson is truncated. Channel reply text starts around x=368 after nested padding.",
+      "fix": "Below 900 points, offer a 200-point list plus the 64-point rail, or collapse the list while reading. Hide row-level call controls until hover/focus and reserve at least 140 points for names."
+    },
+    {
+      "priority": 2,
+      "severity": "medium",
+      "screens": [
+        "chats",
+        "chats-wide",
+        "group-chat",
+        "channel",
+        "composer-mention",
+        "settings",
+        "search-switcher",
+        "calendar",
+        "error-toast"
+      ],
+      "mode": "both",
+      "dimension": "typography",
+      "issue": "Secondary information is consistently smaller than comfortable sustained reading size.",
+      "evidence": "Screens show roughly 11-12-point section labels, timestamps, email addresses and helper text against 14-point message bodies. Settings help occupies y=196-205; message timestamps have about 9 visible glyph pixels. Error recovery text occupies y=678-688. These are visual estimates from 1x rasters, not source font measurements.",
+      "fix": "Use 13-point secondary text and 14-point recovery/error text with 18-20-point line height. Keep 11-point uppercase labels only for short, infrequent section labels."
+    },
+    {
+      "priority": 3,
+      "severity": "medium",
+      "screens": [
+        "call-docked",
+        "call-bar",
+        "chats-wide"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Conversation-start and system-message spacing creates disconnected islands of content.",
+      "evidence": "In call-docked the header ends at y=132, conversation-start text appears around y=307, and the first author appears around y=421. Date and meeting-status rows consume several separate bands before the composer at y=715.",
+      "fix": "Limit top conversation padding to 32 points, use 16 points around date dividers, and group related meeting-status rows with 8-point internal spacing. Preserve bottom anchoring for the latest content."
+    },
+    {
+      "priority": 4,
+      "severity": "medium",
+      "screens": [
+        "signin",
+        "signin-browser",
+        "signin-device-code",
+        "signin-finishing",
+        "signin-expired",
+        "signin-failed"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Sign-in state changes move the brand and main task vertically.",
+      "evidence": "At 1280x800 the initial sign-in bird begins near y=125 and its card y=281; browser-wait starts near y=165/card y=321; finishing starts near y=203/card y=359. The brand moves about 78 px between states.",
+      "fix": "Anchor the brand to a common y position and the card top to a common baseline, e.g. brand top 128 and card top 284 points. Allow the card bottom to grow with content."
+    },
+    {
+      "priority": 5,
+      "severity": "medium",
+      "screens": [
+        "composer-images"
+      ],
+      "mode": "both",
+      "dimension": "hierarchy",
+      "issue": "Extreme-aspect attachments are technically fitted but visually unrecognizable.",
+      "evidence": "The 3072x256 image is shown as a strip roughly 140x12 inside a 144x96 tile; the 256x3072 image is about 8x92. Most of each tile is empty.",
+      "fix": "Use a centered cropped thumbnail with a 64-point minimum recognizable image area and an aspect-ratio badge; retain full aspect ratio in the image preview. Keep dimensions at 13 points beneath it."
+    },
+    {
+      "priority": 6,
+      "severity": "medium",
+      "screens": [
+        "new-chat"
+      ],
+      "mode": "both",
+      "dimension": "hierarchy",
+      "issue": "The submit action does not clearly resolve the in-progress recipient search.",
+      "evidence": "Grace Hopper is selected, the field still contains \"ra\", Barbara Liskov is highlighted with \"Enter to add\", while the primary action says \"Chat with Grace Hopper\". Two different next outcomes compete in the same dialog.",
+      "fix": "Keep a stable \"Start chat\" action and show \"1 recipient selected\" next to it at 13 points. Explicitly separate pending search results from the selected-recipient area with 16-point spacing."
+    },
+    {
+      "priority": 7,
+      "severity": "medium",
+      "screens": [
+        "setup"
+      ],
+      "mode": "both",
+      "dimension": "hierarchy",
+      "issue": "First-run registration gives technical configuration too much immediate reading weight.",
+      "evidence": "The 470-point card contains a multi-line Entra ID explanation, a guide action, client ID, tenant terminology, a two-line tenant helper, disabled save explanation and Advanced. Tenant label appears around y=410, input around y=465.",
+      "fix": "Present two numbered groups, \"1. Create the registration\" and \"2. Paste your application ID\". Keep 8 points between labels and fields, move tenant guidance below the field, and use a 13-point single-line explanation with expandable detail."
+    },
+    {
+      "priority": 8,
+      "severity": "low",
+      "screens": [
+        "channel",
+        "channel-narrow"
+      ],
+      "mode": "both",
+      "dimension": "contrast",
+      "issue": "Thread boundaries are visually weak, reducing the clarity of stacked conversations.",
+      "evidence": "Pillow samples at x=390,y=280 in channel: light border #B9BCC4 against #FFFFFF = 1.90:1; dark border #4D4F58 against #26272C = 1.83:1, or 2.11:1 against #1A1B1F. These are grouping borders, not a demonstrated essential-control WCAG failure.",
+      "fix": "If the border carries thread separation, use #7C7F87 in light and #82858E in dark for at least 3:1, or replace the boxes with stronger spacing and a clear thread heading."
+    },
+    {
+      "priority": 9,
+      "severity": "low",
+      "screens": [
+        "group-chat",
+        "composer-mention"
+      ],
+      "mode": "light",
+      "dimension": "contrast",
+      "issue": "Mention text passes AA with almost no margin.",
+      "evidence": "Full-coverage glyph pixel (446,428) is #B4530A on #FDF1E5 at (442,426): 4.517:1. The same colour on white is about 5.0:1. No text contrast failure is claimed.",
+      "fix": "Use #994300 for mention text in the light theme, retaining the pale fill; this provides more comfortable contrast without increasing saturation across the whole UI."
+    },
+    {
+      "priority": 10,
+      "severity": "low",
+      "screens": [
+        "calls",
+        "calls-narrow",
+        "calendar"
+      ],
+      "mode": "both",
+      "dimension": "hierarchy",
+      "issue": "Explanatory prose has too much visual weight relative to the primary task.",
+      "evidence": "Calls places a paragraph and capability list across y=229-349 at full width, and y=229-405 when narrow. Calendar explanatory text spans approximately x=394-1075, while most of the pane below y=294 is blank.",
+      "fix": "Keep one 13-point, two-line maximum browser-handoff explanation directly under the primary action. Move the remaining details into the existing Details disclosure and limit explanatory copy to 520 points wide."
+    },
+    {
+      "priority": 11,
+      "severity": "low",
+      "screens": [
+        "account-menu"
+      ],
+      "mode": "both",
+      "dimension": "colour",
+      "issue": "Presence distinctions depend heavily on colour at very small sizes.",
+      "evidence": "Available and Busy are both solid circles about 12 px across at x=83,y=519/550; only green versus red changes. Away and Be right back use closely related amber clock marks. Text labels help in this menu, but the tiny marks remain hard to scan.",
+      "fix": "Give Busy a distinct minus or filled-square mark and retain Available as a check/dot. Use a consistent 14-point status symbol in menus and a contrasting outline around avatar badges."
+    },
+    {
+      "priority": 12,
+      "severity": "low",
+      "screens": [
+        "shortcuts"
+      ],
+      "mode": "both",
+      "dimension": "spacing",
+      "issue": "Keyboard shortcut columns use noticeably different key-to-description gaps.",
+      "evidence": "Left-column descriptions begin around x=389, 191 px after the key column at x=198; right-column descriptions begin x=776, only 94 px after keys at x=682. Short left keys leave a wide empty lane.",
+      "fix": "Use a shared 136-point key column and a 16-point gutter in both groups, retaining equal row heights and a 32-point inter-group gap."
+    },
+    {
+      "priority": 13,
+      "severity": "low",
+      "screens": [
+        "chat-filter-no-match"
+      ],
+      "mode": "both",
+      "dimension": "other",
+      "issue": "Clearing a short failed filter requires looking far from the input.",
+      "evidence": "The query is at x=76,y=58; the only visible Clear filter action is centered near x=214,y=497, about 423 px below the input centre.",
+      "fix": "Add a 24x24-point clear button at the right edge of the filter, with a 3:1 icon, while retaining the central recovery action."
+    },
+    {
+      "priority": 14,
+      "severity": "low",
+      "screens": [
+        "signin-device-code",
+        "signin-finishing"
+      ],
+      "mode": "both",
+      "dimension": "other",
+      "issue": "Pending authentication screens provide limited visible information about waiting and recovery.",
+      "evidence": "Device-code screen shows a code and \"Waiting for you to enter the code...\" but no visible expiry cue. Finishing shows only a spinner and a few-seconds explanation; screenshots cannot establish timeout behavior.",
+      "fix": "Show code expiry beneath the code at 13 points, and provide a low-emphasis Cancel action during finishing. Preserve the same card position and primary hierarchy."
+    }
+  ]
+}
