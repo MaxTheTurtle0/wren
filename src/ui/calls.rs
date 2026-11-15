@@ -116,11 +116,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                     ui.label(egui::RichText::new("Join a meeting").font(theme::semibold(15.0)).color(palette.text));
                     ui.add_space(6.0);
                     ui.horizontal(|ui| {
-                        let field = egui::TextEdit::singleline(&mut link)
-                            .hint_text("Paste a Teams meeting link")
-                            .desired_width(ui.available_width() - 90.0)
-                            .margin(Margin::symmetric(8, 6))
-                            .min_size(vec2(0.0, 32.0));
+                        let field = widgets::text_field(&mut link, "Paste a Teams meeting link", theme::regular(13.0))
+                            .desired_width(ui.available_width() - 90.0);
                         let response = ui.add(field);
                         let valid = crate::calling::is_teams_link(link.trim());
                         let join = ui.add_enabled_ui(valid, |ui| widgets::primary_button(ui, &palette, "Join")).inner;
@@ -144,7 +141,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             ui.label(egui::RichText::new(format!("Calls open in {place}. Microsoft's own client runs the call, so it costs nothing extra; Wren shows the meeting chat and follows the call.")).color(palette.secondary));
             ui.add_space(10.0);
             // What works, at a glance; the details on request.
-            for (status, color, icon) in [("Works", palette.success, Icon::Check), ("Not possible", palette.danger, Icon::Close)] {
+            for (status, color, icon) in [("Works", palette.success, Icon::Check), ("Not possible", palette.secondary, Icon::Close)] {
                 // "Join meetings, start audio or video calls, call status"
                 let names: Vec<String> = CAPABILITIES
                     .iter()
@@ -161,10 +158,14 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 if names.is_empty() {
                     continue;
                 }
-                ui.horizontal_wrapped(|ui| {
+                // Icon in its own column; wrapped lines hang under the text.
+                ui.horizontal_top(|ui| {
+                    ui.spacing_mut().item_spacing.x = 8.0;
                     theme::icon(ui, icon, 14.0, color);
-                    ui.label(egui::RichText::new(format!("{status}:")).font(theme::semibold(13.0)).color(color));
-                    ui.label(egui::RichText::new(names.join(", ")).font(theme::regular(13.0)).color(palette.text));
+                    let mut job = egui::text::LayoutJob::default();
+                    job.append(&format!("{status}: "), 0.0, egui::TextFormat::simple(theme::semibold(13.0), color));
+                    job.append(&names.join(", "), 0.0, egui::TextFormat::simple(theme::regular(13.0), palette.text));
+                    ui.add(egui::Label::new(job).wrap());
                 });
             }
             ui.add_space(4.0);

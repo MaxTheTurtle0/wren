@@ -100,8 +100,8 @@ pub fn avatar(
 }
 
 /// A presence dot. Shape tells the states apart as well as colour: Do not
-/// disturb carries a bar, Away and Be right back a hollow centre, Offline
-/// is a ring.
+/// disturb carries a bar, Away a hollow centre, Be right back clock hands,
+/// Offline is a ring.
 pub fn presence_dot(
     painter: &egui::Painter,
     palette: &Palette,
@@ -115,9 +115,16 @@ pub fn presence_dot(
         Offline | Unknown => {
             painter.circle_stroke(center, radius - 1.0, Stroke::new(2.0, color));
         }
-        BeRightBack | Away => {
+        Away => {
             painter.circle_filled(center, radius, color);
             painter.circle_filled(center, radius * 0.4, palette.panel);
+        }
+        BeRightBack => {
+            // A clock face: hands at twelve and three.
+            painter.circle_filled(center, radius, color);
+            let hand = Stroke::new((radius * 0.28).max(1.2), Color32::WHITE);
+            painter.line_segment([center, center - vec2(0.0, radius * 0.6)], hand);
+            painter.line_segment([center, center + vec2(radius * 0.5, 0.0)], hand);
         }
         DoNotDisturb => {
             painter.circle_filled(center, radius, color);
@@ -177,7 +184,7 @@ pub fn primary_button(ui: &mut Ui, palette: &Palette, text: &str) -> Response {
     let button = egui::Button::new(
         egui::RichText::new(text)
             .color(fg)
-            .font(theme::semibold(14.0)),
+            .font(theme::semibold(13.0)),
     )
     .fill(fill)
     .corner_radius(CornerRadius::same(8))
@@ -201,7 +208,7 @@ pub fn secondary_button(ui: &mut Ui, palette: &Palette, text: &str) -> Response 
     let button = egui::Button::new(
         egui::RichText::new(text)
             .color(palette.text)
-            .font(theme::medium(13.0)),
+            .font(theme::semibold(13.0)),
     )
     .fill(palette.surface)
     // A 3:1 edge, so it reads as a button and not a label.
@@ -506,6 +513,51 @@ pub fn disclosure_chevron(color: Color32) -> impl FnOnce(&mut Ui, f32, &Response
                 egui::Rect::from_center_size(response.rect.center(), Vec2::splat(14.0)),
             );
     }
+}
+
+/// Two options side by side in one bordered control; `value` is true when
+/// the second is chosen.
+pub fn segmented(ui: &mut Ui, palette: &Palette, value: &mut bool, first: &str, second: &str) {
+    ui.horizontal(|ui| {
+        ui.spacing_mut().item_spacing.x = 0.0;
+        for (index, label) in [first, second].into_iter().enumerate() {
+            let on = *value == (index == 1);
+            let corner = if index == 0 {
+                CornerRadius {
+                    nw: 6,
+                    sw: 6,
+                    ne: 0,
+                    se: 0,
+                }
+            } else {
+                CornerRadius {
+                    nw: 0,
+                    sw: 0,
+                    ne: 6,
+                    se: 6,
+                }
+            };
+            let button = egui::Button::new(
+                egui::RichText::new(label)
+                    .font(theme::semibold(13.0))
+                    .color(if on { palette.on_accent } else { palette.text }),
+            )
+            .fill(if on { palette.accent } else { palette.surface })
+            .stroke(Stroke::new(
+                1.0,
+                if on { palette.accent } else { palette.control },
+            ))
+            .corner_radius(corner)
+            .min_size(vec2(56.0, 28.0));
+            if ui
+                .add(button)
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .clicked()
+            {
+                *value = index == 1;
+            }
+        }
+    });
 }
 
 /// A label above a field or drop-down.

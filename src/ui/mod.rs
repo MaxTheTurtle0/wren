@@ -22,6 +22,8 @@ use crate::theme::{self, Icon};
 
 pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let ctx = ui.ctx().clone();
+    // Set again by the main pane this frame; docked windows have none.
+    ctx.data_mut(|d| d.remove::<egui::Rect>(egui::Id::new(MAIN_PANE)));
     keys::handle(app, &ctx);
     if matches!(app.update, crate::updates::Status::Ready(_)) {
         egui::Panel::bottom("update-ready")
@@ -154,6 +156,8 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
         .show_separator_line(false)
         .frame(Frame::new().fill(palette.panel))
         .show(ui, |ui| {
+            // Keep the panel's width when its list is empty.
+            ui.set_min_width(ui.max_rect().width());
             let header = egui::Rect::from_min_size(
                 ui.max_rect().min,
                 vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
@@ -194,7 +198,9 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                                 );
                                 widgets::on_click(&new_chat, &mut app.actions, Action::OpenNewChat);
                             }
-                            let busy = !app.loading.is_empty();
+                            // While the first list loads, the main pane shows progress.
+                            let busy = !app.loading.is_empty()
+                                && !(app.section == Section::Chats && app.chats.is_empty());
                             if busy {
                                 widgets::loading(ui, palette.dim, 14.0);
                             }
@@ -232,21 +238,33 @@ fn main(app: &mut App, ui: &mut egui::Ui) {
     let palette = app.palette;
     egui::CentralPanel::no_frame()
         .frame(Frame::new().fill(palette.window))
-        .show(ui, |ui| match app.section {
-            Section::Chats | Section::Teams => match app.open.clone() {
-                Some(open) => conversation::show(app, ui, open),
-                None => {
-                    let header = egui::Rect::from_min_size(
-                        ui.max_rect().min,
-                        vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
-                    );
-                    widgets::window_drag(ui, header, "main-drag");
-                    empty_main(app, ui);
-                }
-            },
-            Section::Calendar => calendar::detail(app, ui),
-            Section::Calls => calls::show(app, ui),
+        .show(ui, |ui| {
+            // Toasts centre on this pane, not the window.
+            let pane = ui.max_rect();
+            ui.ctx()
+                .data_mut(|d| d.insert_temp(egui::Id::new(MAIN_PANE), pane));
+            main_content(app, ui);
         });
+}
+
+const MAIN_PANE: &str = "wren-main-pane";
+
+fn main_content(app: &mut App, ui: &mut egui::Ui) {
+    match app.section {
+        Section::Chats | Section::Teams => match app.open.clone() {
+            Some(open) => conversation::show(app, ui, open),
+            None => {
+                let header = egui::Rect::from_min_size(
+                    ui.max_rect().min,
+                    vec2(ui.max_rect().width(), theme::HEADER_HEIGHT),
+                );
+                widgets::window_drag(ui, header, "main-drag");
+                empty_main(app, ui);
+            }
+        },
+        Section::Calendar => calendar::detail(app, ui),
+        Section::Calls => calls::show(app, ui),
+    }
 }
 
 /// The main pane when nothing is open: what to do next, or why there is
@@ -336,10 +354,17 @@ fn toasts(app: &mut App, ctx: &egui::Context) {
     times.retain(|id, _| app.toasts.iter().any(|t| t.id == *id));
     ctx.data_mut(|d| d.insert_temp(shown_id, times));
 
+    // At the top of the main pane, clear of the newest messages and the
+    // composer, where a failed message and its Retry button appear.
+    let pane = ctx
+        .data(|d| d.get_temp::<egui::Rect>(egui::Id::new(MAIN_PANE)))
+        .unwrap_or_else(|| ctx.content_rect());
     egui::Area::new(egui::Id::new("wren-toasts"))
-        // At the top, clear of the newest messages and the composer, where
-        // a failed message and its Retry button appear.
-        .anchor(Align2::CENTER_TOP, vec2(0.0, theme::HEADER_HEIGHT + 12.0))
+        .pivot(Align2::CENTER_TOP)
+        .fixed_pos(egui::pos2(
+            pane.center().x,
+            pane.top() + theme::HEADER_HEIGHT + 12.0,
+        ))
         .order(egui::Order::Foreground)
         .interactable(true)
         .show(ctx, |ui| {

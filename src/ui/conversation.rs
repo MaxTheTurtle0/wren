@@ -45,171 +45,192 @@ fn header(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                 Stroke::new(1.0, palette.outline),
             );
             widgets::window_drag(ui, rect, "header-drag");
-            ui.horizontal_centered(|ui| {
-                ui.spacing_mut().item_spacing.x = 10.0;
-                let mut call_users: Vec<String> = Vec::new();
-                let mut join: Option<String> = None;
-                let web: Option<String>;
-                let (title, subtitle) = match conversation {
-                    ConversationId::Chat(id) => {
-                        let chat = app.chat(id).cloned().unwrap_or_default();
-                        let title = chat.title(&me);
-                        call_users = chat
-                            .members
-                            .iter()
-                            .filter(|m| m.user_id != me)
-                            .filter_map(|m| m.email.clone())
-                            .collect();
-                        join = chat.join_url.clone();
-                        web = chat.web_url.clone();
-                        match chat.kind {
-                            ChatKind::OneOnOne => {
-                                let peer = chat.peer(&me);
-                                widgets::avatar(
-                                    ui,
-                                    app,
-                                    peer.map(|p| p.user_id.as_str()),
-                                    &title,
-                                    32.0,
-                                    true,
-                                );
-                                let subtitle = peer
-                                    .and_then(|p| app.presence.get(&p.user_id))
-                                    .map(|p| match &p.status_message {
-                                        Some(message) => format!("{} · {message}", p.describe()),
-                                        None => p.describe(),
-                                    })
-                                    .or_else(|| peer.and_then(|p| p.email.clone()))
-                                    .unwrap_or_default();
-                                (title, subtitle)
-                            }
-                            ChatKind::Group => {
-                                widgets::avatar(ui, app, None, &title, 32.0, false);
-                                (title, format!("{} people", chat.members.len()))
-                            }
-                            ChatKind::Meeting => {
-                                let (tile, _) =
-                                    ui.allocate_exact_size(egui::Vec2::splat(32.0), Sense::hover());
-                                ui.painter().rect_filled(
-                                    tile,
-                                    CornerRadius::same(8),
-                                    palette.surface_active,
-                                );
-                                Icon::Calendar.image(palette.accent, 16.0).paint_at(
-                                    ui,
-                                    egui::Rect::from_center_size(
-                                        tile.center(),
-                                        egui::Vec2::splat(16.0),
-                                    ),
-                                );
-                                (title, "Meeting chat".to_owned())
+            // Actions end where the message column ends on wide windows.
+            let column = egui::Rect::from_min_size(
+                rect.min,
+                vec2(rect.width().min(MAX_HISTORY_WIDTH - 4.0), rect.height()),
+            );
+            ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
+                ui.horizontal_centered(|ui| {
+                    ui.spacing_mut().item_spacing.x = 10.0;
+                    let mut call_users: Vec<String> = Vec::new();
+                    let mut join: Option<String> = None;
+                    let web: Option<String>;
+                    let (title, subtitle) = match conversation {
+                        ConversationId::Chat(id) => {
+                            let chat = app.chat(id).cloned().unwrap_or_default();
+                            let title = chat.title(&me);
+                            call_users = chat
+                                .members
+                                .iter()
+                                .filter(|m| m.user_id != me)
+                                .filter_map(|m| m.email.clone())
+                                .collect();
+                            join = chat.join_url.clone();
+                            web = chat.web_url.clone();
+                            match chat.kind {
+                                ChatKind::OneOnOne => {
+                                    let peer = chat.peer(&me);
+                                    widgets::avatar(
+                                        ui,
+                                        app,
+                                        peer.map(|p| p.user_id.as_str()),
+                                        &title,
+                                        32.0,
+                                        true,
+                                    );
+                                    let subtitle = peer
+                                        .and_then(|p| app.presence.get(&p.user_id))
+                                        .map(|p| match &p.status_message {
+                                            Some(message) => {
+                                                format!("{} · {message}", p.describe())
+                                            }
+                                            None => p.describe(),
+                                        })
+                                        .or_else(|| peer.and_then(|p| p.email.clone()))
+                                        .unwrap_or_default();
+                                    (title, subtitle)
+                                }
+                                ChatKind::Group => {
+                                    widgets::avatar(ui, app, None, &title, 32.0, false);
+                                    (title, format!("{} people", chat.members.len()))
+                                }
+                                ChatKind::Meeting => {
+                                    let (tile, _) = ui.allocate_exact_size(
+                                        egui::Vec2::splat(32.0),
+                                        Sense::hover(),
+                                    );
+                                    ui.painter().rect_filled(
+                                        tile,
+                                        CornerRadius::same(8),
+                                        palette.surface_active,
+                                    );
+                                    Icon::Calendar.image(palette.accent, 16.0).paint_at(
+                                        ui,
+                                        egui::Rect::from_center_size(
+                                            tile.center(),
+                                            egui::Vec2::splat(16.0),
+                                        ),
+                                    );
+                                    (title, "Meeting chat".to_owned())
+                                }
                             }
                         }
+                        ConversationId::Channel { team, channel } => {
+                            let channel_data = app.channel(team, channel).cloned();
+                            let team_name =
+                                app.team(team).map(|t| t.name.clone()).unwrap_or_default();
+                            web = channel_data.as_ref().and_then(|c| c.web_url.clone());
+                            let (tile, _) =
+                                ui.allocate_exact_size(egui::Vec2::splat(32.0), Sense::hover());
+                            ui.painter().rect_filled(
+                                tile,
+                                CornerRadius::same(8),
+                                palette.surface_active,
+                            );
+                            Icon::Hash.image(palette.secondary, 16.0).paint_at(
+                                ui,
+                                egui::Rect::from_center_size(
+                                    tile.center(),
+                                    egui::Vec2::splat(16.0),
+                                ),
+                            );
+                            let name = channel_data
+                                .as_ref()
+                                .map(|c| c.name.clone())
+                                .unwrap_or_else(|| "Channel".into());
+                            let subtitle = channel_data
+                                .and_then(|c| c.description)
+                                .map(|d| format!("{team_name} · {d}"))
+                                .unwrap_or(team_name);
+                            (name, subtitle)
+                        }
+                    };
+                    // During a call in this chat the call bar has the controls.
+                    let in_call = app
+                        .call
+                        .as_ref()
+                        .is_some_and(|c| !c.is_ended() && c.chat.as_ref() == Some(conversation));
+                    if in_call {
+                        call_users.clear();
+                        join = None;
                     }
-                    ConversationId::Channel { team, channel } => {
-                        let channel_data = app.channel(team, channel).cloned();
-                        let team_name = app.team(team).map(|t| t.name.clone()).unwrap_or_default();
-                        web = channel_data.as_ref().and_then(|c| c.web_url.clone());
-                        let (tile, _) =
-                            ui.allocate_exact_size(egui::Vec2::splat(32.0), Sense::hover());
-                        ui.painter().rect_filled(
-                            tile,
-                            CornerRadius::same(8),
-                            palette.surface_active,
-                        );
-                        Icon::Hash.image(palette.secondary, 16.0).paint_at(
-                            ui,
-                            egui::Rect::from_center_size(tile.center(), egui::Vec2::splat(16.0)),
-                        );
-                        let name = channel_data
-                            .as_ref()
-                            .map(|c| c.name.clone())
-                            .unwrap_or_else(|| "Channel".into());
-                        let subtitle = channel_data
-                            .and_then(|c| c.description)
-                            .map(|d| format!("{team_name} · {d}"))
-                            .unwrap_or(team_name);
-                        (name, subtitle)
-                    }
-                };
-                // During a call in this chat the call bar has the controls.
-                let in_call = app
-                    .call
-                    .as_ref()
-                    .is_some_and(|c| !c.is_ended() && c.chat.as_ref() == Some(conversation));
-                if in_call {
-                    call_users.clear();
-                    join = None;
-                }
-                // The title takes whatever the header's buttons leave.
-                let buttons = if web.is_some() { 34.0 } else { 0.0 }
-                    + if call_users.is_empty() { 0.0 } else { 68.0 }
-                    + if join.is_some() { 84.0 } else { 0.0 }
-                    + 40.0;
-                ui.vertical(|ui| {
-                    ui.add_space(8.0);
-                    ui.spacing_mut().item_spacing.y = 0.0;
-                    let width = (ui.available_width() - buttons).max(120.0);
-                    ui.add(egui::Label::new(super::chat_list::elided(
-                        ui,
-                        &title,
-                        theme::semibold(15.0),
-                        palette.text,
-                        width,
-                    )));
-                    if !subtitle.is_empty() {
+                    // The title takes whatever the header's buttons leave.
+                    let buttons = if web.is_some() { 34.0 } else { 0.0 }
+                        + if call_users.is_empty() { 0.0 } else { 68.0 }
+                        + if join.is_some() { 84.0 } else { 0.0 }
+                        + 40.0;
+                    ui.vertical(|ui| {
+                        ui.add_space(8.0);
+                        ui.spacing_mut().item_spacing.y = 0.0;
+                        let width = (ui.available_width() - buttons).max(120.0);
                         ui.add(egui::Label::new(super::chat_list::elided(
                             ui,
-                            &subtitle,
-                            theme::regular(12.0),
-                            palette.secondary,
+                            &title,
+                            theme::semibold(15.0),
+                            palette.text,
                             width,
                         )));
-                    }
-                });
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.spacing_mut().item_spacing.x = 4.0;
-                    if let Some(web) = web {
-                        let open = widgets::icon_button(
-                            ui,
-                            &palette,
-                            Icon::ExternalLink,
-                            "Open in Microsoft Teams",
-                        );
-                        widgets::on_click(&open, &mut app.actions, Action::OpenUrl(web));
-                    }
-                    if !call_users.is_empty() {
-                        let audio = widgets::icon_button(ui, &palette, Icon::Phone, "Audio call");
-                        widgets::on_click(
-                            &audio,
-                            &mut app.actions,
-                            Action::StartCall {
-                                users: call_users.clone(),
-                                video: false,
-                            },
-                        );
-                        let video = widgets::icon_button(ui, &palette, Icon::Video, "Video call");
-                        widgets::on_click(
-                            &video,
-                            &mut app.actions,
-                            Action::StartCall {
-                                users: call_users,
-                                video: true,
-                            },
-                        );
-                    }
-                    if let Some(join) = join {
-                        ui.add_space(4.0);
-                        let response = widgets::pill(ui, &palette, Icon::Video, "Join", true)
-                            .on_hover_text("Join the meeting");
-                        widgets::on_click(&response, &mut app.actions, Action::JoinMeeting(join));
-                    }
-                    if app
-                        .loading
-                        .contains(&crate::sync::Resource::Messages(conversation.clone()))
-                    {
-                        widgets::loading(ui, palette.dim, 14.0);
-                    }
+                        if !subtitle.is_empty() {
+                            ui.add(egui::Label::new(super::chat_list::elided(
+                                ui,
+                                &subtitle,
+                                theme::regular(12.0),
+                                palette.secondary,
+                                width,
+                            )));
+                        }
+                    });
+                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        ui.spacing_mut().item_spacing.x = 4.0;
+                        if let Some(web) = web {
+                            let open = widgets::icon_button(
+                                ui,
+                                &palette,
+                                Icon::ExternalLink,
+                                "Open in Microsoft Teams",
+                            );
+                            widgets::on_click(&open, &mut app.actions, Action::OpenUrl(web));
+                        }
+                        if !call_users.is_empty() {
+                            let audio =
+                                widgets::icon_button(ui, &palette, Icon::Phone, "Audio call");
+                            widgets::on_click(
+                                &audio,
+                                &mut app.actions,
+                                Action::StartCall {
+                                    users: call_users.clone(),
+                                    video: false,
+                                },
+                            );
+                            let video =
+                                widgets::icon_button(ui, &palette, Icon::Video, "Video call");
+                            widgets::on_click(
+                                &video,
+                                &mut app.actions,
+                                Action::StartCall {
+                                    users: call_users,
+                                    video: true,
+                                },
+                            );
+                        }
+                        if let Some(join) = join {
+                            ui.add_space(4.0);
+                            let response = widgets::pill(ui, &palette, Icon::Video, "Join", true)
+                                .on_hover_text("Join the meeting");
+                            widgets::on_click(
+                                &response,
+                                &mut app.actions,
+                                Action::JoinMeeting(join),
+                            );
+                        }
+                        if app
+                            .loading
+                            .contains(&crate::sync::Resource::Messages(conversation.clone()))
+                        {
+                            widgets::loading(ui, palette.dim, 14.0);
+                        }
+                    });
                 });
             });
         });
@@ -860,10 +881,11 @@ fn reactions(
             })
             .stroke(Stroke::new(
                 1.0,
+                // Reactions are toggles: a 3:1 edge like other controls.
                 if mine {
-                    palette.accent.gamma_multiply(0.7)
+                    palette.accent
                 } else {
-                    palette.outline
+                    palette.control
                 },
             ))
             .corner_radius(CornerRadius::same(12))
@@ -920,7 +942,8 @@ fn hover_toolbar(
     let size = vec2(buttons * 28.0 + 12.0, 34.0);
     let min = egui::pos2(
         row.right() - size.x - 4.0,
-        (row.top() - 12.0).max(ui.clip_rect().top() + 2.0),
+        // Inside the hovered row's own top padding, never over a neighbour.
+        (row.top() + 2.0).max(ui.clip_rect().top() + 2.0),
     );
     let rect = egui::Rect::from_min_size(min, size);
     let reacted = |emoji: &str| {
@@ -933,7 +956,7 @@ fn hover_toolbar(
     ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
         Frame::new()
             .fill(palette.surface)
-            .stroke(Stroke::new(1.0, palette.outline))
+            .stroke(Stroke::new(1.0, palette.control))
             .corner_radius(CornerRadius::same(8))
             .shadow(egui::Shadow {
                 offset: [0, 2],
@@ -1209,7 +1232,7 @@ fn thread_card(
                             .color(palette.secondary),
                     )
                     .fill(palette.surface)
-                    .stroke(Stroke::new(1.0, palette.outline))
+                    .stroke(Stroke::new(1.0, palette.control))
                     .corner_radius(CornerRadius::same(6))
                     .min_size(vec2(0.0, 28.0)),
                 );
@@ -1356,7 +1379,11 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
     let mut picked: Option<crate::model::Member> =
         clicked.and_then(|index| candidates.get(index).cloned());
     let mut composer_top = None;
-    let max_editor_height = (ui.available_height() / 3.0).clamp(40.0, 200.0);
+    // Whole 20 pt lines plus the editor's 12 pt of padding, so a scrolled
+    // draft never shows a line cut in half at the top.
+    let max_editor_height = ((ui.available_height() / 3.0).clamp(40.0, 200.0) - 12.0)
+        .div_euclid(20.0)
+        .mul_add(20.0, 12.0);
     egui::Panel::bottom("composer")
         .show_separator_line(false)
         .frame(Frame::new().fill(palette.window).inner_margin(Margin {
@@ -1376,385 +1403,490 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                 ),
             );
             ui.scope_builder(egui::UiBuilder::new().max_rect(column), |ui| {
-            composer_top = Some(ui.cursor().min);
-            // The field's edge reads as a control, and focus as a ring.
-            let edge = if ui.memory(|m| m.has_focus(id)) {
-                Stroke::new(2.0, palette.accent)
-            } else {
-                Stroke::new(1.0, palette.control)
-            };
-            Frame::new()
-                .fill(palette.surface)
-                .stroke(edge)
-                .corner_radius(CornerRadius::same(10))
-                .inner_margin(Margin {
-                    left: 12,
-                    right: 8,
-                    top: 6,
-                    bottom: 6,
-                })
-                .show(ui, |ui| {
-                    if let Some((icon, text)) = &context_line {
-                        ui.horizontal(|ui| {
-                            theme::icon(ui, *icon, 14.0, palette.accent);
-                            let width = ui.available_width() - 40.0;
-                            ui.add(egui::Label::new(super::chat_list::elided(
-                                ui,
-                                text,
-                                theme::regular(12.0),
-                                palette.secondary,
-                                width,
-                            )));
-                            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                let close = widgets::icon_button_sized(
+                composer_top = Some(ui.cursor().min);
+                // The field's edge reads as a control, and focus as a ring.
+                let edge = if ui.memory(|m| m.has_focus(id)) {
+                    Stroke::new(2.0, palette.accent)
+                } else {
+                    Stroke::new(1.0, palette.control)
+                };
+                Frame::new()
+                    .fill(palette.surface)
+                    .stroke(edge)
+                    .corner_radius(CornerRadius::same(10))
+                    .inner_margin(Margin {
+                        left: 12,
+                        right: 8,
+                        top: 6,
+                        bottom: 6,
+                    })
+                    .show(ui, |ui| {
+                        if let Some((icon, text)) = &context_line {
+                            ui.horizontal(|ui| {
+                                theme::icon(ui, *icon, 14.0, palette.accent);
+                                let width = ui.available_width() - 40.0;
+                                ui.add(egui::Label::new(super::chat_list::elided(
                                     ui,
-                                    &palette,
-                                    Icon::Close,
-                                    "Cancel (Esc)",
-                                    22.0,
-                                    14.0,
-                                    palette.dim,
-                                );
-                                widgets::on_click(&close, &mut actions, Action::CancelCompose);
+                                    text,
+                                    theme::regular(12.0),
+                                    palette.secondary,
+                                    width,
+                                )));
+                                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                                    let close = widgets::icon_button_sized(
+                                        ui,
+                                        &palette,
+                                        Icon::Close,
+                                        "Cancel (Esc)",
+                                        22.0,
+                                        14.0,
+                                        palette.dim,
+                                    );
+                                    widgets::on_click(&close, &mut actions, Action::CancelCompose);
+                                });
                             });
-                        });
-                        ui.add_space(2.0);
-                    }
-                    // Files waiting to go with the message.
-                    if !draft.files.is_empty() {
-                        let mut remove = None;
-                        ui.horizontal_wrapped(|ui| {
-                            ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
-                            for (index, path) in draft.files.iter().enumerate() {
-                                let name = path
-                                    .file_name()
-                                    .map(|n| n.to_string_lossy().into_owned())
-                                    .unwrap_or_default();
-                                Frame::new()
-                                    .fill(palette.surface_hover)
-                                    .corner_radius(CornerRadius::same(6))
-                                    .inner_margin(Margin { left: 8, right: 2, top: 3, bottom: 3 })
-                                    .show(ui, |ui| {
-                                        ui.horizontal(|ui| {
-                                            ui.spacing_mut().item_spacing.x = 4.0;
-                                            theme::icon(ui, Icon::File, 14.0, palette.accent);
-                                            ui.label(
-                                                egui::RichText::new(crate::html::truncate(&name, 32))
+                            ui.add_space(2.0);
+                        }
+                        // Files waiting to go with the message.
+                        if !draft.files.is_empty() {
+                            let mut remove = None;
+                            ui.horizontal_wrapped(|ui| {
+                                ui.spacing_mut().item_spacing = vec2(6.0, 6.0);
+                                for (index, path) in draft.files.iter().enumerate() {
+                                    let name = path
+                                        .file_name()
+                                        .map(|n| n.to_string_lossy().into_owned())
+                                        .unwrap_or_default();
+                                    Frame::new()
+                                        .fill(palette.surface_hover)
+                                        .corner_radius(CornerRadius::same(6))
+                                        .inner_margin(Margin {
+                                            left: 8,
+                                            right: 2,
+                                            top: 3,
+                                            bottom: 3,
+                                        })
+                                        .show(ui, |ui| {
+                                            ui.horizontal(|ui| {
+                                                ui.spacing_mut().item_spacing.x = 4.0;
+                                                theme::icon(ui, Icon::File, 14.0, palette.accent);
+                                                ui.label(
+                                                    egui::RichText::new(crate::html::truncate(
+                                                        &name, 32,
+                                                    ))
                                                     .font(theme::medium(12.0))
                                                     .color(palette.text),
-                                            );
-                                            ui.label(
-                                                egui::RichText::new(file_size(path))
-                                                    .font(theme::regular(11.0))
-                                                    .color(palette.dim),
-                                            );
-                                            let close = widgets::icon_button_sized(
-                                                ui, &palette, Icon::Close, "Remove", 20.0, 12.0, palette.dim,
-                                            );
-                                            if close.clicked() {
-                                                remove = Some(index);
-                                            }
+                                                );
+                                                ui.label(
+                                                    egui::RichText::new(file_size(path))
+                                                        .font(theme::regular(11.0))
+                                                        .color(palette.dim),
+                                                );
+                                                let close = widgets::icon_button_sized(
+                                                    ui,
+                                                    &palette,
+                                                    Icon::Close,
+                                                    "Remove",
+                                                    20.0,
+                                                    12.0,
+                                                    palette.dim,
+                                                );
+                                                if close.clicked() {
+                                                    remove = Some(index);
+                                                }
+                                            });
                                         });
-                                    });
+                                }
+                            });
+                            if let Some(index) = remove {
+                                draft.files.remove(index);
                             }
-                        });
-                        if let Some(index) = remove {
-                            draft.files.remove(index);
+                            ui.add_space(4.0);
                         }
-                        ui.add_space(4.0);
-                    }
-                    if !draft.images.is_empty() {
-                        let mut remove = None;
-                        ui.add_space(4.0);
-                        ui.horizontal_wrapped(|ui| {
-                            ui.spacing_mut().item_spacing = vec2(8.0, 8.0);
-                            for (index, image) in draft.images.iter().enumerate() {
-                                // Crop a fixed-size thumbnail instead of shrinking a
-                                // wide screenshot into a line. The preview keeps the
-                                // full image and its original proportions.
-                                let size = vec2(144.0, 96.0);
-                                let natural = vec2(image.width.max(1) as f32, image.height.max(1) as f32);
-                                let scale = (size.x / natural.x).max(size.y / natural.y);
-                                let uv = egui::Rect::from_center_size(egui::pos2(0.5, 0.5), size / (natural * scale));
-                                let (rect, _) = ui.allocate_exact_size(size, Sense::hover());
-                                ui.painter().rect_filled(rect, CornerRadius::same(8), palette.surface_hover);
-                                let response = ui
-                                    .put(
+                        if !draft.images.is_empty() {
+                            let mut remove = None;
+                            ui.add_space(4.0);
+                            ui.horizontal_wrapped(|ui| {
+                                ui.spacing_mut().item_spacing = vec2(8.0, 8.0);
+                                for (index, image) in draft.images.iter().enumerate() {
+                                    // Crop a fixed-size thumbnail instead of shrinking a
+                                    // wide screenshot into a line. The preview keeps the
+                                    // full image and its original proportions.
+                                    let size = vec2(144.0, 96.0);
+                                    let natural =
+                                        vec2(image.width.max(1) as f32, image.height.max(1) as f32);
+                                    let scale = (size.x / natural.x).max(size.y / natural.y);
+                                    let uv = egui::Rect::from_center_size(
+                                        egui::pos2(0.5, 0.5),
+                                        size / (natural * scale),
+                                    );
+                                    let (tile, _) = ui.allocate_exact_size(
+                                        size + vec2(0.0, 18.0),
+                                        Sense::hover(),
+                                    );
+                                    let rect = egui::Rect::from_min_size(tile.min, size);
+                                    // What is being sent, since the tile shows a crop.
+                                    ui.painter().text(
+                                        egui::pos2(rect.left() + 2.0, rect.bottom() + 3.0),
+                                        egui::Align2::LEFT_TOP,
+                                        format!("{} × {}", image.width, image.height),
+                                        theme::regular(12.0),
+                                        palette.dim,
+                                    );
+                                    ui.painter().rect_filled(
                                         rect,
-                                        egui::Image::new(crate::images::cropped(&image.uri()))
-                                            .fit_to_exact_size(size)
-                                            .maintain_aspect_ratio(false)
-                                            .uv(uv)
-                                            .corner_radius(8)
-                                            .sense(Sense::click())
-                                            .alt_text("Preview pasted image"),
-                                    )
-                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                                    .on_hover_text("Preview image");
-                                ui.painter().rect_stroke(
-                                    rect,
-                                    CornerRadius::same(8),
-                                    Stroke::new(1.0, if response.hovered() { palette.control } else { palette.outline }),
-                                    egui::StrokeKind::Inside,
-                                );
-                                if response.clicked() {
-                                    actions.push(Action::PreviewImage(image.uri()));
-                                }
-                                // Remove, on the thumbnail's own corner.
-                                let close_rect = egui::Rect::from_center_size(rect.right_top() + vec2(-14.0, 14.0), Vec2::splat(22.0));
-                                let close = ui
-                                    .interact(close_rect, id.with(("remove-image", index)), Sense::click())
-                                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                                    .on_hover_text("Remove image");
-                                let fill = Color32::from_black_alpha(if close.hovered() { 210 } else { 160 });
-                                ui.painter().circle_filled(close_rect.center(), 11.0, fill);
-                                Icon::Close.image(Color32::WHITE, 13.0).paint_at(ui, egui::Rect::from_center_size(close_rect.center(), Vec2::splat(13.0)));
-                                if close.clicked() {
-                                    remove = Some(index);
-                                }
-                            }
-                        });
-                        if let Some(index) = remove { draft.images.remove(index); }
-                        ui.add_space(4.0);
-                    }
-                    ui.horizontal(|ui| {
-                        let focused = ui.memory(|m| m.has_focus(id));
-                        let mut send = false;
-                        let mut paste_requested = false;
-                        let range = egui::TextEdit::load_state(ui.ctx(), id)
-                            .and_then(|state| state.cursor.char_range())
-                            .map(|r| (r.primary.index.0.min(r.secondary.index.0), r.primary.index.0.max(r.secondary.index.0)))
-                            .unwrap_or((draft.text.chars().count(), draft.text.chars().count()));
-                        if focused {
-                            ui.input_mut(|input| {
-                                let mut pastes = Vec::new();
-                                let mut enter = false;
-                                input.events.retain(|event| {
-                                    if let egui::Event::Paste(text) = event {
-                                        pastes.push(text.clone()); false
-                                    } else if matches!(event, egui::Event::Key {
-                                        key: Key::Enter, pressed: true, modifiers, ..
-                                    } if modifiers.matches_exact(Modifiers::NONE)) {
-                                        // consume_key ignores extra Shift and Alt.
-                                        // Keep Shift+Enter for the multiline editor.
-                                        enter = true; false
-                                    } else { true }
-                                });
-                                for text in pastes {
-                                    paste_requested = true;
-                                    actions.push(Action::Paste { conversation: conversation.clone(), range, text });
-                                }
-                                // The mention list takes the arrows, Enter
-                                // and Tab while it shows.
-                                if !candidates.is_empty() {
-                                    if input.consume_key(Modifiers::NONE, Key::ArrowDown) {
-                                        selected = (selected + 1) % candidates.len();
+                                        CornerRadius::same(8),
+                                        palette.surface_hover,
+                                    );
+                                    let response = ui
+                                        .put(
+                                            rect,
+                                            egui::Image::new(crate::images::cropped(&image.uri()))
+                                                .fit_to_exact_size(size)
+                                                .maintain_aspect_ratio(false)
+                                                .uv(uv)
+                                                .corner_radius(8)
+                                                .sense(Sense::click())
+                                                .alt_text("Preview pasted image"),
+                                        )
+                                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                        .on_hover_text("Preview image");
+                                    ui.painter().rect_stroke(
+                                        rect,
+                                        CornerRadius::same(8),
+                                        Stroke::new(
+                                            1.0,
+                                            if response.hovered() {
+                                                palette.control
+                                            } else {
+                                                palette.outline
+                                            },
+                                        ),
+                                        egui::StrokeKind::Inside,
+                                    );
+                                    if response.clicked() {
+                                        actions.push(Action::PreviewImage(image.uri()));
                                     }
-                                    if input.consume_key(Modifiers::NONE, Key::ArrowUp) {
-                                        selected = (selected + candidates.len() - 1) % candidates.len();
-                                    }
-                                    if enter
-                                        || input.consume_key(Modifiers::NONE, Key::Tab)
-                                    {
-                                        picked = candidates.get(selected).cloned();
-                                        enter = false;
-                                    }
-                                    if input.consume_key(Modifiers::NONE, Key::Escape)
-                                        && let Some((at, ..)) = &mention
-                                    {
-                                        ui.ctx().data_mut(|d| d.insert_temp(dismissed_id, *at));
-                                    }
-                                }
-                                send |= enter;
-                                if input.consume_key(Modifiers::NONE, Key::Escape) {
-                                    actions.push(Action::CancelCompose);
-                                }
-                                if draft.text.is_empty()
-                                    && input.consume_key(Modifiers::NONE, Key::ArrowUp)
-                                {
-                                    let me = app.me();
-                                    if let Some(last) =
-                                        app.conversation(conversation).and_then(|c| {
-                                            c.messages
-                                                .iter()
-                                                .rev()
-                                                .find(|m| m.is_from(me) && !m.deleted && !m.system)
-                                        })
-                                        && !channel
-                                    {
-                                        actions.push(Action::StartEdit(last.id.clone()));
+                                    // Remove, on the thumbnail's own corner.
+                                    let close_rect = egui::Rect::from_center_size(
+                                        rect.right_top() + vec2(-14.0, 14.0),
+                                        Vec2::splat(22.0),
+                                    );
+                                    let close = ui
+                                        .interact(
+                                            close_rect,
+                                            id.with(("remove-image", index)),
+                                            Sense::click(),
+                                        )
+                                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                                        .on_hover_text("Remove image");
+                                    let fill = Color32::from_black_alpha(if close.hovered() {
+                                        210
+                                    } else {
+                                        160
+                                    });
+                                    ui.painter().circle_filled(close_rect.center(), 11.0, fill);
+                                    Icon::Close.image(Color32::WHITE, 13.0).paint_at(
+                                        ui,
+                                        egui::Rect::from_center_size(
+                                            close_rect.center(),
+                                            Vec2::splat(13.0),
+                                        ),
+                                    );
+                                    if close.clicked() {
+                                        remove = Some(index);
                                     }
                                 }
                             });
+                            if let Some(index) = remove {
+                                draft.images.remove(index);
+                            }
+                            ui.add_space(4.0);
                         }
-                        // Put the picked name in place of `@query`.
-                        if let (Some(person), Some((at, _, cursor))) = (&picked, &mention) {
-                            // Consuming Tab doesn't cancel egui's pending focus
-                            // move. Keep keyboard input in the composer.
-                            ui.memory_mut(|memory| memory.move_focus(egui::FocusDirection::None));
-                            let chars: Vec<char> = draft.text.chars().collect();
-                            let before: String = chars[..*at].iter().collect();
-                            let after: String = chars[(*cursor).min(chars.len())..].iter().collect();
-                            let inserted = format!("@{} ", person.display_name);
-                            draft.text = format!("{before}{inserted}{after}");
-                            if !draft.mentions.iter().any(|m| m.user_id == person.user_id) {
-                                draft.mentions.push(crate::model::MentionRef {
-                                    user_id: person.user_id.clone(),
-                                    name: person.display_name.clone(),
+                        ui.horizontal(|ui| {
+                            let focused = ui.memory(|m| m.has_focus(id));
+                            let mut send = false;
+                            let mut paste_requested = false;
+                            let range = egui::TextEdit::load_state(ui.ctx(), id)
+                                .and_then(|state| state.cursor.char_range())
+                                .map(|r| {
+                                    (
+                                        r.primary.index.0.min(r.secondary.index.0),
+                                        r.primary.index.0.max(r.secondary.index.0),
+                                    )
+                                })
+                                .unwrap_or((
+                                    draft.text.chars().count(),
+                                    draft.text.chars().count(),
+                                ));
+                            if focused {
+                                ui.input_mut(|input| {
+                                    let mut pastes = Vec::new();
+                                    let mut enter = false;
+                                    input.events.retain(|event| {
+                                        if let egui::Event::Paste(text) = event {
+                                            pastes.push(text.clone());
+                                            false
+                                        } else if matches!(event, egui::Event::Key {
+                                        key: Key::Enter, pressed: true, modifiers, ..
+                                    } if modifiers.matches_exact(Modifiers::NONE))
+                                        {
+                                            // consume_key ignores extra Shift and Alt.
+                                            // Keep Shift+Enter for the multiline editor.
+                                            enter = true;
+                                            false
+                                        } else {
+                                            true
+                                        }
+                                    });
+                                    for text in pastes {
+                                        paste_requested = true;
+                                        actions.push(Action::Paste {
+                                            conversation: conversation.clone(),
+                                            range,
+                                            text,
+                                        });
+                                    }
+                                    // The mention list takes the arrows, Enter
+                                    // and Tab while it shows.
+                                    if !candidates.is_empty() {
+                                        if input.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                                            selected = (selected + 1) % candidates.len();
+                                        }
+                                        if input.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                                            selected = (selected + candidates.len() - 1)
+                                                % candidates.len();
+                                        }
+                                        if enter || input.consume_key(Modifiers::NONE, Key::Tab) {
+                                            picked = candidates.get(selected).cloned();
+                                            enter = false;
+                                        }
+                                        if input.consume_key(Modifiers::NONE, Key::Escape)
+                                            && let Some((at, ..)) = &mention
+                                        {
+                                            ui.ctx().data_mut(|d| d.insert_temp(dismissed_id, *at));
+                                        }
+                                    }
+                                    send |= enter;
+                                    if input.consume_key(Modifiers::NONE, Key::Escape) {
+                                        actions.push(Action::CancelCompose);
+                                    }
+                                    if draft.text.is_empty()
+                                        && input.consume_key(Modifiers::NONE, Key::ArrowUp)
+                                    {
+                                        let me = app.me();
+                                        if let Some(last) =
+                                            app.conversation(conversation).and_then(|c| {
+                                                c.messages.iter().rev().find(|m| {
+                                                    m.is_from(me) && !m.deleted && !m.system
+                                                })
+                                            })
+                                            && !channel
+                                        {
+                                            actions.push(Action::StartEdit(last.id.clone()));
+                                        }
+                                    }
                                 });
                             }
-                            let caret = at + inserted.chars().count();
-                            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
-                                state.cursor.set_char_range(Some(egui::text::CCursorRange::one(
-                                    egui::text::CCursor::new(caret),
-                                )));
-                                egui::TextEdit::store_state(ui.ctx(), id, state);
+                            // Put the picked name in place of `@query`.
+                            if let (Some(person), Some((at, _, cursor))) = (&picked, &mention) {
+                                // Consuming Tab doesn't cancel egui's pending focus
+                                // move. Keep keyboard input in the composer.
+                                ui.memory_mut(|memory| {
+                                    memory.move_focus(egui::FocusDirection::None)
+                                });
+                                let chars: Vec<char> = draft.text.chars().collect();
+                                let before: String = chars[..*at].iter().collect();
+                                let after: String =
+                                    chars[(*cursor).min(chars.len())..].iter().collect();
+                                let inserted = format!("@{} ", person.display_name);
+                                draft.text = format!("{before}{inserted}{after}");
+                                if !draft.mentions.iter().any(|m| m.user_id == person.user_id) {
+                                    draft.mentions.push(crate::model::MentionRef {
+                                        user_id: person.user_id.clone(),
+                                        name: person.display_name.clone(),
+                                    });
+                                }
+                                let caret = at + inserted.chars().count();
+                                if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
+                                    state.cursor.set_char_range(Some(
+                                        egui::text::CCursorRange::one(egui::text::CCursor::new(
+                                            caret,
+                                        )),
+                                    ));
+                                    egui::TextEdit::store_state(ui.ctx(), id, state);
+                                }
                             }
-                        }
-                        // Narrow panes drop the mention reminder so the hint fits one line.
-                        let mention = if ui.available_width() >= 520.0 { "  ·  @ to mention" } else { "" };
-                        let hint = if !can_post {
-                            "Posting needs the ChannelMessage.Send permission".to_owned()
-                        } else if draft.editing.is_some() {
-                            "Edit your message".to_owned()
-                        } else if channel && draft.reply_to.is_none() {
-                            format!("Start a new post in {title}{mention}")
-                        } else if channel {
-                            "Reply to the thread".to_owned()
-                        } else {
-                            format!("Message {title}{mention}")
-                        };
-                        let width = (ui.available_width() - 70.0).max(0.0);
-                        // Roomier lines than egui's default (1.43, like messages)
-                        // so long drafts stay readable.
-                        let text_color = palette.text;
-                        let mut layouter = |ui: &egui::Ui, buffer: &dyn egui::TextBuffer, wrap_width: f32| {
-                            let mut job = egui::text::LayoutJob::single_section(
-                                buffer.as_str().to_owned(),
-                                egui::TextFormat {
-                                    font_id: theme::regular(14.0),
-                                    color: text_color,
-                                    line_height: Some(20.0),
-                                    ..Default::default()
-                                },
-                            );
-                            job.wrap.max_width = wrap_width;
-                            ui.ctx().fonts_mut(|f| f.layout_job(job))
-                        };
-                        let edit = egui::TextEdit::multiline(&mut draft.text)
-                            .id(id)
-                            .layouter(&mut layouter)
-                            .hint_text(hint)
-                            .desired_rows(1)
-                            .desired_width(width)
-                            // A custom Frame overrides TextEdit::margin.
-                            // Put the padding on the frame itself.
-                            .frame(Frame::new().inner_margin(Margin::symmetric(0, 6)))
-                            .font(theme::regular(14.0))
-                            .vertical_align(Align::Center);
-                        // Reserve the controls' width and let only the editor
-                        // scroll. TextEdit's desired_rows is a minimum, so a
-                        // large paste otherwise grows over the message history.
-                        let response = ui.allocate_ui_with_layout(
-                            vec2(width, max_editor_height),
-                            Layout::top_down(Align::Min),
-                            |ui| {
-                                // Show that a long draft scrolls.
-                                ui.spacing_mut().scroll.dormant_handle_opacity = 0.6;
-                                egui::ScrollArea::vertical()
-                                    .id_salt(id.with("scroll"))
-                                    .max_height(max_editor_height)
-                                    .min_scrolled_height(0.0)
-                                    .auto_shrink([false, true])
-                                    .animated(false)
-                                    .show(ui, |ui| {
-                                        ui.add_enabled_ui(can_post, |ui| {
-                                            let output = edit.show(ui);
-                                            // Paste and mention completion move the
-                                            // cursor before TextEdit handles input.
-                                            if (pasted_cursor.is_some() || picked.is_some())
-                                                && let Some(range) = output.state.cursor.char_range()
-                                            {
-                                                let caret = output.galley.pos_from_cursor(range.primary)
-                                                    .translate(output.galley_pos.to_vec2());
-                                                ui.scroll_to_rect(caret, None);
-                                            }
-                                            output.response
-                                        }).inner
-                                    }).inner
-                            },
-                        ).inner;
-                        if std::mem::take(&mut app.focus_composer) {
-                            response.request_focus();
-                        }
-                        // Send and attach stay at the bottom of a tall draft.
-                        ui.with_layout(Layout::right_to_left(Align::Max), |ui| {
-                            ui.spacing_mut().item_spacing.x = 2.0;
-                            let ready = !draft.text.trim().is_empty() || !draft.files.is_empty() || !draft.images.is_empty();
-                            let tint = if ready { palette.accent } else { palette.dim };
-                            let label = if draft.editing.is_some() {
-                                "Save (Enter)"
+                            // Narrow panes drop the mention reminder so the hint fits one line.
+                            let mention = if ui.available_width() >= 520.0 {
+                                "  ·  @ to mention"
                             } else {
-                                "Send (Enter)"
+                                ""
                             };
-                            let button = widgets::icon_button_sized(
-                                ui,
-                                &palette,
-                                if draft.editing.is_some() {
-                                    Icon::Check
-                                } else {
-                                    Icon::Send
-                                },
-                                label,
-                                30.0,
-                                18.0,
-                                tint,
-                            );
-                            if button.clicked() {
-                                send = true;
+                            let hint = if !can_post {
+                                "Posting needs the ChannelMessage.Send permission".to_owned()
+                            } else if draft.editing.is_some() {
+                                "Edit your message".to_owned()
+                            } else if channel && draft.reply_to.is_none() {
+                                format!("Start a new post in {title}{mention}")
+                            } else if channel {
+                                "Reply to the thread".to_owned()
+                            } else {
+                                format!("Message {title}{mention}")
+                            };
+                            let width = (ui.available_width() - 70.0).max(0.0);
+                            // Roomier lines than egui's default (1.43, like messages)
+                            // so long drafts stay readable.
+                            let text_color = palette.text;
+                            let mut layouter =
+                                |ui: &egui::Ui, buffer: &dyn egui::TextBuffer, wrap_width: f32| {
+                                    let mut job = egui::text::LayoutJob::single_section(
+                                        buffer.as_str().to_owned(),
+                                        egui::TextFormat {
+                                            font_id: theme::regular(14.0),
+                                            color: text_color,
+                                            line_height: Some(20.0),
+                                            ..Default::default()
+                                        },
+                                    );
+                                    job.wrap.max_width = wrap_width;
+                                    ui.ctx().fonts_mut(|f| f.layout_job(job))
+                                };
+                            let edit = egui::TextEdit::multiline(&mut draft.text)
+                                .id(id)
+                                .layouter(&mut layouter)
+                                .hint_text(hint)
+                                .desired_rows(1)
+                                .desired_width(width)
+                                // A custom Frame overrides TextEdit::margin.
+                                // Put the padding on the frame itself.
+                                .frame(Frame::new().inner_margin(Margin::symmetric(0, 6)))
+                                .font(theme::regular(14.0))
+                                .vertical_align(Align::Center);
+                            // Reserve the controls' width and let only the editor
+                            // scroll. TextEdit's desired_rows is a minimum, so a
+                            // large paste otherwise grows over the message history.
+                            let response = ui
+                                .allocate_ui_with_layout(
+                                    vec2(width, max_editor_height),
+                                    Layout::top_down(Align::Min),
+                                    |ui| {
+                                        // Show that a long draft scrolls.
+                                        ui.spacing_mut().scroll.dormant_handle_opacity = 0.6;
+                                        egui::ScrollArea::vertical()
+                                            .id_salt(id.with("scroll"))
+                                            .max_height(max_editor_height)
+                                            .min_scrolled_height(0.0)
+                                            .auto_shrink([false, true])
+                                            .animated(false)
+                                            .show(ui, |ui| {
+                                                ui.add_enabled_ui(can_post, |ui| {
+                                                    let output = edit.show(ui);
+                                                    // Paste and mention completion move the
+                                                    // cursor before TextEdit handles input.
+                                                    if (pasted_cursor.is_some() || picked.is_some())
+                                                        && let Some(range) =
+                                                            output.state.cursor.char_range()
+                                                    {
+                                                        let caret = output
+                                                            .galley
+                                                            .pos_from_cursor(range.primary)
+                                                            .translate(output.galley_pos.to_vec2());
+                                                        ui.scroll_to_rect(caret, None);
+                                                    }
+                                                    output.response
+                                                })
+                                                .inner
+                                            })
+                                            .inner
+                                    },
+                                )
+                                .inner;
+                            if std::mem::take(&mut app.focus_composer) {
+                                response.request_focus();
                             }
-                            if draft.editing.is_none() {
-                                let attach = widgets::icon_button_sized(
+                            // Send and attach stay at the bottom of a tall draft.
+                            ui.with_layout(Layout::right_to_left(Align::Max), |ui| {
+                                ui.spacing_mut().item_spacing.x = 2.0;
+                                let ready = !draft.text.trim().is_empty()
+                                    || !draft.files.is_empty()
+                                    || !draft.images.is_empty();
+                                let tint = if ready { palette.accent } else { palette.dim };
+                                let label = if draft.editing.is_some() {
+                                    "Save (Enter)"
+                                } else {
+                                    "Send (Enter)"
+                                };
+                                let button = widgets::icon_button_sized(
                                     ui,
                                     &palette,
-                                    Icon::Paperclip,
-                                    "Attach files (or drop them here)",
+                                    if draft.editing.is_some() {
+                                        Icon::Check
+                                    } else {
+                                        Icon::Send
+                                    },
+                                    label,
                                     30.0,
                                     18.0,
-                                    palette.secondary,
+                                    tint,
                                 );
-                                widgets::on_click(&attach, &mut actions, Action::AttachFiles);
+                                if button.clicked() {
+                                    send = true;
+                                }
+                                if draft.editing.is_none() {
+                                    let attach = widgets::icon_button_sized(
+                                        ui,
+                                        &palette,
+                                        Icon::Paperclip,
+                                        "Attach files (or drop them here)",
+                                        30.0,
+                                        18.0,
+                                        palette.secondary,
+                                    );
+                                    widgets::on_click(&attach, &mut actions, Action::AttachFiles);
+                                }
+                            });
+                            let has_content = !draft.text.trim().is_empty()
+                                || !draft.files.is_empty()
+                                || !draft.images.is_empty();
+                            if send
+                                && has_content
+                                && can_post
+                                && picked.is_none()
+                                && draft.pending_pastes == 0
+                                && !paste_requested
+                            {
+                                match &draft.editing {
+                                    Some(message) => actions.push(Action::Edit {
+                                        conversation: conversation.clone(),
+                                        message: message.clone(),
+                                        text: std::mem::take(&mut draft.text),
+                                    }),
+                                    None => actions.push(Action::Send {
+                                        conversation: conversation.clone(),
+                                        text: std::mem::take(&mut draft.text),
+                                        reply_to: draft.reply_to.take(),
+                                        mentions: std::mem::take(&mut draft.mentions),
+                                        files: std::mem::take(&mut draft.files),
+                                        images: std::mem::take(&mut draft.images),
+                                    }),
+                                }
+                                draft.editing = None;
                             }
                         });
-                        let has_content = !draft.text.trim().is_empty() || !draft.files.is_empty() || !draft.images.is_empty();
-                        if send && has_content && can_post && picked.is_none() && draft.pending_pastes == 0 && !paste_requested {
-                            match &draft.editing {
-                                Some(message) => actions.push(Action::Edit {
-                                    conversation: conversation.clone(),
-                                    message: message.clone(),
-                                    text: std::mem::take(&mut draft.text),
-                                }),
-                                None => actions.push(Action::Send {
-                                    conversation: conversation.clone(),
-                                    text: std::mem::take(&mut draft.text),
-                                    reply_to: draft.reply_to.take(),
-                                    mentions: std::mem::take(&mut draft.mentions),
-                                    files: std::mem::take(&mut draft.files),
-                                    images: std::mem::take(&mut draft.images),
-                                }),
-                            }
-                            draft.editing = None;
-                        }
                     });
-                });
-            ui.add_space(4.0);
-            // One line at any width: the formatting reminder only when it fits.
-            let hint = if ui.available_width() >= 640.0 {
-                "Enter to send · Shift+Enter for a new line · **bold**, *italic*, `code`, > quote, - list"
-            } else {
-                "Enter to send · Shift+Enter for a new line"
-            };
-            ui.label(egui::RichText::new(hint).font(theme::regular(12.0)).color(palette.dim));
+                ui.add_space(4.0);
+                // One quiet line; the Markdown note only where it fits.
+                let hint = if ui.available_width() >= 480.0 {
+                    "Enter to send · Shift+Enter for a new line · Markdown formatting works"
+                } else {
+                    "Enter to send · Shift+Enter for a new line"
+                };
+                ui.label(
+                    egui::RichText::new(hint)
+                        .font(theme::regular(12.0))
+                        .color(palette.dim),
+                );
             });
         });
     ui.ctx().data_mut(|d| d.insert_temp(selected_id, selected));
@@ -1815,8 +1947,8 @@ fn composer(app: &mut App, ui: &mut egui::Ui, conversation: &ConversationId) {
                                 if let Some(email) = &person.email {
                                     ui.label(
                                         egui::RichText::new(email)
-                                            .font(theme::regular(11.0))
-                                            .color(palette.dim),
+                                            .font(theme::regular(12.0))
+                                            .color(palette.secondary),
                                     );
                                 }
                             });

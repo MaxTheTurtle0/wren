@@ -22,7 +22,13 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
             widgets::window_drag(ui, header, "signin-drag");
             egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.add_space((ui.available_height() * 0.07).max(32.0));
+                    // The logo, card and footer sit as one group near the middle.
+                    let group = if matches!(app.auth, AuthStatus::NotConfigured) {
+                        720.0
+                    } else {
+                        560.0
+                    };
+                    ui.add_space(((ui.available_height() - group) / 2.0).max(32.0));
                     ui.add(egui::Image::new(LOGO).fit_to_exact_size(vec2(160.0, 121.0)).tint(palette.text).alt_text("Wren"));
                     ui.add_space(10.0);
                     ui.label(

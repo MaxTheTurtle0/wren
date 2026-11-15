@@ -53,8 +53,8 @@ fn image_preview(app: &mut App, ctx: &egui::Context, uri: &str) {
                 });
             });
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut actual_size, false, "Fit");
-                ui.selectable_value(&mut actual_size, true, "100%");
+                widgets::segmented(ui, &palette, &mut actual_size, "Fit", "100%");
+                ui.add_space(8.0);
                 if let Ok(egui::load::TexturePoll::Ready { texture }) = &loaded {
                     ui.label(
                         egui::RichText::new(format!(
@@ -786,21 +786,26 @@ fn shortcuts(app: &mut App, ctx: &egui::Context) {
                 });
             });
             ui.add_space(10.0);
-            for (group, shortcuts) in super::keys::SHORTCUTS {
-                ui.add_space(6.0);
-                widgets::section_label(ui, &palette, group);
-                egui::Grid::new(("shortcuts", *group))
-                    .num_columns(2)
-                    .min_col_width(150.0)
-                    .spacing(vec2(24.0, 8.0))
-                    .show(ui, |ui| {
+            // One grid for every group, so descriptions share one column.
+            egui::Grid::new("shortcuts")
+                .num_columns(2)
+                .spacing(vec2(20.0, 6.0))
+                .show(ui, |ui| {
+                    for (index, (group, shortcuts)) in super::keys::SHORTCUTS.iter().enumerate() {
+                        ui.vertical(|ui| {
+                            if index > 0 {
+                                ui.add_space(8.0);
+                            }
+                            widgets::section_label(ui, &palette, group);
+                        });
+                        ui.end_row();
                         for (keys, what) in *shortcuts {
                             widgets::keycaps(ui, &palette, &super::keys::shortcut(keys));
                             ui.label(egui::RichText::new(*what).color(palette.text));
                             ui.end_row();
                         }
-                    });
-            }
+                    }
+                });
         });
     });
     if close {
@@ -921,6 +926,15 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                 }
                 ui.add_space(8.0);
             }
+            widgets::field_label(
+                ui,
+                &palette,
+                if picked.is_empty() {
+                    "To"
+                } else {
+                    "Add someone else"
+                },
+            );
             let response = ui.add(
                 egui::TextEdit::singleline(&mut query)
                     .hint_text("Type a name or email address")
@@ -962,7 +976,7 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                         ui.label(
                             egui::RichText::new(email)
                                 .font(theme::regular(12.0))
-                                .color(palette.dim),
+                                .color(palette.secondary),
                         );
                     }
                 });
@@ -1011,8 +1025,8 @@ fn new_chat(app: &mut App, ctx: &egui::Context) {
                 if picked.len() == 1 {
                     ui.label(
                         egui::RichText::new("An existing chat with this person opens instead.")
-                            .font(theme::regular(11.0))
-                            .color(palette.dim),
+                            .font(theme::regular(12.0))
+                            .color(palette.secondary),
                     );
                 }
             });
@@ -1068,39 +1082,42 @@ fn status_message(app: &mut App, ctx: &egui::Context) {
                     .color(palette.secondary),
             );
             ui.add_space(10.0);
-            let response = ui.add(
-                egui::TextEdit::multiline(&mut text)
-                    .hint_text("For example: Back at 3 pm")
-                    .desired_rows(2)
-                    .desired_width(f32::INFINITY)
-                    .margin(Margin::symmetric(10, 8)),
-            );
+            let response = ui.add(widgets::text_field(
+                &mut text,
+                "For example: Back at 3 pm",
+                theme::regular(14.0),
+            ));
             response.request_focus();
-            ui.add_space(12.0);
+            ui.add_space(14.0);
             let current = app
                 .my_presence
                 .as_ref()
                 .and_then(|p| p.status_message.clone())
                 .unwrap_or_default();
             ui.horizontal(|ui| {
-                // Save once something changed; Remove only when a status is set.
-                let changed = text.trim() != current.trim();
-                let save = ui
-                    .add_enabled_ui(changed, |ui| {
-                        widgets::primary_button(ui, &palette, "  Save  ")
-                    })
-                    .inner;
-                if save.clicked() {
-                    actions.push(Action::SetStatusMessage(text.clone()));
-                }
                 if !current.is_empty()
                     && widgets::secondary_button(ui, &palette, "Remove status").clicked()
                 {
                     actions.push(Action::SetStatusMessage(String::new()));
                 }
-                if widgets::secondary_button(ui, &palette, "Cancel").clicked() {
-                    actions.push(Action::CloseOverlay);
-                }
+                // The dialog's actions on the right: Cancel, then Save.
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // Save once something changed.
+                    let changed = text.trim() != current.trim();
+                    let save = ui
+                        .add_enabled_ui(changed, |ui| {
+                            widgets::primary_button(ui, &palette, "  Save  ")
+                        })
+                        .inner;
+                    let enter =
+                        changed && response.lost_focus() && ui.input(|i| i.key_pressed(Key::Enter));
+                    if save.clicked() || enter {
+                        actions.push(Action::SetStatusMessage(text.clone()));
+                    }
+                    if widgets::secondary_button(ui, &palette, "Cancel").clicked() {
+                        actions.push(Action::CloseOverlay);
+                    }
+                });
             });
         });
     });
